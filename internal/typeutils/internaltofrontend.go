@@ -2762,7 +2762,8 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 
 	createdAt, err := id.TimeFromULID(req.ID)
 	if err != nil {
-		err := gtserror.Newf("error converting id to time: %w", err)
+		// Error already
+		// nicely wrapped.
 		return nil, err
 	}
 
@@ -3047,4 +3048,94 @@ func (c *Converter) tagsToAPI(
 	}
 
 	return apiModels
+}
+
+func (c *Converter) DomainLimitToAPIDomainLimit(
+	ctx context.Context,
+	domainLimit *gtsmodel.DomainLimit,
+) (*apimodel.DomainLimit, error) {
+
+	// Domain may be in Punycode,
+	// de-punify it just in case.
+	domain, err := util.DePunify(domainLimit.Domain)
+	if err != nil {
+		return nil, gtserror.Newf("error de-punifying %s: %w", domainLimit.Domain, err)
+	}
+
+	// Derive created at time from ULID.
+	createdAt, err := id.TimeFromULID(domainLimit.ID)
+	if err != nil {
+		err := gtserror.Newf("error converting time from id: %w", err)
+		return nil, err
+	}
+
+	// Derive media policy.
+	var mediaPolicy apimodel.MediaPolicy
+	switch p := domainLimit.MediaPolicy; p {
+	case gtsmodel.MediaPolicyNoAction:
+		mediaPolicy = apimodel.MediaPolicyNoAction
+	case gtsmodel.MediaPolicyMarkSensitive:
+		mediaPolicy = apimodel.MediaPolicyMarkSensitive
+	case gtsmodel.MediaPolicyReject:
+		mediaPolicy = apimodel.MediaPolicyReject
+	default:
+		err := gtserror.Newf("unknown media policy %d", p)
+		return nil, err
+	}
+
+	// Derive follows policy.
+	var followsPolicy apimodel.FollowsPolicy
+	switch p := domainLimit.FollowsPolicy; p {
+	case gtsmodel.FollowsPolicyNoAction:
+		followsPolicy = apimodel.FollowsPolicyNoAction
+	case gtsmodel.FollowsPolicyManualApproval:
+		followsPolicy = apimodel.FollowsPolicyManualApproval
+	case gtsmodel.FollowsPolicyRejectNonMutual:
+		followsPolicy = apimodel.FollowsPolicyRejectNonMutual
+	case gtsmodel.FollowsPolicyRejectAll:
+		followsPolicy = apimodel.FollowsPolicyRejectAll
+	default:
+		err := gtserror.Newf("unknown follows policy %d", p)
+		return nil, err
+	}
+
+	// Derive statuses policy.
+	var statusesPolicy apimodel.StatusesPolicy
+	switch p := domainLimit.StatusesPolicy; p {
+	case gtsmodel.StatusesPolicyNoAction:
+		statusesPolicy = apimodel.StatusesPolicyNoAction
+	case gtsmodel.StatusesPolicyFilterWarn:
+		statusesPolicy = apimodel.StatusesPolicyFilterWarn
+	case gtsmodel.StatusesPolicyFilterHide:
+		statusesPolicy = apimodel.StatusesPolicyFilterWarn
+	default:
+		err := gtserror.Newf("unknown accounts policy %d", p)
+		return nil, err
+	}
+
+	// Derive accounts policy.
+	var accountsPolicy apimodel.AccountsPolicy
+	switch p := domainLimit.AccountsPolicy; p {
+	case gtsmodel.AccountsPolicyNoAction:
+		accountsPolicy = apimodel.AccountsPolicyNoAction
+	case gtsmodel.AccountsPolicyMute:
+		accountsPolicy = apimodel.AccountsPolicyMute
+	default:
+		err := gtserror.Newf("unknown accounts policy %d", p)
+		return nil, err
+	}
+
+	return &apimodel.DomainLimit{
+		ID:             domainLimit.ID,
+		Domain:         domain,
+		MediaPolicy:    mediaPolicy,
+		FollowsPolicy:  followsPolicy,
+		StatusesPolicy: statusesPolicy,
+		AccountsPolicy: accountsPolicy,
+		ContentWarning: domainLimit.ContentWarning,
+		PublicComment:  util.PtrIf(domainLimit.PublicComment),
+		PrivateComment: util.PtrIf(domainLimit.PrivateComment),
+		CreatedBy:      domainLimit.CreatedByAccountID,
+		CreatedAt:      util.FormatISO8601(createdAt),
+	}, nil
 }

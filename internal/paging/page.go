@@ -35,6 +35,11 @@ type Page struct {
 	Limit int
 }
 
+// Paging returns true if the page is not nil and at least one of min, max, and limit are set.
+func (p *Page) Paging() bool {
+	return p != nil && (p.Min.Value != "" || p.Max.Value != "" || p.Limit != 0)
+}
+
 // GetMin is a small helper function to return minimum boundary value (checking for nil page).
 func (p *Page) GetMin() string {
 	if p == nil {

@@ -257,3 +257,55 @@ func APIWebPushNotificationPolicyToWebPushNotificationPolicy(policy apimodel.Web
 	}
 	return 0
 }
+
+func APIMediaPolicyToMediaPolicy(policy apimodel.MediaPolicy) gtsmodel.MediaPolicy {
+	switch policy {
+	case apimodel.MediaPolicyNoAction:
+		return gtsmodel.MediaPolicyNoAction
+	case apimodel.MediaPolicyMarkSensitive:
+		return gtsmodel.MediaPolicyMarkSensitive
+	case apimodel.MediaPolicyReject:
+		return gtsmodel.MediaPolicyReject
+	default:
+		return gtsmodel.MediaPolicyUnknown
+	}
+}
+
+func APIFollowsPolicyToFollowsPolicy(policy apimodel.FollowsPolicy) gtsmodel.FollowsPolicy {
+	switch policy {
+	case apimodel.FollowsPolicyNoAction:
+		return gtsmodel.FollowsPolicyNoAction
+	case apimodel.FollowsPolicyManualApproval:
+		return gtsmodel.FollowsPolicyManualApproval
+	case apimodel.FollowsPolicyRejectNonMutual:
+		return gtsmodel.FollowsPolicyRejectNonMutual
+	case apimodel.FollowsPolicyRejectAll:
+		return gtsmodel.FollowsPolicyRejectAll
+	default:
+		return gtsmodel.FollowsPolicyUnknown
+	}
+}
+
+func APIStatusesPolicyToStatusesPolicy(policy apimodel.StatusesPolicy) gtsmodel.StatusesPolicy {
+	switch policy {
+	case apimodel.StatusesPolicyNoAction:
+		return gtsmodel.StatusesPolicyNoAction
+	case apimodel.StatusesPolicyFilterWarn:
+		return gtsmodel.StatusesPolicyFilterWarn
+	case apimodel.StatusesPolicyFilterHide:
+		return gtsmodel.StatusesPolicyFilterHide
+	default:
+		return gtsmodel.StatusesPolicyUnknown
+	}
+}
+
+func APIAccountsPolicyToAccountsPolicy(policy apimodel.AccountsPolicy) gtsmodel.AccountsPolicy {
+	switch policy {
+	case apimodel.AccountsPolicyNoAction:
+		return gtsmodel.AccountsPolicyNoAction
+	case apimodel.AccountsPolicyMute:
+		return gtsmodel.AccountsPolicyMute
+	default:
+		return gtsmodel.AccountsPolicyUnknown
+	}
+}

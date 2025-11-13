@@ -93,6 +93,32 @@ type Domain interface {
 	AreURIsBlocked(ctx context.Context, uris []*url.URL) (bool, error)
 
 	/*
+		Domain limit stuff.
+	*/
+
+	// GetDomainLimitByID gets one DomainLimit with the given ID.
+	GetDomainLimitByID(ctx context.Context, id string) (*gtsmodel.DomainLimit, error)
+
+	// GetDomainLimitByID gets one DomainLimit with the given domain.
+	GetDomainLimitByDomain(ctx context.Context, domain string) (*gtsmodel.DomainLimit, error)
+
+	// GetDomainLimits gets domain limits with the given paging params (nil page to return all).
+	GetDomainLimits(ctx context.Context, page *paging.Page) ([]*gtsmodel.DomainLimit, error)
+
+	// PutDomainLimit stores one DomainLimit.
+	PutDomainLimit(ctx context.Context, limit *gtsmodel.DomainLimit) error
+
+	// MatchDomainLimit checks if the given domain is limited by a covering DomainLimit
+	// entry, and returns that entry if so. Will be nil, nil if there's no error but also no limit.
+	MatchDomainLimit(ctx context.Context, domain string) (*gtsmodel.DomainLimit, error)
+
+	// UpdateDomainLimit updates the given domain limit, setting the provided columns (empty for all).
+	UpdateDomainLimit(ctx context.Context, limit *gtsmodel.DomainLimit, columns ...string) error
+
+	// DeleteDomainLimit deletes one DomainLimit with the given id.
+	DeleteDomainLimit(ctx context.Context, id string) error
+
+	/*
 		Domain permission draft stuff.
 	*/
 

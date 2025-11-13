@@ -19,12 +19,13 @@ package domain_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/cache/domain"
 )
 
-func TestCache(t *testing.T) {
+func domainCache(t *testing.T) (*domain.Cache, func() ([]string, error)) {
 	c := new(domain.Cache)
 
 	cachedDomains := []string{
@@ -41,6 +42,14 @@ func TestCache(t *testing.T) {
 		t.Log("load: returning cached domains")
 		return cachedDomains, nil
 	}
+
+	return c, loader
+}
+
+func TestCache(t *testing.T) {
+
+	// Create test domain cache.
+	c, loader := domainCache(t)
 
 	// Check a list of known matching domains.
 	for _, domain := range []string{
@@ -89,5 +98,30 @@ func TestCache(t *testing.T) {
 		return nil, knownErr
 	}); !errors.Is(err, knownErr) {
 		t.Fatalf("matches did not return expected error: %v", err)
+	}
+}
+
+func TestMatchesOn(t *testing.T) {
+
+	// Create test domain cache.
+	c, loader := domainCache(t)
+
+	// Check a list of known matching domains.
+	for _, domain := range []string{
+		"google.com",
+		"mail.google.com",
+		"dev.mail.google.com",
+		"google.co.uk",
+		"mail.google.co.uk",
+		"pleroma.bad.host",
+		"dev.pleroma.bad.host",
+		"pleroma.still.a.bad.host",
+		"dev.pleroma.still.a.bad.host",
+	} {
+		matchedOn, _ := c.MatchesOn(domain, loader)
+		t.Logf("checking domain matches: domain=%s matchedOn=%s", domain, matchedOn)
+		if !strings.HasSuffix(domain, matchedOn) {
+			t.Fatalf("matched domain %s should match on %s", domain, matchedOn)
+		}
 	}
 }

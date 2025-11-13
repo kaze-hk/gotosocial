@@ -161,6 +161,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 		}
 	}
 
+	for _, v := range NewTestDomainLimits() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(ctx, err)
+		}
+	}
+
 	for _, v := range NewTestInstances() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(ctx, err)

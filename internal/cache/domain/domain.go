@@ -39,59 +39,95 @@ type Cache struct {
 	rootptr atomic.Pointer[root]
 }
 
-// Matches checks whether domain matches an entry in the cache.
-// If the cache is not currently loaded, then the provided load
-// function is used to hydrate it.
-func (c *Cache) Matches(domain string, load func() ([]string, error)) (bool, error) {
+func (c *Cache) hydrate(load func() ([]string, error)) (*root, error) {
 	// Load the current
 	// root pointer value.
 	ptr := c.rootptr.Load()
 
-	if ptr == nil {
-		// Cache is not hydrated.
-		//
-		// Load domains from callback.
-		domains, err := load()
-		if err != nil {
-			return false, fmt.Errorf("error reloading cache: %w", err)
+	if ptr != nil {
+		// Cache already hydrated,
+		// nothing else to do.
+		return ptr, nil
+	}
+
+	// Cache is not hydrated.
+	//
+	// Load domains from callback.
+	domains, err := load()
+	if err != nil {
+		return nil, fmt.Errorf("error reloading cache: %w", err)
+	}
+
+	// Ensure the domains being inserted into the cache
+	// are sorted by number of domain parts. i.e. those
+	// with less parts are inserted last, else this can
+	// allow domains to fall through the matching code!
+	slices.SortFunc(domains, func(a, b string) int {
+		const k = +1
+		an := strings.Count(a, ".")
+		bn := strings.Count(b, ".")
+		switch {
+		case an < bn:
+			return +k
+		case an > bn:
+			return -k
+		default:
+			return 0
 		}
+	})
 
-		// Ensure the domains being inserted into the cache
-		// are sorted by number of domain parts. i.e. those
-		// with less parts are inserted last, else this can
-		// allow domains to fall through the matching code!
-		slices.SortFunc(domains, func(a, b string) int {
-			const k = +1
-			an := strings.Count(a, ".")
-			bn := strings.Count(b, ".")
-			switch {
-			case an < bn:
-				return +k
-			case an > bn:
-				return -k
-			default:
-				return 0
-			}
-		})
+	// Allocate new radix trie
+	// node to store matches.
+	ptr = new(root)
 
-		// Allocate new radix trie
-		// node to store matches.
-		ptr = new(root)
+	// Add each domain to the trie.
+	for _, domain := range domains {
+		ptr.Add(domain)
+	}
 
-		// Add each domain to the trie.
-		for _, domain := range domains {
-			ptr.Add(domain)
-		}
+	// Sort the trie.
+	ptr.Sort()
 
-		// Sort the trie.
-		ptr.Sort()
+	// Store new node ptr.
+	c.rootptr.Store(ptr)
 
-		// Store new node ptr.
-		c.rootptr.Store(ptr)
+	return ptr, nil
+}
+
+// Matches checks whether domain matches an entry in the cache.
+// If the cache is not currently loaded, then the provided load
+// function is used to hydrate it.
+//
+// This is a bit cheaper than MatchesOn so use it if you
+// don't need to know the exact entry a match was made on.
+func (c *Cache) Matches(domain string, load func() ([]string, error)) (bool, error) {
+
+	// Ensure hydrated.
+	ptr, err := c.hydrate(load)
+	if err != nil {
+		return false, err
 	}
 
 	// Look for match in trie node.
 	return ptr.Match(domain), nil
+}
+
+// MatchesOn is like Matches but it returns a string corresponding to
+// the highest-level domain that was matched on, rather than a boolean.
+// Returns an empty string in case of no match.
+//
+// This is more expensive than Matches, so only use it if
+// you need to know the entry that given domain matched on.
+func (c *Cache) MatchesOn(domain string, load func() ([]string, error)) (string, error) {
+	// Ensure hydrated.
+	ptr, err := c.hydrate(load)
+	if err != nil {
+		return "", err
+	}
+
+	// Look for match in trie node.
+	matchedOn := ptr.MatchOn(domain)
+	return matchedOn, nil
 }
 
 // Clear will drop the currently loaded domain list,
@@ -117,7 +153,26 @@ func (r *root) Add(domain string) {
 // Match will return whether the given domain matches
 // an existing stored domain in this radix trie.
 func (r *root) Match(domain string) bool {
-	return r.root.Match(strings.Split(domain, "."))
+	parts := strings.Split(domain, ".")
+	return r.root.Match(parts) != -1
+}
+
+// MatchOn is like Match, but if a match is found instead of
+// returning a boolean it will return the highest-level domain
+// that the search matched on.
+//
+// For example, will return "example.org" if "example.org" and
+// "test.example.org" were stored, and input domain was either
+// "test.example.org" or "example.org".
+//
+// Returns empty string in case of no match.
+func (r *root) MatchOn(domain string) string {
+	parts := strings.Split(domain, ".")
+	if remain := r.root.Match(parts); remain != -1 {
+		parts = parts[remain:]
+		return strings.Join(parts, ".")
+	}
+	return ""
 }
 
 // Sort will sort the entire radix trie ensuring that
@@ -182,7 +237,7 @@ func (n *node) Add(parts []string) {
 	}
 }
 
-func (n *node) Match(parts []string) bool {
+func (n *node) Match(parts []string) (remain int) {
 	for len(parts) > 0 {
 		// Pop next domain part.
 		i := len(parts) - 1
@@ -195,12 +250,12 @@ func (n *node) Match(parts []string) bool {
 
 		if nn == nil {
 			// No match :(
-			return false
+			return -1
 		}
 
 		if len(nn.child) == 0 {
 			// It's a match!
-			return true
+			return len(parts)
 		}
 
 		// Re-iter with
@@ -210,7 +265,7 @@ func (n *node) Match(parts []string) bool {
 
 	// Ran out of parts
 	// without a match.
-	return false
+	return -1
 }
 
 // getChild fetches child node with given domain part string

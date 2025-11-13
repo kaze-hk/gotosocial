@@ -3895,6 +3895,32 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIEdits() {
 ]`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestDomainLimitToAPIDomainLimit() {
+	domainLimit := suite.testDomainLimits["fossbros-anonymous.io"]
+
+	apiDomainLimit, err := suite.typeconverter.DomainLimitToAPIDomainLimit(suite.T().Context(), domainLimit)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(apiDomainLimit, "", "    ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+    "id": "01K8TE4ES467FGYGRKVPDM6RF6",
+    "domain": "fossbros-anonymous.io",
+    "media_policy": "mark_sensitive",
+    "follows_policy": "reject_non_mutual",
+    "statuses_policy": "filter_warn",
+    "accounts_policy": "mute",
+    "content_warning": "potentially annoying post ahead",
+    "public_comment": "they're kind of annoying",
+    "private_comment": "they're actually really annoying I just wanna be coy about it",
+    "created_by": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "created_at": "2025-10-30T11:30:32.868Z"
+}`, string(b))
+}
+
 func TestInternalToFrontendTestSuite(t *testing.T) {
 	suite.Run(t, new(InternalToFrontendTestSuite))
 }

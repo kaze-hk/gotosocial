@@ -36,6 +36,8 @@ const (
 	DomainBlocksPathWithID                   = DomainBlocksPath + "/:" + apiutil.IDKey
 	DomainAllowsPath                         = BasePath + "/domain_allows"
 	DomainAllowsPathWithID                   = DomainAllowsPath + "/:" + apiutil.IDKey
+	DomainLimitsPath                         = BasePath + "/domain_limits"
+	DomainLimitsPathWithID                   = DomainLimitsPath + "/:" + apiutil.IDKey
 	DomainPermissionDraftsPath               = BasePath + "/domain_permission_drafts"
 	DomainPermissionDraftsPathWithID         = DomainPermissionDraftsPath + "/:" + apiutil.IDKey
 	DomainPermissionDraftAcceptPath          = DomainPermissionDraftsPathWithID + "/accept"
@@ -111,6 +113,12 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, DomainAllowsPathWithID, m.DomainAllowGETHandler)
 	attachHandler(http.MethodPut, DomainAllowsPathWithID, m.DomainAllowUpdatePUTHandler)
 	attachHandler(http.MethodDelete, DomainAllowsPathWithID, m.DomainAllowDELETEHandler)
+
+	// domain limits stuff
+	attachHandler(http.MethodGet, DomainLimitsPath, m.DomainLimitsGETHandler)
+	attachHandler(http.MethodPost, DomainLimitsPath, m.DomainLimitsPOSTHandler)
+	attachHandler(http.MethodPut, DomainLimitsPathWithID, m.DomainLimitPUTHandler)
+	attachHandler(http.MethodDelete, DomainLimitsPathWithID, m.DomainLimitDELETEHandler)
 
 	// domain permission draft stuff
 	attachHandler(http.MethodPost, DomainPermissionDraftsPath, m.DomainPermissionDraftsPOSTHandler)

@@ -29,203 +29,204 @@ import (
 )
 
 const (
-	LogLevelFlag                                   = "log-level"
-	LogFormatFlag                                  = "log-format"
-	LogTimestampFormatFlag                         = "log-timestamp-format"
-	LogDbQueriesFlag                               = "log-db-queries"
-	LogClientIPFlag                                = "log-client-ip"
-	RequestIDHeaderFlag                            = "request-id-header"
-	ConfigPathFlag                                 = "config-path"
-	ApplicationNameFlag                            = "application-name"
-	LandingPageUserFlag                            = "landing-page-user"
-	HostFlag                                       = "host"
-	AccountDomainFlag                              = "account-domain"
-	ProtocolFlag                                   = "protocol"
-	BindAddressFlag                                = "bind-address"
-	PortFlag                                       = "port"
-	TrustedProxiesFlag                             = "trusted-proxies"
-	SoftwareVersionFlag                            = "software-version"
-	DbTypeFlag                                     = "db-type"
-	DbAddressFlag                                  = "db-address"
-	DbPortFlag                                     = "db-port"
-	DbUserFlag                                     = "db-user"
-	DbPasswordFlag                                 = "db-password"
-	DbDatabaseFlag                                 = "db-database"
-	DbTLSModeFlag                                  = "db-tls-mode"
-	DbTLSCACertFlag                                = "db-tls-ca-cert"
-	DbMaxOpenConnsMultiplierFlag                   = "db-max-open-conns-multiplier"
-	DbSqliteJournalModeFlag                        = "db-sqlite-journal-mode"
-	DbSqliteSynchronousFlag                        = "db-sqlite-synchronous"
-	DbSqliteCacheSizeFlag                          = "db-sqlite-cache-size"
-	DbSqliteBusyTimeoutFlag                        = "db-sqlite-busy-timeout"
-	DbPostgresConnectionStringFlag                 = "db-postgres-connection-string"
-	WebTemplateBaseDirFlag                         = "web-template-base-dir"
-	WebAssetBaseDirFlag                            = "web-asset-base-dir"
-	InstanceFederationModeFlag                     = "instance-federation-mode"
-	InstanceFederationSpamFilterFlag               = "instance-federation-spam-filter"
-	InstanceExposePeersFlag                        = "instance-expose-peers"
-	InstanceExposeBlocklistFlag                    = "instance-expose-blocklist"
-	InstanceExposeBlocklistWebFlag                 = "instance-expose-blocklist-web"
-	InstanceExposeAllowlistFlag                    = "instance-expose-allowlist"
-	InstanceExposeAllowlistWebFlag                 = "instance-expose-allowlist-web"
-	InstanceExposePublicTimelineFlag               = "instance-expose-public-timeline"
-	InstanceExposeCustomEmojisFlag                 = "instance-expose-custom-emojis"
-	InstanceDeliverToSharedInboxesFlag             = "instance-deliver-to-shared-inboxes"
-	InstanceInjectMastodonVersionFlag              = "instance-inject-mastodon-version"
-	InstanceLanguagesFlag                          = "instance-languages"
-	InstanceSubscriptionsProcessFromFlag           = "instance-subscriptions-process-from"
-	InstanceSubscriptionsProcessEveryFlag          = "instance-subscriptions-process-every"
-	InstanceStatsModeFlag                          = "instance-stats-mode"
-	InstanceAllowBackdatingStatusesFlag            = "instance-allow-backdating-statuses"
-	AccountsRegistrationOpenFlag                   = "accounts-registration-open"
-	AccountsReasonRequiredFlag                     = "accounts-reason-required"
-	AccountsRegistrationDailyLimitFlag             = "accounts-registration-daily-limit"
-	AccountsRegistrationBacklogLimitFlag           = "accounts-registration-backlog-limit"
-	AccountsAllowCustomCSSFlag                     = "accounts-allow-custom-css"
-	AccountsCustomCSSLengthFlag                    = "accounts-custom-css-length"
-	AccountsMaxProfileFieldsFlag                   = "accounts-max-profile-fields"
-	StorageBackendFlag                             = "storage-backend"
-	StorageLocalBasePathFlag                       = "storage-local-base-path"
-	StorageS3EndpointFlag                          = "storage-s3-endpoint"
-	StorageS3AccessKeyFlag                         = "storage-s3-access-key"
-	StorageS3SecretKeyFlag                         = "storage-s3-secret-key"
-	StorageS3UseSSLFlag                            = "storage-s3-use-ssl"
-	StorageS3BucketNameFlag                        = "storage-s3-bucket"
-	StorageS3ProxyFlag                             = "storage-s3-proxy"
-	StorageS3RedirectURLFlag                       = "storage-s3-redirect-url"
-	StorageS3BucketLookupFlag                      = "storage-s3-bucket-lookup"
-	StorageS3KeyPrefixFlag                         = "storage-s3-key-prefix"
-	StatusesMaxCharsFlag                           = "statuses-max-chars"
-	StatusesPollMaxOptionsFlag                     = "statuses-poll-max-options"
-	StatusesPollOptionMaxCharsFlag                 = "statuses-poll-option-max-chars"
-	StatusesMediaMaxFilesFlag                      = "statuses-media-max-files"
-	ScheduledStatusesMaxTotalFlag                  = "scheduled-statuses-max-total"
-	ScheduledStatusesMaxDailyFlag                  = "scheduled-statuses-max-daily"
-	LetsEncryptEnabledFlag                         = "letsencrypt-enabled"
-	LetsEncryptPortFlag                            = "letsencrypt-port"
-	LetsEncryptCertDirFlag                         = "letsencrypt-cert-dir"
-	LetsEncryptEmailAddressFlag                    = "letsencrypt-email-address"
-	TLSCertificateChainFlag                        = "tls-certificate-chain"
-	TLSCertificateKeyFlag                          = "tls-certificate-key"
-	OIDCEnabledFlag                                = "oidc-enabled"
-	OIDCIdpNameFlag                                = "oidc-idp-name"
-	OIDCSkipVerificationFlag                       = "oidc-skip-verification"
-	OIDCIssuerFlag                                 = "oidc-issuer"
-	OIDCClientIDFlag                               = "oidc-client-id"
-	OIDCClientSecretFlag                           = "oidc-client-secret"
-	OIDCScopesFlag                                 = "oidc-scopes"
-	OIDCLinkExistingFlag                           = "oidc-link-existing"
-	OIDCAllowedGroupsFlag                          = "oidc-allowed-groups"
-	OIDCAdminGroupsFlag                            = "oidc-admin-groups"
-	TracingEnabledFlag                             = "tracing-enabled"
-	MetricsEnabledFlag                             = "metrics-enabled"
-	SMTPHostFlag                                   = "smtp-host"
-	SMTPPortFlag                                   = "smtp-port"
-	SMTPUsernameFlag                               = "smtp-username"
-	SMTPPasswordFlag                               = "smtp-password"
-	SMTPFromFlag                                   = "smtp-from"
-	SMTPDiscloseRecipientsFlag                     = "smtp-disclose-recipients"
-	SyslogEnabledFlag                              = "syslog-enabled"
-	SyslogProtocolFlag                             = "syslog-protocol"
-	SyslogAddressFlag                              = "syslog-address"
-	AdvancedCookiesSamesiteFlag                    = "advanced-cookies-samesite"
-	AdvancedSenderMultiplierFlag                   = "advanced-sender-multiplier"
-	AdvancedCSPExtraURIsFlag                       = "advanced-csp-extra-uris"
-	AdvancedHeaderFilterModeFlag                   = "advanced-header-filter-mode"
-	AdvancedRateLimitRequestsFlag                  = "advanced-rate-limit-requests"
-	AdvancedRateLimitExceptionsFlag                = "advanced-rate-limit-exceptions"
-	AdvancedThrottlingMultiplierFlag               = "advanced-throttling-multiplier"
-	AdvancedThrottlingRetryAfterFlag               = "advanced-throttling-retry-after"
-	HTTPClientAllowIPsFlag                         = "http-client-allow-ips"
-	HTTPClientBlockIPsFlag                         = "http-client-block-ips"
-	HTTPClientTimeoutFlag                          = "http-client-timeout"
-	HTTPClientTLSInsecureSkipVerifyFlag            = "http-client-tls-insecure-skip-verify"
-	HTTPClientInsecureOutgoingFlag                 = "http-client-insecure-outgoing"
-	MediaDescriptionMinCharsFlag                   = "media-description-min-chars"
-	MediaDescriptionMaxCharsFlag                   = "media-description-max-chars"
-	MediaRemoteCacheDaysFlag                       = "media-remote-cache-days"
-	MediaEmojiLocalMaxSizeFlag                     = "media-emoji-local-max-size"
-	MediaEmojiRemoteMaxSizeFlag                    = "media-emoji-remote-max-size"
-	MediaImageSizeHintFlag                         = "media-image-size-hint"
-	MediaVideoSizeHintFlag                         = "media-video-size-hint"
-	MediaLocalMaxSizeFlag                          = "media-local-max-size"
-	MediaRemoteMaxSizeFlag                         = "media-remote-max-size"
-	MediaCleanupFromFlag                           = "media-cleanup-from"
-	MediaCleanupEveryFlag                          = "media-cleanup-every"
-	MediaFfmpegPoolSizeFlag                        = "media-ffmpeg-pool-size"
-	MediaThumbMaxPixelsFlag                        = "media-thumb-max-pixels"
-	CacheS3ObjectInfoFlag                          = "cache-s3-object-info"
-	CacheMemoryTargetFlag                          = "cache-memory-target"
-	CacheAccountMemRatioFlag                       = "cache-account-mem-ratio"
-	CacheAccountNoteMemRatioFlag                   = "cache-account-note-mem-ratio"
-	CacheAccountSettingsMemRatioFlag               = "cache-account-settings-mem-ratio"
-	CacheAccountStatsMemRatioFlag                  = "cache-account-stats-mem-ratio"
-	CacheApplicationMemRatioFlag                   = "cache-application-mem-ratio"
-	CacheBlockMemRatioFlag                         = "cache-block-mem-ratio"
-	CacheBlockIDsMemRatioFlag                      = "cache-block-ids-mem-ratio"
-	CacheBoostOfIDsMemRatioFlag                    = "cache-boost-of-ids-mem-ratio"
-	CacheClientMemRatioFlag                        = "cache-client-mem-ratio"
-	CacheConversationMemRatioFlag                  = "cache-conversation-mem-ratio"
-	CacheConversationLastStatusIDsMemRatioFlag     = "cache-conversation-last-status-ids-mem-ratio"
-	CacheDomainPermissionDraftMemRationFlag        = "cache-domain-permission-draft-mem-ratio"
-	CacheDomainPermissionSubscriptionMemRationFlag = "cache-domain-permission-subscription-mem-ratio"
-	CacheEmojiMemRatioFlag                         = "cache-emoji-mem-ratio"
-	CacheEmojiCategoryMemRatioFlag                 = "cache-emoji-category-mem-ratio"
-	CacheFilterMemRatioFlag                        = "cache-filter-mem-ratio"
-	CacheFilterIDsMemRatioFlag                     = "cache-filter-ids-mem-ratio"
-	CacheFilterKeywordMemRatioFlag                 = "cache-filter-keyword-mem-ratio"
-	CacheFilterStatusMemRatioFlag                  = "cache-filter-status-mem-ratio"
-	CacheFollowMemRatioFlag                        = "cache-follow-mem-ratio"
-	CacheFollowIDsMemRatioFlag                     = "cache-follow-ids-mem-ratio"
-	CacheFollowRequestMemRatioFlag                 = "cache-follow-request-mem-ratio"
-	CacheFollowRequestIDsMemRatioFlag              = "cache-follow-request-ids-mem-ratio"
-	CacheFollowingTagIDsMemRatioFlag               = "cache-following-tag-ids-mem-ratio"
-	CacheHomeAccountIDsMemRatioFlag                = "cache-home-account-ids-mem-ratio"
-	CacheInReplyToIDsMemRatioFlag                  = "cache-in-reply-to-ids-mem-ratio"
-	CacheInstanceMemRatioFlag                      = "cache-instance-mem-ratio"
-	CacheInteractionRequestMemRatioFlag            = "cache-interaction-request-mem-ratio"
-	CacheListMemRatioFlag                          = "cache-list-mem-ratio"
-	CacheListIDsMemRatioFlag                       = "cache-list-ids-mem-ratio"
-	CacheListedIDsMemRatioFlag                     = "cache-listed-ids-mem-ratio"
-	CacheMarkerMemRatioFlag                        = "cache-marker-mem-ratio"
-	CacheMediaMemRatioFlag                         = "cache-media-mem-ratio"
-	CacheMentionMemRatioFlag                       = "cache-mention-mem-ratio"
-	CacheMoveMemRatioFlag                          = "cache-move-mem-ratio"
-	CacheNotificationMemRatioFlag                  = "cache-notification-mem-ratio"
-	CachePollMemRatioFlag                          = "cache-poll-mem-ratio"
-	CachePollVoteMemRatioFlag                      = "cache-poll-vote-mem-ratio"
-	CachePollVoteIDsMemRatioFlag                   = "cache-poll-vote-ids-mem-ratio"
-	CacheReportMemRatioFlag                        = "cache-report-mem-ratio"
-	CacheScheduledStatusMemRatioFlag               = "cache-scheduled-status-mem-ratio"
-	CacheSinBinStatusMemRatioFlag                  = "cache-sin-bin-status-mem-ratio"
-	CacheStatusMemRatioFlag                        = "cache-status-mem-ratio"
-	CacheStatusBookmarkMemRatioFlag                = "cache-status-bookmark-mem-ratio"
-	CacheStatusBookmarkIDsMemRatioFlag             = "cache-status-bookmark-ids-mem-ratio"
-	CacheStatusEditMemRatioFlag                    = "cache-status-edit-mem-ratio"
-	CacheStatusFaveMemRatioFlag                    = "cache-status-fave-mem-ratio"
-	CacheStatusFaveIDsMemRatioFlag                 = "cache-status-fave-ids-mem-ratio"
-	CacheTagMemRatioFlag                           = "cache-tag-mem-ratio"
-	CacheThreadMuteMemRatioFlag                    = "cache-thread-mute-mem-ratio"
-	CacheTokenMemRatioFlag                         = "cache-token-mem-ratio"
-	CacheTombstoneMemRatioFlag                     = "cache-tombstone-mem-ratio"
-	CacheUserMemRatioFlag                          = "cache-user-mem-ratio"
-	CacheUserMuteMemRatioFlag                      = "cache-user-mute-mem-ratio"
-	CacheUserMuteIDsMemRatioFlag                   = "cache-user-mute-ids-mem-ratio"
-	CacheWebfingerMemRatioFlag                     = "cache-webfinger-mem-ratio"
-	CacheWebPushSubscriptionMemRatioFlag           = "cache-web-push-subscription-mem-ratio"
-	CacheWebPushSubscriptionIDsMemRatioFlag        = "cache-web-push-subscription-ids-mem-ratio"
-	CacheMutesMemRatioFlag                         = "cache-mutes-mem-ratio"
-	CacheStatusFilterMemRatioFlag                  = "cache-status-filter-mem-ratio"
-	CacheVisibilityMemRatioFlag                    = "cache-visibility-mem-ratio"
-	AdminAccountUsernameFlag                       = "username"
-	AdminAccountEmailFlag                          = "email"
-	AdminAccountPasswordFlag                       = "password"
-	AdminTransPathFlag                             = "path"
-	AdminMediaPruneDryRunFlag                      = "dry-run"
-	AdminMediaListLocalOnlyFlag                    = "local-only"
-	AdminMediaListRemoteOnlyFlag                   = "remote-only"
-	TestrigSkipDBSetupFlag                         = "skip-db-setup"
-	TestrigSkipDBTeardownFlag                      = "skip-db-teardown"
+	LogLevelFlag                                  = "log-level"
+	LogFormatFlag                                 = "log-format"
+	LogTimestampFormatFlag                        = "log-timestamp-format"
+	LogDbQueriesFlag                              = "log-db-queries"
+	LogClientIPFlag                               = "log-client-ip"
+	RequestIDHeaderFlag                           = "request-id-header"
+	ConfigPathFlag                                = "config-path"
+	ApplicationNameFlag                           = "application-name"
+	LandingPageUserFlag                           = "landing-page-user"
+	HostFlag                                      = "host"
+	AccountDomainFlag                             = "account-domain"
+	ProtocolFlag                                  = "protocol"
+	BindAddressFlag                               = "bind-address"
+	PortFlag                                      = "port"
+	TrustedProxiesFlag                            = "trusted-proxies"
+	SoftwareVersionFlag                           = "software-version"
+	DbTypeFlag                                    = "db-type"
+	DbAddressFlag                                 = "db-address"
+	DbPortFlag                                    = "db-port"
+	DbUserFlag                                    = "db-user"
+	DbPasswordFlag                                = "db-password"
+	DbDatabaseFlag                                = "db-database"
+	DbTLSModeFlag                                 = "db-tls-mode"
+	DbTLSCACertFlag                               = "db-tls-ca-cert"
+	DbMaxOpenConnsMultiplierFlag                  = "db-max-open-conns-multiplier"
+	DbSqliteJournalModeFlag                       = "db-sqlite-journal-mode"
+	DbSqliteSynchronousFlag                       = "db-sqlite-synchronous"
+	DbSqliteCacheSizeFlag                         = "db-sqlite-cache-size"
+	DbSqliteBusyTimeoutFlag                       = "db-sqlite-busy-timeout"
+	DbPostgresConnectionStringFlag                = "db-postgres-connection-string"
+	WebTemplateBaseDirFlag                        = "web-template-base-dir"
+	WebAssetBaseDirFlag                           = "web-asset-base-dir"
+	InstanceFederationModeFlag                    = "instance-federation-mode"
+	InstanceFederationSpamFilterFlag              = "instance-federation-spam-filter"
+	InstanceExposePeersFlag                       = "instance-expose-peers"
+	InstanceExposeBlocklistFlag                   = "instance-expose-blocklist"
+	InstanceExposeBlocklistWebFlag                = "instance-expose-blocklist-web"
+	InstanceExposeAllowlistFlag                   = "instance-expose-allowlist"
+	InstanceExposeAllowlistWebFlag                = "instance-expose-allowlist-web"
+	InstanceExposePublicTimelineFlag              = "instance-expose-public-timeline"
+	InstanceExposeCustomEmojisFlag                = "instance-expose-custom-emojis"
+	InstanceDeliverToSharedInboxesFlag            = "instance-deliver-to-shared-inboxes"
+	InstanceInjectMastodonVersionFlag             = "instance-inject-mastodon-version"
+	InstanceLanguagesFlag                         = "instance-languages"
+	InstanceSubscriptionsProcessFromFlag          = "instance-subscriptions-process-from"
+	InstanceSubscriptionsProcessEveryFlag         = "instance-subscriptions-process-every"
+	InstanceStatsModeFlag                         = "instance-stats-mode"
+	InstanceAllowBackdatingStatusesFlag           = "instance-allow-backdating-statuses"
+	AccountsRegistrationOpenFlag                  = "accounts-registration-open"
+	AccountsReasonRequiredFlag                    = "accounts-reason-required"
+	AccountsRegistrationDailyLimitFlag            = "accounts-registration-daily-limit"
+	AccountsRegistrationBacklogLimitFlag          = "accounts-registration-backlog-limit"
+	AccountsAllowCustomCSSFlag                    = "accounts-allow-custom-css"
+	AccountsCustomCSSLengthFlag                   = "accounts-custom-css-length"
+	AccountsMaxProfileFieldsFlag                  = "accounts-max-profile-fields"
+	StorageBackendFlag                            = "storage-backend"
+	StorageLocalBasePathFlag                      = "storage-local-base-path"
+	StorageS3EndpointFlag                         = "storage-s3-endpoint"
+	StorageS3AccessKeyFlag                        = "storage-s3-access-key"
+	StorageS3SecretKeyFlag                        = "storage-s3-secret-key"
+	StorageS3UseSSLFlag                           = "storage-s3-use-ssl"
+	StorageS3BucketNameFlag                       = "storage-s3-bucket"
+	StorageS3ProxyFlag                            = "storage-s3-proxy"
+	StorageS3RedirectURLFlag                      = "storage-s3-redirect-url"
+	StorageS3BucketLookupFlag                     = "storage-s3-bucket-lookup"
+	StorageS3KeyPrefixFlag                        = "storage-s3-key-prefix"
+	StatusesMaxCharsFlag                          = "statuses-max-chars"
+	StatusesPollMaxOptionsFlag                    = "statuses-poll-max-options"
+	StatusesPollOptionMaxCharsFlag                = "statuses-poll-option-max-chars"
+	StatusesMediaMaxFilesFlag                     = "statuses-media-max-files"
+	ScheduledStatusesMaxTotalFlag                 = "scheduled-statuses-max-total"
+	ScheduledStatusesMaxDailyFlag                 = "scheduled-statuses-max-daily"
+	LetsEncryptEnabledFlag                        = "letsencrypt-enabled"
+	LetsEncryptPortFlag                           = "letsencrypt-port"
+	LetsEncryptCertDirFlag                        = "letsencrypt-cert-dir"
+	LetsEncryptEmailAddressFlag                   = "letsencrypt-email-address"
+	TLSCertificateChainFlag                       = "tls-certificate-chain"
+	TLSCertificateKeyFlag                         = "tls-certificate-key"
+	OIDCEnabledFlag                               = "oidc-enabled"
+	OIDCIdpNameFlag                               = "oidc-idp-name"
+	OIDCSkipVerificationFlag                      = "oidc-skip-verification"
+	OIDCIssuerFlag                                = "oidc-issuer"
+	OIDCClientIDFlag                              = "oidc-client-id"
+	OIDCClientSecretFlag                          = "oidc-client-secret"
+	OIDCScopesFlag                                = "oidc-scopes"
+	OIDCLinkExistingFlag                          = "oidc-link-existing"
+	OIDCAllowedGroupsFlag                         = "oidc-allowed-groups"
+	OIDCAdminGroupsFlag                           = "oidc-admin-groups"
+	TracingEnabledFlag                            = "tracing-enabled"
+	MetricsEnabledFlag                            = "metrics-enabled"
+	SMTPHostFlag                                  = "smtp-host"
+	SMTPPortFlag                                  = "smtp-port"
+	SMTPUsernameFlag                              = "smtp-username"
+	SMTPPasswordFlag                              = "smtp-password"
+	SMTPFromFlag                                  = "smtp-from"
+	SMTPDiscloseRecipientsFlag                    = "smtp-disclose-recipients"
+	SyslogEnabledFlag                             = "syslog-enabled"
+	SyslogProtocolFlag                            = "syslog-protocol"
+	SyslogAddressFlag                             = "syslog-address"
+	AdvancedCookiesSamesiteFlag                   = "advanced-cookies-samesite"
+	AdvancedSenderMultiplierFlag                  = "advanced-sender-multiplier"
+	AdvancedCSPExtraURIsFlag                      = "advanced-csp-extra-uris"
+	AdvancedHeaderFilterModeFlag                  = "advanced-header-filter-mode"
+	AdvancedRateLimitRequestsFlag                 = "advanced-rate-limit-requests"
+	AdvancedRateLimitExceptionsFlag               = "advanced-rate-limit-exceptions"
+	AdvancedThrottlingMultiplierFlag              = "advanced-throttling-multiplier"
+	AdvancedThrottlingRetryAfterFlag              = "advanced-throttling-retry-after"
+	HTTPClientAllowIPsFlag                        = "http-client-allow-ips"
+	HTTPClientBlockIPsFlag                        = "http-client-block-ips"
+	HTTPClientTimeoutFlag                         = "http-client-timeout"
+	HTTPClientTLSInsecureSkipVerifyFlag           = "http-client-tls-insecure-skip-verify"
+	HTTPClientInsecureOutgoingFlag                = "http-client-insecure-outgoing"
+	MediaDescriptionMinCharsFlag                  = "media-description-min-chars"
+	MediaDescriptionMaxCharsFlag                  = "media-description-max-chars"
+	MediaRemoteCacheDaysFlag                      = "media-remote-cache-days"
+	MediaEmojiLocalMaxSizeFlag                    = "media-emoji-local-max-size"
+	MediaEmojiRemoteMaxSizeFlag                   = "media-emoji-remote-max-size"
+	MediaImageSizeHintFlag                        = "media-image-size-hint"
+	MediaVideoSizeHintFlag                        = "media-video-size-hint"
+	MediaLocalMaxSizeFlag                         = "media-local-max-size"
+	MediaRemoteMaxSizeFlag                        = "media-remote-max-size"
+	MediaCleanupFromFlag                          = "media-cleanup-from"
+	MediaCleanupEveryFlag                         = "media-cleanup-every"
+	MediaFfmpegPoolSizeFlag                       = "media-ffmpeg-pool-size"
+	MediaThumbMaxPixelsFlag                       = "media-thumb-max-pixels"
+	CacheS3ObjectInfoFlag                         = "cache-s3-object-info"
+	CacheMemoryTargetFlag                         = "cache-memory-target"
+	CacheAccountMemRatioFlag                      = "cache-account-mem-ratio"
+	CacheAccountNoteMemRatioFlag                  = "cache-account-note-mem-ratio"
+	CacheAccountSettingsMemRatioFlag              = "cache-account-settings-mem-ratio"
+	CacheAccountStatsMemRatioFlag                 = "cache-account-stats-mem-ratio"
+	CacheApplicationMemRatioFlag                  = "cache-application-mem-ratio"
+	CacheBlockMemRatioFlag                        = "cache-block-mem-ratio"
+	CacheBlockIDsMemRatioFlag                     = "cache-block-ids-mem-ratio"
+	CacheBoostOfIDsMemRatioFlag                   = "cache-boost-of-ids-mem-ratio"
+	CacheClientMemRatioFlag                       = "cache-client-mem-ratio"
+	CacheConversationMemRatioFlag                 = "cache-conversation-mem-ratio"
+	CacheConversationLastStatusIDsMemRatioFlag    = "cache-conversation-last-status-ids-mem-ratio"
+	CacheDomainPermissionDraftMemRatioFlag        = "cache-domain-permission-draft-mem-ratio"
+	CacheDomainLimitMemRatioFlag                  = "cache-domain-permission-limit-mem-ratio"
+	CacheDomainPermissionSubscriptionMemRatioFlag = "cache-domain-permission-subscription-mem-ratio"
+	CacheEmojiMemRatioFlag                        = "cache-emoji-mem-ratio"
+	CacheEmojiCategoryMemRatioFlag                = "cache-emoji-category-mem-ratio"
+	CacheFilterMemRatioFlag                       = "cache-filter-mem-ratio"
+	CacheFilterIDsMemRatioFlag                    = "cache-filter-ids-mem-ratio"
+	CacheFilterKeywordMemRatioFlag                = "cache-filter-keyword-mem-ratio"
+	CacheFilterStatusMemRatioFlag                 = "cache-filter-status-mem-ratio"
+	CacheFollowMemRatioFlag                       = "cache-follow-mem-ratio"
+	CacheFollowIDsMemRatioFlag                    = "cache-follow-ids-mem-ratio"
+	CacheFollowRequestMemRatioFlag                = "cache-follow-request-mem-ratio"
+	CacheFollowRequestIDsMemRatioFlag             = "cache-follow-request-ids-mem-ratio"
+	CacheFollowingTagIDsMemRatioFlag              = "cache-following-tag-ids-mem-ratio"
+	CacheHomeAccountIDsMemRatioFlag               = "cache-home-account-ids-mem-ratio"
+	CacheInReplyToIDsMemRatioFlag                 = "cache-in-reply-to-ids-mem-ratio"
+	CacheInstanceMemRatioFlag                     = "cache-instance-mem-ratio"
+	CacheInteractionRequestMemRatioFlag           = "cache-interaction-request-mem-ratio"
+	CacheListMemRatioFlag                         = "cache-list-mem-ratio"
+	CacheListIDsMemRatioFlag                      = "cache-list-ids-mem-ratio"
+	CacheListedIDsMemRatioFlag                    = "cache-listed-ids-mem-ratio"
+	CacheMarkerMemRatioFlag                       = "cache-marker-mem-ratio"
+	CacheMediaMemRatioFlag                        = "cache-media-mem-ratio"
+	CacheMentionMemRatioFlag                      = "cache-mention-mem-ratio"
+	CacheMoveMemRatioFlag                         = "cache-move-mem-ratio"
+	CacheNotificationMemRatioFlag                 = "cache-notification-mem-ratio"
+	CachePollMemRatioFlag                         = "cache-poll-mem-ratio"
+	CachePollVoteMemRatioFlag                     = "cache-poll-vote-mem-ratio"
+	CachePollVoteIDsMemRatioFlag                  = "cache-poll-vote-ids-mem-ratio"
+	CacheReportMemRatioFlag                       = "cache-report-mem-ratio"
+	CacheScheduledStatusMemRatioFlag              = "cache-scheduled-status-mem-ratio"
+	CacheSinBinStatusMemRatioFlag                 = "cache-sin-bin-status-mem-ratio"
+	CacheStatusMemRatioFlag                       = "cache-status-mem-ratio"
+	CacheStatusBookmarkMemRatioFlag               = "cache-status-bookmark-mem-ratio"
+	CacheStatusBookmarkIDsMemRatioFlag            = "cache-status-bookmark-ids-mem-ratio"
+	CacheStatusEditMemRatioFlag                   = "cache-status-edit-mem-ratio"
+	CacheStatusFaveMemRatioFlag                   = "cache-status-fave-mem-ratio"
+	CacheStatusFaveIDsMemRatioFlag                = "cache-status-fave-ids-mem-ratio"
+	CacheTagMemRatioFlag                          = "cache-tag-mem-ratio"
+	CacheThreadMuteMemRatioFlag                   = "cache-thread-mute-mem-ratio"
+	CacheTokenMemRatioFlag                        = "cache-token-mem-ratio"
+	CacheTombstoneMemRatioFlag                    = "cache-tombstone-mem-ratio"
+	CacheUserMemRatioFlag                         = "cache-user-mem-ratio"
+	CacheUserMuteMemRatioFlag                     = "cache-user-mute-mem-ratio"
+	CacheUserMuteIDsMemRatioFlag                  = "cache-user-mute-ids-mem-ratio"
+	CacheWebfingerMemRatioFlag                    = "cache-webfinger-mem-ratio"
+	CacheWebPushSubscriptionMemRatioFlag          = "cache-web-push-subscription-mem-ratio"
+	CacheWebPushSubscriptionIDsMemRatioFlag       = "cache-web-push-subscription-ids-mem-ratio"
+	CacheMutesMemRatioFlag                        = "cache-mutes-mem-ratio"
+	CacheStatusFilterMemRatioFlag                 = "cache-status-filter-mem-ratio"
+	CacheVisibilityMemRatioFlag                   = "cache-visibility-mem-ratio"
+	AdminAccountUsernameFlag                      = "username"
+	AdminAccountEmailFlag                         = "email"
+	AdminAccountPasswordFlag                      = "password"
+	AdminTransPathFlag                            = "path"
+	AdminMediaPruneDryRunFlag                     = "dry-run"
+	AdminMediaListLocalOnlyFlag                   = "local-only"
+	AdminMediaListRemoteOnlyFlag                  = "remote-only"
+	TestrigSkipDBSetupFlag                        = "skip-db-setup"
+	TestrigSkipDBTeardownFlag                     = "skip-db-teardown"
 )
 
 func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
@@ -355,7 +356,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Int("media-ffmpeg-pool-size", cfg.Media.FfmpegPoolSize, "Number of instances of the embedded ffmpeg WASM binary to add to the media processing pool. 0 or less uses GOMAXPROCS.")
 	flags.Int("media-thumb-max-pixels", cfg.Media.ThumbMaxPixels, "Max size in pixels of any one dimension of a thumbnail (as input media ratio is preserved).")
 	flags.Int("cache-s3-object-info", cfg.Cache.S3ObjectInfo, "Enables caching of S3 object information in the storage driver to reduce S3 calls, value is cache capacity.")
-	flags.String("cache-memory-target", cfg.Cache.MemoryTarget.String(), "Sets a target limit that the application will *try* to keep *most* of its caches within.")
+	flags.String("cache-memory-target", cfg.Cache.MemoryTarget.String(), "")
 	flags.Float64("cache-account-mem-ratio", cfg.Cache.AccountMemRatio, "")
 	flags.Float64("cache-account-note-mem-ratio", cfg.Cache.AccountNoteMemRatio, "")
 	flags.Float64("cache-account-settings-mem-ratio", cfg.Cache.AccountSettingsMemRatio, "")
@@ -367,8 +368,9 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Float64("cache-client-mem-ratio", cfg.Cache.ClientMemRatio, "")
 	flags.Float64("cache-conversation-mem-ratio", cfg.Cache.ConversationMemRatio, "")
 	flags.Float64("cache-conversation-last-status-ids-mem-ratio", cfg.Cache.ConversationLastStatusIDsMemRatio, "")
-	flags.Float64("cache-domain-permission-draft-mem-ratio", cfg.Cache.DomainPermissionDraftMemRation, "")
-	flags.Float64("cache-domain-permission-subscription-mem-ratio", cfg.Cache.DomainPermissionSubscriptionMemRation, "")
+	flags.Float64("cache-domain-permission-draft-mem-ratio", cfg.Cache.DomainPermissionDraftMemRatio, "")
+	flags.Float64("cache-domain-permission-limit-mem-ratio", cfg.Cache.DomainLimitMemRatio, "")
+	flags.Float64("cache-domain-permission-subscription-mem-ratio", cfg.Cache.DomainPermissionSubscriptionMemRatio, "")
 	flags.Float64("cache-emoji-mem-ratio", cfg.Cache.EmojiMemRatio, "")
 	flags.Float64("cache-emoji-category-mem-ratio", cfg.Cache.EmojiCategoryMemRatio, "")
 	flags.Float64("cache-filter-mem-ratio", cfg.Cache.FilterMemRatio, "")
@@ -420,7 +422,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 197)
+	cfgmap := make(map[string]any, 198)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-format"] = cfg.LogFormat
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
@@ -559,8 +561,9 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["cache-client-mem-ratio"] = cfg.Cache.ClientMemRatio
 	cfgmap["cache-conversation-mem-ratio"] = cfg.Cache.ConversationMemRatio
 	cfgmap["cache-conversation-last-status-ids-mem-ratio"] = cfg.Cache.ConversationLastStatusIDsMemRatio
-	cfgmap["cache-domain-permission-draft-mem-ratio"] = cfg.Cache.DomainPermissionDraftMemRation
-	cfgmap["cache-domain-permission-subscription-mem-ratio"] = cfg.Cache.DomainPermissionSubscriptionMemRation
+	cfgmap["cache-domain-permission-draft-mem-ratio"] = cfg.Cache.DomainPermissionDraftMemRatio
+	cfgmap["cache-domain-permission-limit-mem-ratio"] = cfg.Cache.DomainLimitMemRatio
+	cfgmap["cache-domain-permission-subscription-mem-ratio"] = cfg.Cache.DomainPermissionSubscriptionMemRatio
 	cfgmap["cache-emoji-mem-ratio"] = cfg.Cache.EmojiMemRatio
 	cfgmap["cache-emoji-category-mem-ratio"] = cfg.Cache.EmojiCategoryMemRatio
 	cfgmap["cache-filter-mem-ratio"] = cfg.Cache.FilterMemRatio
@@ -1767,15 +1770,23 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 
 	if ival, ok := cfgmap["cache-domain-permission-draft-mem-ratio"]; ok {
 		var err error
-		cfg.Cache.DomainPermissionDraftMemRation, err = cast.ToFloat64E(ival)
+		cfg.Cache.DomainPermissionDraftMemRatio, err = cast.ToFloat64E(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> float64 for 'cache-domain-permission-draft-mem-ratio': %w", ival, err)
 		}
 	}
 
+	if ival, ok := cfgmap["cache-domain-permission-limit-mem-ratio"]; ok {
+		var err error
+		cfg.Cache.DomainLimitMemRatio, err = cast.ToFloat64E(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> float64 for 'cache-domain-permission-limit-mem-ratio': %w", ival, err)
+		}
+	}
+
 	if ival, ok := cfgmap["cache-domain-permission-subscription-mem-ratio"]; ok {
 		var err error
-		cfg.Cache.DomainPermissionSubscriptionMemRation, err = cast.ToFloat64E(ival)
+		cfg.Cache.DomainPermissionSubscriptionMemRatio, err = cast.ToFloat64E(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> float64 for 'cache-domain-permission-subscription-mem-ratio': %w", ival, err)
 		}
@@ -5286,56 +5297,78 @@ func SetCacheConversationLastStatusIDsMemRatio(v float64) {
 	global.SetCacheConversationLastStatusIDsMemRatio(v)
 }
 
-// GetCacheDomainPermissionDraftMemRation safely fetches the Configuration value for state's 'Cache.DomainPermissionDraftMemRation' field
-func (st *ConfigState) GetCacheDomainPermissionDraftMemRation() (v float64) {
+// GetCacheDomainPermissionDraftMemRatio safely fetches the Configuration value for state's 'Cache.DomainPermissionDraftMemRatio' field
+func (st *ConfigState) GetCacheDomainPermissionDraftMemRatio() (v float64) {
 	st.mutex.RLock()
-	v = st.config.Cache.DomainPermissionDraftMemRation
+	v = st.config.Cache.DomainPermissionDraftMemRatio
 	st.mutex.RUnlock()
 	return
 }
 
-// SetCacheDomainPermissionDraftMemRation safely sets the Configuration value for state's 'Cache.DomainPermissionDraftMemRation' field
-func (st *ConfigState) SetCacheDomainPermissionDraftMemRation(v float64) {
+// SetCacheDomainPermissionDraftMemRatio safely sets the Configuration value for state's 'Cache.DomainPermissionDraftMemRatio' field
+func (st *ConfigState) SetCacheDomainPermissionDraftMemRatio(v float64) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.Cache.DomainPermissionDraftMemRation = v
+	st.config.Cache.DomainPermissionDraftMemRatio = v
 	st.reloadToViper()
 }
 
-// GetCacheDomainPermissionDraftMemRation safely fetches the value for global configuration 'Cache.DomainPermissionDraftMemRation' field
-func GetCacheDomainPermissionDraftMemRation() float64 {
-	return global.GetCacheDomainPermissionDraftMemRation()
+// GetCacheDomainPermissionDraftMemRatio safely fetches the value for global configuration 'Cache.DomainPermissionDraftMemRatio' field
+func GetCacheDomainPermissionDraftMemRatio() float64 {
+	return global.GetCacheDomainPermissionDraftMemRatio()
 }
 
-// SetCacheDomainPermissionDraftMemRation safely sets the value for global configuration 'Cache.DomainPermissionDraftMemRation' field
-func SetCacheDomainPermissionDraftMemRation(v float64) {
-	global.SetCacheDomainPermissionDraftMemRation(v)
+// SetCacheDomainPermissionDraftMemRatio safely sets the value for global configuration 'Cache.DomainPermissionDraftMemRatio' field
+func SetCacheDomainPermissionDraftMemRatio(v float64) {
+	global.SetCacheDomainPermissionDraftMemRatio(v)
 }
 
-// GetCacheDomainPermissionSubscriptionMemRation safely fetches the Configuration value for state's 'Cache.DomainPermissionSubscriptionMemRation' field
-func (st *ConfigState) GetCacheDomainPermissionSubscriptionMemRation() (v float64) {
+// GetCacheDomainLimitMemRatio safely fetches the Configuration value for state's 'Cache.DomainLimitMemRatio' field
+func (st *ConfigState) GetCacheDomainLimitMemRatio() (v float64) {
 	st.mutex.RLock()
-	v = st.config.Cache.DomainPermissionSubscriptionMemRation
+	v = st.config.Cache.DomainLimitMemRatio
 	st.mutex.RUnlock()
 	return
 }
 
-// SetCacheDomainPermissionSubscriptionMemRation safely sets the Configuration value for state's 'Cache.DomainPermissionSubscriptionMemRation' field
-func (st *ConfigState) SetCacheDomainPermissionSubscriptionMemRation(v float64) {
+// SetCacheDomainLimitMemRatio safely sets the Configuration value for state's 'Cache.DomainLimitMemRatio' field
+func (st *ConfigState) SetCacheDomainLimitMemRatio(v float64) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.Cache.DomainPermissionSubscriptionMemRation = v
+	st.config.Cache.DomainLimitMemRatio = v
 	st.reloadToViper()
 }
 
-// GetCacheDomainPermissionSubscriptionMemRation safely fetches the value for global configuration 'Cache.DomainPermissionSubscriptionMemRation' field
-func GetCacheDomainPermissionSubscriptionMemRation() float64 {
-	return global.GetCacheDomainPermissionSubscriptionMemRation()
+// GetCacheDomainLimitMemRatio safely fetches the value for global configuration 'Cache.DomainLimitMemRatio' field
+func GetCacheDomainLimitMemRatio() float64 { return global.GetCacheDomainLimitMemRatio() }
+
+// SetCacheDomainLimitMemRatio safely sets the value for global configuration 'Cache.DomainLimitMemRatio' field
+func SetCacheDomainLimitMemRatio(v float64) { global.SetCacheDomainLimitMemRatio(v) }
+
+// GetCacheDomainPermissionSubscriptionMemRatio safely fetches the Configuration value for state's 'Cache.DomainPermissionSubscriptionMemRatio' field
+func (st *ConfigState) GetCacheDomainPermissionSubscriptionMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.DomainPermissionSubscriptionMemRatio
+	st.mutex.RUnlock()
+	return
 }
 
-// SetCacheDomainPermissionSubscriptionMemRation safely sets the value for global configuration 'Cache.DomainPermissionSubscriptionMemRation' field
-func SetCacheDomainPermissionSubscriptionMemRation(v float64) {
-	global.SetCacheDomainPermissionSubscriptionMemRation(v)
+// SetCacheDomainPermissionSubscriptionMemRatio safely sets the Configuration value for state's 'Cache.DomainPermissionSubscriptionMemRatio' field
+func (st *ConfigState) SetCacheDomainPermissionSubscriptionMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.DomainPermissionSubscriptionMemRatio = v
+	st.reloadToViper()
+}
+
+// GetCacheDomainPermissionSubscriptionMemRatio safely fetches the value for global configuration 'Cache.DomainPermissionSubscriptionMemRatio' field
+func GetCacheDomainPermissionSubscriptionMemRatio() float64 {
+	return global.GetCacheDomainPermissionSubscriptionMemRatio()
+}
+
+// SetCacheDomainPermissionSubscriptionMemRatio safely sets the value for global configuration 'Cache.DomainPermissionSubscriptionMemRatio' field
+func SetCacheDomainPermissionSubscriptionMemRatio(v float64) {
+	global.SetCacheDomainPermissionSubscriptionMemRatio(v)
 }
 
 // GetCacheEmojiMemRatio safely fetches the Configuration value for state's 'Cache.EmojiMemRatio' field
@@ -6612,8 +6645,9 @@ func (st *ConfigState) GetTotalOfMemRatios() (total float64) {
 	total += st.config.Cache.ClientMemRatio
 	total += st.config.Cache.ConversationMemRatio
 	total += st.config.Cache.ConversationLastStatusIDsMemRatio
-	total += st.config.Cache.DomainPermissionDraftMemRation
-	total += st.config.Cache.DomainPermissionSubscriptionMemRation
+	total += st.config.Cache.DomainPermissionDraftMemRatio
+	total += st.config.Cache.DomainLimitMemRatio
+	total += st.config.Cache.DomainPermissionSubscriptionMemRatio
 	total += st.config.Cache.EmojiMemRatio
 	total += st.config.Cache.EmojiCategoryMemRatio
 	total += st.config.Cache.FilterMemRatio
@@ -7110,6 +7144,17 @@ func flattenConfigMap(cfgmap map[string]any) {
 		ival, ok := mapGet(cfgmap, key...)
 		if ok {
 			cfgmap["cache-domain-permission-draft-mem-ratio"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"cache", "domain-permission-limit-mem-ratio"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["cache-domain-permission-limit-mem-ratio"] = ival
 			nestedKeys[key[0]] = struct{}{}
 			break
 		}

@@ -64,6 +64,12 @@ type DBCaches struct {
 	// DomainBlock provides access to the domain block database cache.
 	DomainBlock *domain.Cache
 
+	// DomainLimited provides access to the domain limits matching trie cache.
+	DomainLimited *domain.Cache
+
+	// DomainLimit provides access to the domain limit database cache.
+	DomainLimit StructCache[*gtsmodel.DomainLimit]
+
 	// DomainPermissionDraft provides access to the domain permission draft database cache.
 	DomainPermissionDraft StructCache[*gtsmodel.DomainPermissionDraft]
 
@@ -547,11 +553,46 @@ func (c *Caches) initDomainBlock() {
 	c.DB.DomainBlock = new(domain.Cache)
 }
 
+func (c *Caches) initDomainLimit() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofDomainLimit(), // model in-mem size.
+		config.GetCacheDomainLimitMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(d1 *gtsmodel.DomainLimit) *gtsmodel.DomainLimit {
+		d2 := new(gtsmodel.DomainLimit)
+		*d2 = *d1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		d2.CreatedByAccount = nil
+
+		return d2
+	}
+
+	c.DB.DomainLimit.Init(structr.CacheConfig[*gtsmodel.DomainLimit]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "Domain"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initDomainLimited() {
+	c.DB.DomainLimited = new(domain.Cache)
+}
+
 func (c *Caches) initDomainPermissionDraft() {
 	// Calculate maximum cache size.
 	cap := calculateResultCacheMax(
 		sizeofDomainPermissionDraft(), // model in-mem size.
-		config.GetCacheDomainPermissionDraftMemRation(),
+		config.GetCacheDomainPermissionDraftMemRatio(),
 	)
 
 	log.Infof(nil, "cache size = %d", cap)
@@ -583,7 +624,7 @@ func (c *Caches) initDomainPermissionSubscription() {
 	// Calculate maximum cache size.
 	cap := calculateResultCacheMax(
 		sizeofDomainPermissionSubscription(), // model in-mem size.
-		config.GetCacheDomainPermissionSubscriptionMemRation(),
+		config.GetCacheDomainPermissionSubscriptionMemRatio(),
 	)
 
 	log.Infof(nil, "cache size = %d", cap)

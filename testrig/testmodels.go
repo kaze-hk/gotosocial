@@ -1969,6 +1969,23 @@ func NewTestDomainBlocks() map[string]*gtsmodel.DomainBlock {
 	}
 }
 
+func NewTestDomainLimits() map[string]*gtsmodel.DomainLimit {
+	return map[string]*gtsmodel.DomainLimit{
+		"fossbros-anonymous.io": {
+			ID:                 "01K8TE4ES467FGYGRKVPDM6RF6",
+			Domain:             "fossbros-anonymous.io",
+			CreatedByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
+			PrivateComment:     "they're actually really annoying I just wanna be coy about it",
+			PublicComment:      "they're kind of annoying",
+			MediaPolicy:        gtsmodel.MediaPolicyMarkSensitive,
+			FollowsPolicy:      gtsmodel.FollowsPolicyRejectNonMutual,
+			StatusesPolicy:     gtsmodel.StatusesPolicyFilterWarn,
+			AccountsPolicy:     gtsmodel.AccountsPolicyMute,
+			ContentWarning:     "potentially annoying post ahead",
+		},
+	}
+}
+
 type filenames struct {
 	Original string
 	Small    string

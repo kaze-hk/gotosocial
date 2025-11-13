@@ -295,6 +295,19 @@ func sizeofDomainPermissionDraft() uintptr {
 	}))
 }
 
+func sizeofDomainLimit() uintptr {
+	return uintptr(size.Of(&gtsmodel.DomainLimit{
+		ID:                 exampleID,
+		Domain:             "example.org",
+		CreatedByAccountID: exampleID,
+		PrivateComment:     exampleTextSmall,
+		PublicComment:      exampleTextSmall,
+		MediaPolicy:        gtsmodel.MediaPolicyNoAction,
+		FollowsPolicy:      gtsmodel.FollowsPolicyNoAction,
+		ContentWarning:     exampleTextSmall,
+	}))
+}
+
 func sizeofDomainPermissionSubscription() uintptr {
 	return uintptr(size.Of(&gtsmodel.DomainPermissionSubscription{
 		ID:                    exampleID,

@@ -34,6 +34,7 @@ const (
 	scopeCustomEmojis  = "custom_emojis"
 	scopeDomainAllows  = "domain_allows"
 	scopeDomainBlocks  = "domain_blocks"
+	scopeDomainLimits  = "domain_limits"
 	scopeFavourites    = "favourites"
 	scopeFilters       = "filters"
 	scopeFollows       = "follows"
@@ -92,6 +93,8 @@ const (
 	ScopeAdminWriteDomainAllows Scope = ScopeAdminWrite + ":" + scopeDomainAllows
 	ScopeAdminReadDomainBlocks  Scope = ScopeAdminRead + ":" + scopeDomainBlocks
 	ScopeAdminWriteDomainBlocks Scope = ScopeAdminWrite + ":" + scopeDomainBlocks
+	ScopeAdminReadDomainLimits  Scope = ScopeAdminRead + ":" + scopeDomainLimits
+	ScopeAdminWriteDomainLimits Scope = ScopeAdminWrite + ":" + scopeDomainLimits
 	ScopeAdminReadReports       Scope = ScopeAdminRead + ":" + scopeReports
 	ScopeAdminWriteReports      Scope = ScopeAdminWrite + ":" + scopeReports
 )

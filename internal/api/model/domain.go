@@ -74,6 +74,148 @@ type DomainPermission struct {
 	PermissionType string `json:"permission_type,omitempty"`
 }
 
+// DomainLimit represents a limit applied to one domain.
+//
+// swagger:model domainLimit
+type DomainLimit struct {
+
+	// The ID of the domain limit.
+	// example: 01FBW21XJA09XYX51KV5JVBW0F
+	ID string `json:"id"`
+
+	// The hostname of the domain.
+	// example: example.org
+	Domain string `json:"domain"`
+
+	// Policy to apply to media files originating from the limited domain.
+	// Enum:
+	//	- no_action
+	//	- mark_sensitive
+	//	- reject
+	MediaPolicy MediaPolicy `json:"media_policy"`
+
+	// Policy to apply to follow (requests) originating from the limited domain.
+	// Enum:
+	//	- no_action
+	//	- manual_approval
+	//	- reject_non_mutual
+	//	- reject_all
+	FollowsPolicy FollowsPolicy `json:"follows_policy"`
+
+	// Policy to apply to statuses of non-followed accounts on the limited domain.
+	// Enum:
+	//	- no_action
+	//	- filter_warn
+	//	- filter_hide
+	StatusesPolicy StatusesPolicy `json:"statuses_policy"`
+
+	// Policy to apply to non-followed accounts on the limited domain.
+	// Enum:
+	//	- no_action
+	//	- mute
+	AccountsPolicy AccountsPolicy `json:"accounts_policy"`
+
+	// Content warning to prepend to statuses originating from the limited domain.
+	// Omitted if not set.
+	// example: maybe nsfw
+	ContentWarning string `json:"content_warning,omitempty"`
+
+	// (Optionally) publicly stated reason for limiting the domain.
+	// Omitted if not set.
+	// example: they smell
+	PublicComment *string `json:"public_comment,omitempty"`
+
+	// Privately stated reason for limiting the domain.
+	// Omitted if not set.
+	// example: they smell
+	PrivateComment *string `json:"private_comment,omitempty"`
+
+	// ID of the account that created this domain limit.
+	// example: 01FBW2758ZB6PBR200YPDDJK4C
+	CreatedBy string `json:"created_by"`
+
+	// Time at which the domain limit was created (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
+	CreatedAt string `json:"created_at"`
+}
+
+// Policy to apply to media files
+// originating from the limited domain.
+type MediaPolicy string
+
+const (
+	MediaPolicyNoAction      MediaPolicy = "no_action"
+	MediaPolicyMarkSensitive MediaPolicy = "mark_sensitive"
+	MediaPolicyReject        MediaPolicy = "reject"
+)
+
+// Policy to apply to follow (requests)
+// originating from the limited domain.
+type FollowsPolicy string
+
+const (
+	FollowsPolicyNoAction        FollowsPolicy = "no_action"
+	FollowsPolicyManualApproval  FollowsPolicy = "manual_approval"
+	FollowsPolicyRejectNonMutual FollowsPolicy = "reject_non_mutual"
+	FollowsPolicyRejectAll       FollowsPolicy = "reject_all"
+)
+
+// Policy to apply to statuses from
+// non-followed accounts on the limited domain.
+type StatusesPolicy string
+
+const (
+	StatusesPolicyNoAction   StatusesPolicy = "no_action"
+	StatusesPolicyFilterWarn StatusesPolicy = "filter_warn"
+	StatusesPolicyFilterHide StatusesPolicy = "filter_hide"
+)
+
+// Policy to apply to non-followed
+// accounts on the limited domain.
+type AccountsPolicy string
+
+const (
+	AccountsPolicyNoAction AccountsPolicy = "no_action"
+	AccountsPolicyMute     AccountsPolicy = "mute"
+)
+
+// DomainLimitRequest is the form submitted as a POST
+// or PUT to create or update a domain limit entry.
+//
+// swagger:ignore
+type DomainLimitRequest struct {
+	// The hostname of the domain.
+	Domain string `json:"domain" form:"domain"`
+
+	// Policy to apply to media files
+	// originating from the limited domain.
+	MediaPolicy *MediaPolicy `json:"media_policy" form:"media_policy"`
+
+	// Policy to apply to follow (requests)
+	// originating from the limited domain.
+	FollowsPolicy *FollowsPolicy `json:"follows_policy" form:"follows_policy"`
+
+	// Policy to apply to statuses of
+	// non-followed accounts on the limited domain.
+	StatusesPolicy *StatusesPolicy `json:"statuses_policy" form:"statuses_policy"`
+
+	// Policy to apply to non-followed
+	// accounts on the limited domain.
+	AccountsPolicy *AccountsPolicy `json:"accounts_policy" form:"accounts_policy"`
+
+	// Content warning to prepend to statuses
+	// originating from the limited domain.
+	ContentWarning *string `json:"content_warning" form:"content_warning"`
+
+	// (Optionally) publicly stated
+	// reason for limiting the domain.
+	PublicComment *string `json:"public_comment" form:"public_comment"`
+
+	// Privately stated reason
+	// for limiting the domain.
+	PrivateComment *string `json:"private_comment" form:"private_comment"`
+}
+
 // DomainPermissionRequest is the form submitted as a POST to create a new domain permission entry (allow/block).
 //
 // swagger:ignore

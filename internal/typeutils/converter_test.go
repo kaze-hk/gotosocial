@@ -487,6 +487,7 @@ type TypeUtilsTestSuite struct {
 	testFilterKeywords      map[string]*gtsmodel.FilterKeyword
 	testFilterStatues       map[string]*gtsmodel.FilterStatus
 	testInteractionRequests map[string]*gtsmodel.InteractionRequest
+	testDomainLimits        map[string]*gtsmodel.DomainLimit
 
 	typeconverter *typeutils.Converter
 }
@@ -515,6 +516,7 @@ func (suite *TypeUtilsTestSuite) SetupTest() {
 	suite.testFilterKeywords = testrig.NewTestFilterKeywords()
 	suite.testFilterStatues = testrig.NewTestFilterStatuses()
 	suite.testInteractionRequests = testrig.NewTestInteractionRequests()
+	suite.testDomainLimits = testrig.NewTestDomainLimits()
 	suite.typeconverter = typeutils.NewConverter(&suite.state)
 
 	testrig.StandardDBSetup(suite.db, nil)

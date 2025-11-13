@@ -37,6 +37,7 @@ EXPECT=$(cat << "EOF"
     "cache-conversation-last-status-ids-mem-ratio": 2,
     "cache-conversation-mem-ratio": 1,
     "cache-domain-permission-draft-mem-ratio": 0.5,
+    "cache-domain-permission-limit-mem-ratio": 0.5,
     "cache-domain-permission-subscription-mem-ratio": 0.5,
     "cache-emoji-category-mem-ratio": 0.1,
     "cache-emoji-mem-ratio": 3,

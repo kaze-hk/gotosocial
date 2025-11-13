@@ -1,7 +1,19 @@
 basePath: /
 definitions:
+    AccountsPolicy:
+        description: |-
+            Policy to apply to non-followed
+            accounts on the limited domain.
+        type: string
+        x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     FilterAction:
         title: FilterAction is the action to apply to statuses matching a filter.
+        type: string
+        x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
+    FollowsPolicy:
+        description: |-
+            Policy to apply to follow (requests)
+            originating from the limited domain.
         type: string
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     InstanceConfigurationEmojis:
@@ -32,6 +44,12 @@ definitions:
                 x-go-name: Type
         title: Link represents one 'link' in a slice of links returned from a lookup request.
         type: object
+        x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
+    MediaPolicy:
+        description: |-
+            Policy to apply to media files
+            originating from the limited domain.
+        type: string
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     Mention:
         properties:
@@ -259,6 +277,12 @@ definitions:
                 x-go-name: WebVisibility
         title: Source represents display or publishing preferences of user's own account.
         type: object
+        x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
+    StatusesPolicy:
+        description: |-
+            Policy to apply to statuses from
+            non-followed accounts on the limited domain.
+        type: string
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     TimelineMarker:
         properties:
@@ -1200,6 +1224,61 @@ definitions:
                 x-go-name: SuspendedAt
         type: object
         x-go-name: Domain
+        x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
+    domainLimit:
+        properties:
+            accounts_policy:
+                $ref: '#/definitions/AccountsPolicy'
+            content_warning:
+                description: |-
+                    Content warning to prepend to statuses originating from the limited domain.
+                    Omitted if not set.
+                example: maybe nsfw
+                type: string
+                x-go-name: ContentWarning
+            created_at:
+                description: Time at which the domain limit was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            created_by:
+                description: ID of the account that created this domain limit.
+                example: 01FBW2758ZB6PBR200YPDDJK4C
+                type: string
+                x-go-name: CreatedBy
+            domain:
+                description: The hostname of the domain.
+                example: example.org
+                type: string
+                x-go-name: Domain
+            follows_policy:
+                $ref: '#/definitions/FollowsPolicy'
+            id:
+                description: The ID of the domain limit.
+                example: 01FBW21XJA09XYX51KV5JVBW0F
+                type: string
+                x-go-name: ID
+            media_policy:
+                $ref: '#/definitions/MediaPolicy'
+            private_comment:
+                description: |-
+                    Privately stated reason for limiting the domain.
+                    Omitted if not set.
+                example: they smell
+                type: string
+                x-go-name: PrivateComment
+            public_comment:
+                description: |-
+                    (Optionally) publicly stated reason for limiting the domain.
+                    Omitted if not set.
+                example: they smell
+                type: string
+                x-go-name: PublicComment
+            statuses_policy:
+                $ref: '#/definitions/StatusesPolicy'
+        title: DomainLimit represents a limit applied to one domain.
+        type: object
+        x-go-name: DomainLimit
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     domainPermission:
         properties:
@@ -3869,14 +3948,16 @@ info:
         admin:read: grants admin read access to everything
         admin:read:accounts: grants admin read access to accounts
         admin:read:custom_emojis: grants admin read access to custom emojis
-        admin:read:domain_allows: grants admin read access to domain_allows
-        admin:read:domain_blocks: grants admin read access to domain_blocks
+        admin:read:domain_allows: grants admin read access to domain allows
+        admin:read:domain_blocks: grants admin read access to domain blocks
+        admin:read:domain_limits: grants admin read access to domain limits
         admin:read:reports: grants admin read access to reports
         admin:write: grants admin write access to everything
         admin:write:accounts: grants write read access to accounts
         admin:write:custom_emojis: grants admin write access to custom emojis
-        admin:write:domain_allows: grants admin write access to domain_allows
-        admin:write:domain_blocks: grants write read access to domain_blocks
+        admin:write:domain_allows: grants admin write access to domain allows
+        admin:write:domain_blocks: grants admin write access to domain blocks
+        admin:write:domain_limits: grants admin write access to domain limits
         admin:write:reports: grants admin write access to reports
         profile: grants read access to verify_credentials
         push: grants read/write access to push
@@ -6888,6 +6969,309 @@ paths:
                 - OAuth2 Bearer:
                     - admin:write
             summary: Force expiry of cached public keys for all accounts on the given domain stored in your database.
+            tags:
+                - admin
+    /api/v1/admin/domain_limits:
+        get:
+            description: |-
+                By default, items will be returned in alphabetical order by domain.
+
+                Paging is optional for this endpoint. To page, use the `limit`, `max_id` and/or `min_id` params. Else, all items will be returned.
+
+                If paging, the next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/domain_limits?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_limits?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+
+                If paging, items will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+            operationId: domainLimitsGet
+            parameters:
+                - description: Return only items *OLDER* than the given max ID (for paging downwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *NEWER* than the given since ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only items immediately *NEWER* than the given min ID (for paging upwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of items to return. Use 0 to return all (no paging).
+                  in: query
+                  maximum: 100
+                  minimum: 0
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain limits.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries. Omitted if empty page or not paging.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainLimit'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin:read:domain_limits
+            summary: View domain limits currently in place.
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainLimitCreate
+            parameters:
+                - description: Hostname of the domain to limit.
+                  in: formData
+                  name: domain
+                  required: true
+                  type: string
+                - default: no_action
+                  description: |-
+                    Policy to apply to media files originating from the limited domain.
+                    No action = default (not limited).
+                    Mark sensitive = mark all media from the limited domain as sensitive.
+                    Reject = do not download media from the limited domain. Serve a link to the media instead.
+                  enum:
+                    - no_action
+                    - mark_sensitive
+                    - reject
+                  in: formData
+                  name: media_policy
+                  type: string
+                - default: no_action
+                  description: |-
+                    Policy to apply to follow (requests) originating from the limited domain.
+                    No action = default (not limited).
+                    Manual approval = require manual approval for all follows from limited domain.
+                    Reject non mutual = automatically reject follows from the limited domain when they're not follow-backs.
+                    Reject all = automatically reject all follows from the limited domain.
+                  enum:
+                    - no_action
+                    - manual_approval
+                    - reject_non_mutual
+                    - reject_all
+                  in: formData
+                  name: follows_policy
+                  type: string
+                - default: no_action
+                  description: |-
+                    Policy to apply to statuses of non-followed accounts on the limited domain.
+                    No action = default (not limited).
+                    Filter warn = trigger a warn filter pointing to this domain limit.
+                    Filter hide = trigger a hide filter pointing to this domain limit.
+                  enum:
+                    - no_action
+                    - filter_warn
+                    - filter_hide
+                  in: formData
+                  name: statuses_policy
+                  type: string
+                - default: no_action
+                  description: |-
+                    Policy to apply to non-followed accounts on the limited domain.
+                    No action = default (not limited).
+                    Mute = mute all non-followed accounts on the limited domain.
+                  enum:
+                    - no_action
+                    - mute
+                  in: formData
+                  name: accounts_policy
+                  type: string
+                - description: Content warning to prepend to posts from accounts on this instance.
+                  in: formData
+                  name: content_warning
+                  type: string
+                - description: Public comment about this domain limit. This will be displayed alongside the domain limit if you choose to share limits.
+                  in: formData
+                  name: public_comment
+                  type: string
+                - description: Private comment about this domain limit. Will only be shown to other admins, so this is a useful way of internally keeping track of why a certain domain ended up limited.
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain limit.
+                    schema:
+                        $ref: '#/definitions/domainLimit'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "409":
+                    description: There is already a limit in place for this domain.
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin:write:domain_limits
+            summary: Create a domain limit.
+            tags:
+                - admin
+    /api/v1/admin/domain_limits/{id}:
+        delete:
+            operationId: domainLimitDelete
+            parameters:
+                - description: The id of the domain limit.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The domain limit that was just deleted.
+                    schema:
+                        $ref: '#/definitions/domainLimit'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin:write:domain_limits
+            summary: Delete domain limit with the given ID.
+            tags:
+                - admin
+        put:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainLimitUpdate
+            parameters:
+                - description: The id of the domain limit.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: |-
+                    Policy to apply to media files originating from the limited domain.
+                    No action = default (not limited).
+                    Mark sensitive = mark all media from the limited domain as sensitive.
+                    Reject = do not download media from the limited domain. Serve a link to the media instead.
+                    Omit to keep current value.
+                  enum:
+                    - no_action
+                    - mark_sensitive
+                    - reject
+                  in: formData
+                  name: media_policy
+                  type: string
+                - description: |-
+                    Policy to apply to follow (requests) originating from the limited domain.
+                    No action = default (not limited).
+                    Manual approval = require manual approval for all follows from limited domain.
+                    Reject non mutual = automatically reject follows from the limited domain when they're not follow-backs.
+                    Reject all = automatically reject all follows from the limited domain.
+                    Omit to keep current value.
+                  enum:
+                    - no_action
+                    - manual_approval
+                    - reject_non_mutual
+                    - reject_all
+                  in: formData
+                  name: follows_policy
+                  type: string
+                - description: |-
+                    Policy to apply to statuses of non-followed accounts on the limited domain.
+                    No action = default (not limited).
+                    Filter warn = trigger a warn filter pointing to this domain limit.
+                    Filter hide = trigger a hide filter pointing to this domain limit.
+                    Omit to keep current value.
+                  enum:
+                    - no_action
+                    - filter_warn
+                    - filter_hide
+                  in: formData
+                  name: statuses_policy
+                  type: string
+                - default: no_action
+                  description: |-
+                    Policy to apply to non-followed accounts on the limited domain.
+                    No action = default (not limited).
+                    Mute = mute all non-followed accounts on the limited domain.
+                    Omit to keep current value.
+                  enum:
+                    - no_action
+                    - mute
+                  in: formData
+                  name: accounts_policy
+                  type: string
+                - description: Content warning to prepend to posts from accounts on this instance. Omit to keep current value.
+                  in: formData
+                  name: content_warning
+                  type: string
+                - description: Public comment about this domain limit. This will be displayed alongside the domain limit if you choose to share limits. Omit to keep current value.
+                  in: formData
+                  name: public_comment
+                  type: string
+                - description: Private comment about this domain limit. Will only be shown to other admins, so this is a useful way of internally keeping track of why a certain domain ended up limited. Omit to keep current value.
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The updated domain limit.
+                    schema:
+                        $ref: '#/definitions/domainLimit'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin:write:domain_limits
+            summary: Update a domain limit.
             tags:
                 - admin
     /api/v1/admin/domain_permission_drafts:
@@ -16240,12 +16624,14 @@ securityDefinitions:
             admin:read:custom_emojis: grants admin read access to custom emojis
             admin:read:domain_allows: grants admin read access to domain allows
             admin:read:domain_blocks: grants admin read access to domain blocks
+            admin:read:domain_limits: grants admin read access to domain limits
             admin:read:reports: grants admin read access to reports
             admin:write: grants admin write access to everything
             admin:write:accounts: grants write read access to accounts
             admin:write:custom_emojis: grants admin write access to custom emojis
             admin:write:domain_allows: grants admin write access to domain allows
-            admin:write:domain_blocks: grants write read access to domain blocks
+            admin:write:domain_blocks: grants admin write access to domain blocks
+            admin:write:domain_limits: grants admin write access to domain limits
             admin:write:reports: grants admin write access to reports
             profile: grants read access to verify_credentials
             push: grants read/write access to push
