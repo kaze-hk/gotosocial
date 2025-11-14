@@ -55,6 +55,11 @@ import (
 //		description: Account should be made discoverable and shown in the profile directory (if enabled).
 //		type: boolean
 //	-
+//		name: indexable
+//		in: formData
+//		description: Account's posts should be made indexable by full-text search features (if enabled).
+//		type: boolean
+//	-
 //		name: bot
 //		in: formData
 //		description: Account is flagged as a bot.
@@ -352,6 +357,7 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 
 	if form == nil ||
 		(form.Discoverable == nil &&
+			form.Indexable == nil &&
 			form.Bot == nil &&
 			form.DisplayName == nil &&
 			form.Note == nil &&

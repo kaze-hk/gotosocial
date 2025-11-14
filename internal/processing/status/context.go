@@ -340,7 +340,8 @@ func (p *Processor) WebContextGet(
 
 	// Start preparing web context.
 	wCtx := &apimodel.WebThreadContext{
-		Statuses: make([]*apimodel.WebStatus, 0, len(wholeThread)),
+		Statuses:  make([]*apimodel.WebStatus, 0, len(wholeThread)),
+		Indexable: true,
 	}
 
 	var (
@@ -497,6 +498,12 @@ func (p *Processor) WebContextGet(
 			// thread context status.
 			webStatus.ThreadContextStatus = true
 			wCtx.Status = webStatus
+		}
+
+		// If this status isn't indexable, mark the thread as not indexable.
+		// webStatus.Account from StatusToWebStatus() should always be non-nil.
+		if !webStatus.Account.Indexable {
+			wCtx.Indexable = false
 		}
 
 		wCtx.Statuses = append(wCtx.Statuses, webStatus)

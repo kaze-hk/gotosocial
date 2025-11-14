@@ -102,6 +102,8 @@ func (suite *StatusHistoryTestSuite) TestGetHistory() {
       "display_name": "original zork (he/they)",
       "locked": false,
       "discoverable": true,
+      "indexable": true,
+      "noindex": false,
       "bot": false,
       "created_at": "2022-05-20T11:09:18.000Z",
       "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",

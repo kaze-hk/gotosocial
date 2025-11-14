@@ -79,6 +79,7 @@ func (suite *ASToInternalTestSuite) TestParsePerson() {
 	suite.Equal("hey I'm a new person, your instance hasn't seen me yet uwu", acct.Note)
 	suite.Equal("https://unknown-instance.com/@brand_new_person", acct.URL)
 	suite.True(*acct.Discoverable)
+	suite.True(*acct.Indexable)
 	suite.Equal("https://unknown-instance.com/users/brand_new_person#main-key", acct.PublicKeyURI)
 	suite.False(*acct.Locked)
 }
@@ -101,6 +102,7 @@ func (suite *ASToInternalTestSuite) TestParsePersonWithSharedInbox() {
 	suite.Equal("I just think they're neat", acct.Note)
 	suite.Equal("https://turnip.farm/@turniplover6969", acct.URL)
 	suite.True(*acct.Discoverable)
+	suite.True(*acct.Indexable)
 	suite.Equal("https://turnip.farm/users/turniplover6969#main-key", acct.PublicKeyURI)
 	suite.False(*acct.Locked)
 }
@@ -149,6 +151,7 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 	suite.Equal("https://mastodon.social/inbox", *acct.SharedInboxURI)
 	suite.Equal([]string{"https://tooting.ai/users/Gargron"}, acct.AlsoKnownAsURIs)
 	suite.Equal(int64(1458086400), acct.CreatedAt.Unix())
+	suite.True(*acct.Indexable)
 }
 
 func (suite *ASToInternalTestSuite) TestParseReplyWithMention() {
@@ -206,6 +209,7 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 	suite.Equal("linux audio stuff", acct.Note)
 	suite.False(*acct.Locked)
 	suite.True(*acct.Discoverable)
+	suite.False(*acct.Indexable)
 	suite.Equal("https://owncast.example.org/federation/user/rgh", acct.URI)
 	suite.Equal("https://owncast.example.org/federation/user/rgh", acct.URL)
 	suite.Equal("https://owncast.example.org/federation/user/rgh/inbox", acct.InboxURI)
@@ -615,6 +619,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("honk.example.org", acct.Domain)
 	suite.False(*acct.Locked)
 	suite.False(*acct.Discoverable)
+	suite.False(*acct.Indexable)
 
 	// Store the account representation.
 	acct.ID = "01HMGRMAVQMYQC3DDQ29TPQKJ3" // <- needs an ID
@@ -634,6 +639,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("honk.example.org", acct.Domain)
 	suite.False(*acct.Locked)
 	suite.False(*acct.Discoverable)
+	suite.False(*acct.Indexable)
 
 	// Check DB version.
 	dbAcct, err := suite.db.GetAccountByID(ctx, acct.ID)
@@ -651,6 +657,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("honk.example.org", dbAcct.Domain)
 	suite.False(*dbAcct.Locked)
 	suite.False(*dbAcct.Discoverable)
+	suite.False(*dbAcct.Indexable)
 
 	// Update the account.
 	if err := suite.db.UpdateAccount(ctx, acct); err != nil {
@@ -668,6 +675,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("honk.example.org", acct.Domain)
 	suite.False(*acct.Locked)
 	suite.False(*acct.Discoverable)
+	suite.False(*acct.Indexable)
 
 	// Check DB version.
 	dbAcct, err = suite.db.GetAccountByID(ctx, acct.ID)
@@ -685,6 +693,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("honk.example.org", dbAcct.Domain)
 	suite.False(*dbAcct.Locked)
 	suite.False(*dbAcct.Discoverable)
+	suite.False(*dbAcct.Indexable)
 
 	// Clear caches.
 	suite.state.Caches.DB = cache.DBCaches{}
@@ -705,6 +714,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("honk.example.org", dbAcct.Domain)
 	suite.False(*dbAcct.Locked)
 	suite.False(*dbAcct.Discoverable)
+	suite.False(*dbAcct.Indexable)
 }
 
 func (suite *ASToInternalTestSuite) TestParseAccountableWithoutPreferredUsername() {

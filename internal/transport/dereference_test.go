@@ -43,8 +43,8 @@ func (suite *DereferenceTestSuite) TestDerefLocalUser() {
 	defer resp.Body.Close()
 
 	suite.Equal(http.StatusOK, resp.StatusCode)
-	suite.EqualValues(2109, resp.ContentLength)
-	suite.Equal("2109", resp.Header.Get("Content-Length"))
+	suite.EqualValues(2155, resp.ContentLength)
+	suite.Equal("2155", resp.Header.Get("Content-Length"))
 	suite.Equal(apiutil.AppActivityLDJSON, resp.Header.Get("Content-Type"))
 
 	b, err := io.ReadAll(resp.Body)
@@ -68,6 +68,7 @@ func (suite *DereferenceTestSuite) TestDerefLocalUser() {
         "@id": "toot:featured",
         "@type": "@id"
       },
+      "indexable": "toot:indexable",
       "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
       "toot": "http://joinmastodon.org/ns#"
     }
@@ -92,6 +93,7 @@ func (suite *DereferenceTestSuite) TestDerefLocalUser() {
     "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg"
   },
   "inbox": "http://localhost:8080/users/the_mighty_zork/inbox",
+  "indexable": true,
   "manuallyApprovesFollowers": false,
   "name": "original zork (he/they)",
   "outbox": "http://localhost:8080/users/the_mighty_zork/outbox",

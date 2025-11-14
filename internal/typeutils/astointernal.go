@@ -162,6 +162,10 @@ func (c *Converter) ASRepresentationToAccount(
 	discoverable := ap.GetDiscoverable(accountable)
 	acct.Discoverable = &discoverable
 
+	// Extract account indexability (default = false).
+	indexable := ap.GetIndexable(accountable)
+	acct.Indexable = &indexable
+
 	// Extract the URL property.
 	urls := ap.GetURL(accountable)
 	if len(urls) == 0 {

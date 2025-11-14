@@ -118,10 +118,11 @@ func (m *Module) prepareProfile(c *gin.Context) *profile {
 		rssFeed = "/@" + account.Username + "/feed.rss"
 	}
 
-	// Only allow search robots
-	// if account is discoverable.
+	// Since we serve the profile and posts together,
+	// only allow search robots
+	// if account is discoverable *and* indexable.
 	var robotsMeta string
-	if account.Discoverable {
+	if account.Discoverable && account.Indexable {
 		robotsMeta = apiutil.RobotsDirectivesAllowSome
 	}
 

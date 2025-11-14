@@ -371,6 +371,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	var (
 		locked       = util.PtrOrValue(a.Locked, true)
 		discoverable = util.PtrOrValue(a.Discoverable, false)
+		indexable    = util.PtrOrValue(a.Indexable, false)
 	)
 
 	// Remaining properties are simple and
@@ -383,6 +384,8 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		DisplayName:       a.DisplayName,
 		Locked:            locked,
 		Discoverable:      discoverable,
+		Indexable:         indexable,
+		NoIndex:           !indexable,
 		Bot:               a.ActorType.IsBot(),
 		CreatedAt:         util.FormatISO8601(a.CreatedAt),
 		Note:              a.Note,
@@ -527,6 +530,7 @@ func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		ID:        a.ID,
 		Username:  a.Username,
 		Acct:      acct,
+		NoIndex:   true,
 		Bot:       a.ActorType.IsBot(),
 		CreatedAt: util.FormatISO8601(a.CreatedAt),
 		URL:       a.URL,

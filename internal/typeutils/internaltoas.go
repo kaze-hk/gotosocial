@@ -198,6 +198,12 @@ func (c *Converter) AccountToAS(
 	discoverableProp.Set(*a.Discoverable)
 	accountable.SetTootDiscoverable(discoverableProp)
 
+	// indexable
+	// Account has opted its posts into full-text search features.
+	indexableProp := streams.NewTootIndexableProperty()
+	indexableProp.Set(*a.Indexable)
+	accountable.SetTootIndexable(indexableProp)
+
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
 

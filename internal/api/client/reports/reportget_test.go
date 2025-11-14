@@ -119,6 +119,8 @@ func (suite *ReportGetTestSuite) TestGetReport1() {
     "display_name": "big gerald",
     "locked": false,
     "discoverable": true,
+    "indexable": true,
+    "noindex": false,
     "bot": false,
     "created_at": "2021-09-26T10:52:36.000Z",
     "note": "i post about like, i dunno, stuff, or whatever!!!!",

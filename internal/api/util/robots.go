@@ -24,7 +24,7 @@ package util
 //   - https://www.rfc-editor.org/rfc/rfc9309.html
 const (
 	RobotsDirectivesDisallow  = "noindex, nofollow"
-	RobotsDirectivesAllowSome = "nofollow, noarchive, nositelinkssearchbox, max-image-preview:standard"
+	RobotsDirectivesAllowSome = "noarchive, nositelinkssearchbox, max-image-preview:standard"
 	RobotsTxt                 = `# GoToSocial robots.txt -- to edit, see internal/api/util/robots.go
 # More info @ https://developers.google.com/search/docs/crawling-indexing/robots/intro
 

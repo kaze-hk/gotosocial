@@ -433,6 +433,10 @@ definitions:
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
                 type: string
                 x-go-name: ID
+            indexable:
+                description: Account has opted its posts into full-text search features.
+                type: boolean
+                x-go-name: Indexable
             last_status_at:
                 description: When the account's most recent status was posted (ISO 8601 Date).
                 example: "2021-07-30"
@@ -444,6 +448,12 @@ definitions:
                 x-go-name: Locked
             moved:
                 $ref: '#/definitions/account'
+            noindex:
+                description: |-
+                    Account has *not* opted its posts into full-text search features.
+                    Opposite sense of Indexable for compatibility with `masto-fe-standalone`.
+                type: boolean
+                x-go-name: NoIndex
             note:
                 description: Bio/description of this account.
                 type: string
@@ -2759,6 +2769,10 @@ definitions:
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
                 type: string
                 x-go-name: ID
+            indexable:
+                description: Account has opted its posts into full-text search features.
+                type: boolean
+                x-go-name: Indexable
             last_status_at:
                 description: When the account's most recent status was posted (ISO 8601 Date).
                 example: "2021-07-30"
@@ -2777,6 +2791,12 @@ definitions:
                 example: "2021-07-30T09:20:25+00:00"
                 type: string
                 x-go-name: MuteExpiresAt
+            noindex:
+                description: |-
+                    Account has *not* opted its posts into full-text search features.
+                    Opposite sense of Indexable for compatibility with `masto-fe-standalone`.
+                type: boolean
+                x-go-name: NoIndex
             note:
                 description: Bio/description of this account.
                 type: string
@@ -5349,6 +5369,10 @@ paths:
                 - description: Account should be made discoverable and shown in the profile directory (if enabled).
                   in: formData
                   name: discoverable
+                  type: boolean
+                - description: Account's posts should be made indexable by full-text search features (if enabled).
+                  in: formData
+                  name: indexable
                   type: boolean
                 - description: Account is flagged as a bot.
                   in: formData

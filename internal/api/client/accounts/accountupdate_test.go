@@ -359,6 +359,61 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountDiscoverableJSON() {
 	suite.False(*dbZork.Discoverable)
 }
 
+func (suite *AccountUpdateTestSuite) TestUpdateAccountIndexableForm() {
+	data := map[string][]string{
+		"indexable": {"false"},
+	}
+
+	apimodelAccount, err := suite.updateAccountFromForm(data, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.False(apimodelAccount.Indexable)
+
+	// Check the account in the database too.
+	dbZork, err := suite.db.GetAccountByID(suite.T().Context(), apimodelAccount.ID)
+	suite.NoError(err)
+	suite.False(*dbZork.Indexable)
+}
+
+func (suite *AccountUpdateTestSuite) TestUpdateAccountIndexableFormData() {
+	data := map[string][]string{
+		"indexable": {"false"},
+	}
+
+	apimodelAccount, err := suite.updateAccountFromFormData(data, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.False(apimodelAccount.Indexable)
+
+	// Check the account in the database too.
+	dbZork, err := suite.db.GetAccountByID(suite.T().Context(), apimodelAccount.ID)
+	suite.NoError(err)
+	suite.False(*dbZork.Indexable)
+}
+
+func (suite *AccountUpdateTestSuite) TestUpdateAccountIndexableJSON() {
+	data := `
+{
+  "indexable": false
+}`
+
+	apimodelAccount, err := suite.updateAccountFromJSON(data, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.False(apimodelAccount.Indexable)
+
+	// Check the account in the database too.
+	dbZork, err := suite.db.GetAccountByID(suite.T().Context(), apimodelAccount.ID)
+	suite.NoError(err)
+	suite.False(*dbZork.Indexable)
+}
+
 func (suite *AccountUpdateTestSuite) TestUpdateAccountWithImageFormData() {
 	data := map[string][]string{
 		"display_name": {"updated zork display name!!!"},

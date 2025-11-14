@@ -118,6 +118,12 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		return
 	}
 
+	// If every account in the thread is indexable, then we allow the thread page to be indexed.
+	var robotsMeta string
+	if context.Indexable {
+		robotsMeta = apiutil.RobotsDirectivesAllowSome
+	}
+
 	// Prepare stylesheets for thread.
 	stylesheets := make([]string, 0, 6)
 
@@ -162,7 +168,8 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 			},
 		},
 		Extra: map[string]any{
-			"context": context,
+			"context":    context,
+			"robotsMeta": robotsMeta,
 		},
 	}
 

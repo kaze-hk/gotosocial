@@ -398,6 +398,7 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	suite.WithinDuration(time.Now(), newAccount.UpdatedAt, 30*time.Second)
 	suite.True(*newAccount.Locked)
 	suite.False(*newAccount.Discoverable)
+	suite.False(*newAccount.Indexable)
 }
 
 func (suite *AccountTestSuite) TestGetAccountPinnedStatusesSomeResults() {

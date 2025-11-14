@@ -558,6 +558,7 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 	account.AlsoKnownAsURIs = nil
 	account.MovedToURI = ""
 	account.Discoverable = util.Ptr(false)
+	account.Indexable = util.Ptr(false)
 	account.SuspendedAt = now
 	account.SuspensionOrigin = origin
 

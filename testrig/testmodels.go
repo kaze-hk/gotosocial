@@ -298,6 +298,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2020-05-17T13:10:59Z"),
 			Locked:                       util.Ptr(false),
 			Discoverable:                 util.Ptr(true),
+			Indexable:                    util.Ptr(true),
 			URI:                          "http://localhost:8080/users/localhost:8080",
 			URL:                          "http://localhost:8080/@localhost:8080",
 			PublicKeyURI:                 "http://localhost:8080/users/localhost:8080#main-key",
@@ -319,6 +320,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2022-06-04T13:12:00Z"),
 			Locked:                       util.Ptr(false),
 			Discoverable:                 util.Ptr(false),
+			Indexable:                    util.Ptr(false),
 			URI:                          "http://localhost:8080/users/weed_lord420",
 			URL:                          "http://localhost:8080/@weed_lord420",
 			InboxURI:                     "http://localhost:8080/users/weed_lord420/inbox",
@@ -341,6 +343,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2022-05-17T13:10:59Z"),
 			Locked:                       util.Ptr(false),
 			Discoverable:                 util.Ptr(true),
+			Indexable:                    util.Ptr(true),
 			URI:                          "http://localhost:8080/users/admin",
 			URL:                          "http://localhost:8080/@admin",
 			PublicKeyURI:                 "http://localhost:8080/users/admin#main-key",
@@ -368,6 +371,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2022-05-20T11:09:18Z"),
 			Locked:                       util.Ptr(false),
 			Discoverable:                 util.Ptr(true),
+			Indexable:                    util.Ptr(true),
 			URI:                          "http://localhost:8080/users/the_mighty_zork",
 			URL:                          "http://localhost:8080/@the_mighty_zork",
 			InboxURI:                     "http://localhost:8080/users/the_mighty_zork/inbox",
@@ -413,6 +417,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2022-06-04T13:12:00Z"),
 			Locked:                       util.Ptr(true),
 			Discoverable:                 util.Ptr(false),
+			Indexable:                    util.Ptr(false),
 			URI:                          "http://localhost:8080/users/1happyturtle",
 			URL:                          "http://localhost:8080/@1happyturtle",
 			InboxURI:                     "http://localhost:8080/users/1happyturtle/inbox",
@@ -459,6 +464,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2025-03-15T11:08:00Z"),
 			Locked:                       util.Ptr(false),
 			Discoverable:                 util.Ptr(false),
+			Indexable:                    util.Ptr(false),
 			URI:                          "http://localhost:8080/users/media_mogul",
 			URL:                          "http://localhost:8080/@media_mogul",
 			InboxURI:                     "http://localhost:8080/users/media_mogul/inbox",
@@ -484,6 +490,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2022-06-04T13:12:00Z"),
 			Locked:                       util.Ptr(false),
 			Discoverable:                 util.Ptr(true),
+			Indexable:                    util.Ptr(true),
 			URI:                          "http://fossbros-anonymous.io/users/foss_satan",
 			URL:                          "http://fossbros-anonymous.io/@foss_satan",
 			InboxURI:                     "http://fossbros-anonymous.io/users/foss_satan/inbox",
@@ -509,6 +516,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2022-06-04T13:12:00Z"),
 			Locked:                       util.Ptr(true),
 			Discoverable:                 util.Ptr(true),
+			Indexable:                    util.Ptr(true),
 			URI:                          "http://example.org/users/Some_User",
 			URL:                          "http://example.org/@Some_User",
 			InboxURI:                     "http://example.org/users/Some_User/inbox",
@@ -534,6 +542,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2022-06-04T13:12:00Z"),
 			Locked:                       util.Ptr(true),
 			Discoverable:                 util.Ptr(true),
+			Indexable:                    util.Ptr(true),
 			URI:                          "http://thequeenisstillalive.technology/users/her_fuckin_maj",
 			URL:                          "http://thequeenisstillalive.technology/@her_fuckin_maj",
 			InboxURI:                     "http://thequeenisstillalive.technology/users/her_fuckin_maj/inbox",
@@ -558,6 +567,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			UpdatedAt:                    TimeMustParse("2022-06-04T13:12:00Z"),
 			Locked:                       util.Ptr(false),
 			Discoverable:                 util.Ptr(false),
+			Indexable:                    util.Ptr(false),
 			URI:                          "https://xn--xample-ova.org/users/%C3%BCser",
 			URL:                          "https://xn--xample-ova.org/users/@%C3%BCser",
 			FetchedAt:                    time.Time{},
@@ -3626,6 +3636,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			"hey I'm a new person, your instance hasn't seen me yet uwu",
 			URLMustParse("https://unknown-instance.com/@brand_new_person"),
 			true,
+			true,
 			URLMustParse("https://unknown-instance.com/users/brand_new_person#main-key"),
 			newPerson1Pub,
 			nil,
@@ -3650,6 +3661,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			"Turnip Lover 6969",
 			"I just think they're neat",
 			URLMustParse("https://turnip.farm/@turniplover6969"),
+			true,
 			true,
 			URLMustParse("https://turnip.farm/users/turniplover6969#main-key"),
 			turnipLover6969Pub,
@@ -3676,6 +3688,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			"Peepee poo poo",
 			URLMustParse("http://example.org/@Some_User"),
 			true,
+			true,
 			URLMustParse("http://example.org/users/Some_User#main-key"),
 			someUserPub,
 			nil,
@@ -3700,6 +3713,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			"Shrimp",
 			"",
 			URLMustParse("https://shrimpnet.example.org/@shrimp"),
+			true,
 			true,
 			URLMustParse("https://shrimpnet.example.org/users/shrimp#main-key"),
 			shrimpPub,
@@ -3734,6 +3748,7 @@ func NewTestFediGroups() map[string]vocab.ActivityStreamsGroup {
 			"",
 			URLMustParse("https://unknown-instance.com/@some_group"),
 			true,
+			true,
 			URLMustParse("https://unknown-instance.com/groups/some_group#main-key"),
 			newGroup1Pub,
 			nil,
@@ -3764,6 +3779,7 @@ func NewTestFediServices() map[string]vocab.ActivityStreamsService {
 			"linux audio stuff ",
 			"",
 			URLMustParse("https://owncast.example.org/federation/user/rgh"),
+			true,
 			true,
 			URLMustParse("https://owncast.example.org/federation/user/rgh#main-key"),
 			newService1Pub,
@@ -4437,6 +4453,7 @@ func newAPPerson(
 	note string,
 	profileURL *url.URL,
 	discoverable bool,
+	indexable bool,
 	publicKeyURI *url.URL,
 	pkey *rsa.PublicKey,
 	avatarURL *url.URL,
@@ -4539,6 +4556,12 @@ func newAPPerson(
 	discoverableProp := streams.NewTootDiscoverableProperty()
 	discoverableProp.Set(discoverable)
 	person.SetTootDiscoverable(discoverableProp)
+
+	// indexable
+	// Account has opted its posts into full-text search features.
+	indexableProp := streams.NewTootIndexableProperty()
+	indexableProp.Set(indexable)
+	person.SetTootIndexable(indexableProp)
 
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
@@ -4650,6 +4673,7 @@ func newAPGroup(
 	note string,
 	profileURL *url.URL,
 	discoverable bool,
+	indexable bool,
 	publicKeyURI *url.URL,
 	pkey *rsa.PublicKey,
 	avatarURL *url.URL,
@@ -4739,6 +4763,12 @@ func newAPGroup(
 	discoverableProp := streams.NewTootDiscoverableProperty()
 	discoverableProp.Set(discoverable)
 	group.SetTootDiscoverable(discoverableProp)
+
+	// indexable
+	// Account has opted its posts into full-text search features.
+	indexableProp := streams.NewTootIndexableProperty()
+	indexableProp.Set(indexable)
+	group.SetTootIndexable(indexableProp)
 
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
@@ -4834,6 +4864,7 @@ func newAPService(
 	note string,
 	profileURL *url.URL,
 	discoverable bool,
+	indexable bool,
 	publicKeyURI *url.URL,
 	pkey *rsa.PublicKey,
 	avatarURL *url.URL,
@@ -4923,6 +4954,12 @@ func newAPService(
 	discoverableProp := streams.NewTootDiscoverableProperty()
 	discoverableProp.Set(discoverable)
 	service.SetTootDiscoverable(discoverableProp)
+
+	// indexable
+	// Account has opted its posts into full-text search features.
+	indexableProp := streams.NewTootIndexableProperty()
+	indexableProp.Set(indexable)
+	service.SetTootIndexable(indexableProp)
 
 	// devices
 	// NOT IMPLEMENTED, probably won't implement

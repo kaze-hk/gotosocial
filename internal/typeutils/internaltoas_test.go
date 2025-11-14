@@ -59,6 +59,7 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
         "@id": "toot:featured",
         "@type": "@id"
       },
+      "indexable": "toot:indexable",
       "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
       "toot": "http://joinmastodon.org/ns#"
     }
@@ -83,6 +84,7 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
     "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg"
   },
   "inbox": "http://localhost:8080/users/the_mighty_zork/inbox",
+  "indexable": true,
   "manuallyApprovesFollowers": false,
   "name": "original zork (he/they)",
   "outbox": "http://localhost:8080/users/the_mighty_zork/outbox",
@@ -130,6 +132,7 @@ func (suite *InternalToASTestSuite) TestAccountToASBot() {
         "@id": "toot:featured",
         "@type": "@id"
       },
+      "indexable": "toot:indexable",
       "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
       "toot": "http://joinmastodon.org/ns#"
     }
@@ -154,6 +157,7 @@ func (suite *InternalToASTestSuite) TestAccountToASBot() {
     "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg"
   },
   "inbox": "http://localhost:8080/users/the_mighty_zork/inbox",
+  "indexable": true,
   "manuallyApprovesFollowers": false,
   "name": "original zork (he/they)",
   "outbox": "http://localhost:8080/users/the_mighty_zork/outbox",
@@ -196,6 +200,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
         "@id": "toot:featured",
         "@type": "@id"
       },
+      "indexable": "toot:indexable",
       "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
       "schema": "http://schema.org#",
       "toot": "http://joinmastodon.org/ns#",
@@ -222,6 +227,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
   "hidesToPublicFromUnauthedWeb": false,
   "id": "http://localhost:8080/users/1happyturtle",
   "inbox": "http://localhost:8080/users/1happyturtle/inbox",
+  "indexable": false,
   "manuallyApprovesFollowers": true,
   "name": "happy little turtle :3",
   "outbox": "http://localhost:8080/users/1happyturtle/outbox",
@@ -276,6 +282,7 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
         "@id": "toot:featured",
         "@type": "@id"
       },
+      "indexable": "toot:indexable",
       "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
       "movedTo": {
         "@id": "as:movedTo",
@@ -307,6 +314,7 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
     "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg"
   },
   "inbox": "http://localhost:8080/users/the_mighty_zork/inbox",
+  "indexable": true,
   "manuallyApprovesFollowers": false,
   "movedTo": "http://localhost:8080/users/1happyturtle",
   "name": "original zork (he/they)",
@@ -352,6 +360,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
         "@id": "toot:featured",
         "@type": "@id"
       },
+      "indexable": "toot:indexable",
       "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
       "schema": "http://schema.org#",
       "toot": "http://joinmastodon.org/ns#",
@@ -373,6 +382,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
   "hidesToPublicFromUnauthedWeb": false,
   "id": "http://localhost:8080/users/1happyturtle",
   "inbox": "http://localhost:8080/users/1happyturtle/inbox",
+  "indexable": false,
   "manuallyApprovesFollowers": true,
   "name": "happy little turtle :3",
   "outbox": "http://localhost:8080/users/1happyturtle/outbox",
@@ -416,6 +426,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
         "@id": "toot:featured",
         "@type": "@id"
       },
+      "indexable": "toot:indexable",
       "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
       "toot": "http://joinmastodon.org/ns#"
     }
@@ -440,6 +451,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
     "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg"
   },
   "inbox": "http://localhost:8080/users/the_mighty_zork/inbox",
+  "indexable": true,
   "manuallyApprovesFollowers": false,
   "name": "original zork (he/they)",
   "outbox": "http://localhost:8080/users/the_mighty_zork/outbox",
@@ -493,6 +505,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
         "@id": "toot:featured",
         "@type": "@id"
       },
+      "indexable": "toot:indexable",
       "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
       "toot": "http://joinmastodon.org/ns#"
     }
@@ -520,6 +533,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
     "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg"
   },
   "inbox": "http://localhost:8080/users/the_mighty_zork/inbox",
+  "indexable": true,
   "manuallyApprovesFollowers": false,
   "name": "original zork (he/they)",
   "outbox": "http://localhost:8080/users/the_mighty_zork/outbox",

@@ -66,6 +66,7 @@ func (suite *AccountDeleteTestSuite) TestAccountDeleteLocal() {
 	suite.Zero(updatedAccount.MemorializedAt)
 	suite.Empty(updatedAccount.AlsoKnownAsURIs)
 	suite.False(*updatedAccount.Discoverable)
+	suite.False(*updatedAccount.Indexable)
 	suite.WithinDuration(time.Now(), updatedAccount.SuspendedAt, 1*time.Minute)
 	suite.Equal(suspensionOrigin, updatedAccount.SuspensionOrigin)
 

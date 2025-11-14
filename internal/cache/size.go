@@ -189,6 +189,7 @@ func sizeofAccount() uintptr {
 		FetchedAt:               exampleTime,
 		Locked:                  util.Ptr(true),
 		Discoverable:            util.Ptr(false),
+		Indexable:               util.Ptr(false),
 		URI:                     exampleURI,
 		URL:                     exampleURI,
 		InboxURI:                exampleURI,

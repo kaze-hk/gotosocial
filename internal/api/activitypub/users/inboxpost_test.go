@@ -380,6 +380,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	suite.EqualValues(requestingAccount.MovedToURI, dbUpdatedAccount.MovedToURI)
 	suite.EqualValues(requestingAccount.Locked, dbUpdatedAccount.Locked)
 	suite.EqualValues(requestingAccount.Discoverable, dbUpdatedAccount.Discoverable)
+	suite.EqualValues(requestingAccount.Indexable, dbUpdatedAccount.Indexable)
 	suite.EqualValues(requestingAccount.URI, dbUpdatedAccount.URI)
 	suite.EqualValues(requestingAccount.URL, dbUpdatedAccount.URL)
 	suite.EqualValues(requestingAccount.InboxURI, dbUpdatedAccount.InboxURI)
@@ -444,6 +445,7 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	suite.Empty(dbAccount.HeaderRemoteURL)
 	suite.Empty(dbAccount.Fields)
 	suite.False(*dbAccount.Discoverable)
+	suite.False(*dbAccount.Indexable)
 	suite.WithinDuration(time.Now(), dbAccount.SuspendedAt, 30*time.Second)
 	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
 }

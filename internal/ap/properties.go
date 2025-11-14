@@ -607,6 +607,27 @@ func SetDiscoverable(with WithDiscoverable, discoverable bool) {
 	discoverProp.Set(discoverable)
 }
 
+// GetIndexable returns the boolean contained in the Indexable property of 'with'.
+//
+// Returns default 'false' if property unusable or not set.
+func GetIndexable(with WithIndexable) bool {
+	indexableProp := with.GetTootIndexable()
+	if indexableProp == nil || !indexableProp.IsXMLSchemaBoolean() {
+		return false
+	}
+	return indexableProp.Get()
+}
+
+// SetIndexable sets the given boolean on the Indexable property of 'with'.
+func SetIndexable(with WithIndexable, indexable bool) {
+	indexableProp := with.GetTootIndexable()
+	if indexableProp == nil {
+		indexableProp = streams.NewTootIndexableProperty()
+		with.SetTootIndexable(indexableProp)
+	}
+	indexableProp.Set(indexable)
+}
+
 // GetManuallyApprovesFollowers returns the boolean contained in the ManuallyApprovesFollowers property of 'with'.
 //
 // Returns default 'false' if property unusable or not set.

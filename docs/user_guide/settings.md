@@ -149,20 +149,43 @@ After ticking or unticking the checkbox, be sure to click on the `Save profile i
 
 #### Mark Account as Discoverable by Search Engines and Directories
 
-This setting updates the 'discoverable' flag on your account.
+This setting updates the 'discoverable' setting on your account.
 
 Checking the discoverable box for your account does the following:
 
-- Update robots meta tags for your account, allowing it to be indexed by search engines and appear in search engine results.
 - Indicate to remote instances that your account may be included in public directories and indexes.
+- If 'indexable' is also checked, update robots meta tags for your account, allowing your profile and posts to be indexed by web search engines and appear in web search engine results.
 
-Turning on the discoverable flag may take a week or more to propagate; your account will not immediately appear in search engine results.
-
-!!! tip
-    Discoverable is set to false by default for new accounts, to avoid exposing them to crawlers. Setting it to true is useful for public-facing accounts where you actually *want* to be crawled.
+Turning on the discoverable setting may take a week or more to propagate; your account will not immediately appear in search results.
 
 !!! info
-    The discoverable setting is about **discoverability of your account**, not searchability of your posts. It has nothing to do with indexing of your posts for search by Mastodon instances, or other federated instances that use full text search!
+    The discoverable setting is about **discoverability of your account**, not searchability of your posts. The indexable setting controls the rest.
+
+#### Mark Account's Posts as Full-Text Indexable
+
+This setting updates the 'indexable' setting on your account.
+
+Checking the indexable box for your account does the following:
+
+- Indicate that your account's posts may be included in full-text search indexes. This includes but is not limited to [Mastodon instances with the optional full-text search capability](https://docs.joinmastodon.org/admin/elasticsearch/); other Fediverse instance types and non-instance services may also check this flag.
+- If 'discoverable' is also checked, update robots meta tags for your account, allowing your profile and posts to be indexed by web search engines and appear in web search engine results.
+
+As GoToSocial doesn't currently have general full-text search capability, the indexable setting doesn't currently affect the behavior of your own or other GoToSocial instances, but this may change in the future.
+
+Turning on the indexable setting may take a week or more to propagate; your posts will not immediately appear in search results.
+
+!!! info
+    The indexable setting is specifically about **searchability of your posts**, but if you turn it on, you will generally also want to turn on discoverability as well.
+
+#### Visibility to Web Crawlers
+
+GoToSocial serves your profile and public posts on the same public web page. If you enable both the 'discoverable' and 'indexable' settings, robots meta tags on that page will be updated to allow well-behaved web crawlers (such as search engines) to index it.
+
+!!! warning
+    Robots meta tags are a convention, not a security mechanism: many web crawlers are *not* well-behaved and do not respect robots meta tags. Don't put anything in your profile that you don't want the entire internet to see. The same applies to public posts.
+
+!!! tip
+    'discoverable' and 'indexable' are set to false by default for new accounts, to avoid exposing them to crawlers. Setting them to true is useful for public-facing accounts where you actually *want* to be crawled.
 
 #### Enable RSS Feed of Public Posts
 

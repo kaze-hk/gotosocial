@@ -108,6 +108,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 		bot: useBoolInput("bot", { source: profile }),
 		locked: useBoolInput("locked", { source: profile }),
 		discoverable: useBoolInput("discoverable", { source: profile}),
+		indexable: useBoolInput("indexable", { source: profile}),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
 		hideCollections: useBoolInput("hide_collections", { source: profile }),
 		webVisibility: useTextInput("web_visibility", { source: profile, valueSelector: (p: Account) => p.source?.web_visibility }),
@@ -313,6 +314,10 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 			<Checkbox
 				field={form.discoverable}
 				label="Mark account as discoverable by search engines and directories."
+			/>
+			<Checkbox
+				field={form.indexable}
+				label="Mark account's posts as full-text indexable."
 			/>
 			<Checkbox
 				field={form.enableRSS}

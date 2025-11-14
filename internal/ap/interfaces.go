@@ -247,6 +247,7 @@ type Accountable interface {
 	WithSummary
 	WithAttachment
 	WithDiscoverable
+	WithIndexable
 	WithURL
 	WithPublicKey
 	WithInbox
@@ -548,6 +549,12 @@ type WithSummary interface {
 type WithDiscoverable interface {
 	GetTootDiscoverable() vocab.TootDiscoverableProperty
 	SetTootDiscoverable(vocab.TootDiscoverableProperty)
+}
+
+// WithIndexable represents an activity with TootIndexableProperty
+type WithIndexable interface {
+	GetTootIndexable() vocab.TootIndexableProperty
+	SetTootIndexable(vocab.TootIndexableProperty)
 }
 
 // WithURL represents an activity with ActivityStreamsUrlProperty

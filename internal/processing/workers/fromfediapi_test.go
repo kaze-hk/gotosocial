@@ -420,6 +420,7 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 	suite.Empty(dbAccount.HeaderRemoteURL)
 	suite.Empty(dbAccount.Fields)
 	suite.False(*dbAccount.Discoverable)
+	suite.False(*dbAccount.Indexable)
 	suite.WithinDuration(time.Now(), dbAccount.SuspendedAt, 30*time.Second)
 	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
 }

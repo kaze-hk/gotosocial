@@ -48,6 +48,11 @@ type Account struct {
 	Locked bool `json:"locked"`
 	// Account has opted into discovery features.
 	Discoverable bool `json:"discoverable"`
+	// Account has opted its posts into full-text search features.
+	Indexable bool `json:"indexable"`
+	// Account has *not* opted its posts into full-text search features.
+	// Opposite sense of Indexable for compatibility with `masto-fe-standalone`.
+	NoIndex bool `json:"noindex"`
 	// Account identifies as a bot.
 	Bot bool `json:"bot"`
 	// When the account was created (ISO 8601 Datetime).
@@ -208,6 +213,8 @@ type AccountCreateRequest struct {
 type UpdateCredentialsRequest struct {
 	// Account should be made discoverable and shown in the profile directory (if enabled).
 	Discoverable *bool `form:"discoverable" json:"discoverable"`
+	// Account should be made indexable and opted into full-text search (if enabled).
+	Indexable *bool `form:"indexable" json:"indexable"`
 	// Account is flagged as a bot.
 	Bot *bool `form:"bot" json:"bot"`
 	// The display name to use for the account.

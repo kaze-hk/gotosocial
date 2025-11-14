@@ -20,11 +20,15 @@ package status_test
 import (
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/status"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"github.com/stretchr/testify/suite"
 )
 
+// Test topo sorting of thread replies.
 type topoSortTestSuite struct {
 	suite.Suite
 }
@@ -203,4 +207,111 @@ func (suite *topoSortTestSuite) TestNil() {
 
 func TestTopoSortTestSuite(t *testing.T) {
 	suite.Run(t, &topoSortTestSuite{})
+}
+
+// Test properties of web contexts.
+type webContextGetTestSuite struct {
+	StatusStandardTestSuite
+
+	indexableAccount1    *gtsmodel.Account
+	indexableAccount2    *gtsmodel.Account
+	nonindexableAccount1 *gtsmodel.Account
+}
+
+// Find a test account by name with a given indexable setting, or fail if we can't.
+func (suite *webContextGetTestSuite) requireIndexableAccount(name string, indexable bool) *gtsmodel.Account {
+	account := suite.testAccounts[name]
+	if account == nil || account.Indexable == nil || *account.Indexable != indexable {
+		suite.FailNowf("expected test account %s's indexable setting to be %v", name, indexable)
+	}
+	return account
+}
+
+func (suite *webContextGetTestSuite) SetupSuite() {
+	suite.StatusStandardTestSuite.SetupSuite()
+
+	suite.indexableAccount1 = suite.requireIndexableAccount("local_account_1", true)
+	suite.indexableAccount2 = suite.requireIndexableAccount("admin_account", true)
+	suite.nonindexableAccount1 = suite.requireIndexableAccount("local_account_2", false)
+}
+
+// Create a status in the test DB, or fail if we can't.
+func (suite *webContextGetTestSuite) createStatus(account *gtsmodel.Account, visibility gtsmodel.Visibility, inReplyTo *gtsmodel.Status) *gtsmodel.Status {
+	ctx := suite.T().Context()
+	statusID := id.NewULID()
+	newStatus := &gtsmodel.Status{
+		ID:                  statusID,
+		URI:                 "https://status-id.test/" + statusID,
+		AccountID:           account.ID,
+		AccountURI:          account.URI,
+		Visibility:          visibility,
+		Local:               util.Ptr(true),
+		ActivityStreamsType: ap.ObjectNote,
+		Federated:           util.Ptr(true),
+	}
+	if inReplyTo != nil {
+		newStatus.InReplyToID = inReplyTo.ID
+		newStatus.InReplyToAccountID = inReplyTo.AccountID
+	}
+	if err := suite.db.PutStatus(ctx, newStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+	return newStatus
+}
+
+// If all visible statuses in a thread are indexable, so is the thread.
+func (suite *webContextGetTestSuite) TestAllVisibleIndexable() {
+	ctx := suite.T().Context()
+
+	op := suite.createStatus(suite.indexableAccount1, gtsmodel.VisibilityPublic, nil)
+	_ = suite.createStatus(suite.indexableAccount2, gtsmodel.VisibilityPublic, op)
+	webContext, err := suite.status.WebContextGet(ctx, op.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+		return
+	}
+	suite.Len(webContext.Statuses, 2, "precondition failed")
+	suite.Equal(0, webContext.ThreadRepliesHidden, "precondition failed")
+
+	suite.True(webContext.Indexable)
+}
+
+// If any visible statuses in a thread are not indexable, so is the thread.
+func (suite *webContextGetTestSuite) TestOneVisibleNonindexable() {
+	ctx := suite.T().Context()
+
+	op := suite.createStatus(suite.indexableAccount1, gtsmodel.VisibilityPublic, nil)
+	_ = suite.createStatus(suite.indexableAccount2, gtsmodel.VisibilityPublic, op)
+	_ = suite.createStatus(suite.nonindexableAccount1, gtsmodel.VisibilityPublic, op)
+	webContext, err := suite.status.WebContextGet(ctx, op.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+		return
+	}
+	suite.Len(webContext.Statuses, 3, "precondition failed")
+	suite.Equal(0, webContext.ThreadRepliesHidden, "precondition failed")
+
+	suite.False(webContext.Indexable)
+}
+
+// If the only nonindexable statuses in a thread are also invisible, then the thread is still indexable.
+func (suite *webContextGetTestSuite) TestOneInvisibleNonindexable() {
+	ctx := suite.T().Context()
+
+	op := suite.createStatus(suite.indexableAccount1, gtsmodel.VisibilityPublic, nil)
+	_ = suite.createStatus(suite.indexableAccount2, gtsmodel.VisibilityPublic, op)
+	_ = suite.createStatus(suite.nonindexableAccount1, gtsmodel.VisibilityUnlocked, op)
+	webContext, err := suite.status.WebContextGet(ctx, op.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+		return
+	}
+	suite.Len(webContext.Statuses, 2, "precondition failed")
+	suite.Equal(1, webContext.ThreadRepliesHidden, "precondition failed")
+
+	suite.True(webContext.Indexable)
+}
+
+func TestWebContextGetTestSuite(t *testing.T) {
+	suite.Run(t, &webContextGetTestSuite{})
 }

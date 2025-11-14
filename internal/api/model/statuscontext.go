@@ -40,6 +40,10 @@ type WebThreadContext struct {
 	// status, and descendants.
 	Statuses []*WebStatus
 
+	// True only if all visible Statuses
+	// are from indexable accounts.
+	Indexable bool
+
 	// Total length of
 	// the main thread.
 	ThreadLength int

@@ -77,6 +77,11 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		acctColumns = append(acctColumns, "discoverable")
 	}
 
+	if form.Indexable != nil {
+		account.Indexable = form.Indexable
+		acctColumns = append(acctColumns, "indexable")
+	}
+
 	if bot := form.Bot; bot != nil {
 		if *bot {
 			// Mark account as an Application.
