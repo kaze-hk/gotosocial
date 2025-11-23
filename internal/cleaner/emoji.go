@@ -32,7 +32,7 @@ import (
 
 // Emoji encompasses a set of
 // emoji cleanup / admin utils.
-type Emoji struct{ *Cleaner }
+type Emoji struct{ Cleaner }
 
 // All will execute all cleaner.Emoji utilities synchronously, including output logging.
 // Context will be checked for `gtscontext.DryRun()` in order to actually perform the action.

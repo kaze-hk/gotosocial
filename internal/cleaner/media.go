@@ -35,7 +35,7 @@ import (
 
 // Media encompasses a set of
 // media cleanup / admin utils.
-type Media struct{ *Cleaner }
+type Media struct{ Cleaner }
 
 // All will execute all cleaner.Media utilities synchronously, including output logging.
 // Context will be checked for `gtscontext.DryRun()` in order to actually perform the action.

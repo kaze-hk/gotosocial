@@ -21,6 +21,7 @@ import (
 	"slices"
 	"unsafe"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,6 +35,10 @@ func (r *Router) AttachNoRouteHandler(handler gin.HandlerFunc) {
 }
 
 func (r *Router) AttachGroup(relativePath string, handlers ...gin.HandlerFunc) *RouterGroup {
+	if unsafe.Sizeof(RouterGroup{}) != unsafe.Sizeof(gin.RouterGroup{}) ||
+		unsafe.Offsetof(RouterGroup{}.RouterGroup) != 0 {
+		panic(gtserror.New("compile time unsafe pointer assertion"))
+	}
 	handlers = slices.DeleteFunc(handlers, func(h gin.HandlerFunc) bool { return h == nil })
 	return (*RouterGroup)(unsafe.Pointer(r.engine.Group(relativePath, handlers...)))
 }

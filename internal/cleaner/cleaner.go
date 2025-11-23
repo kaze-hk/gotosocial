@@ -20,6 +20,7 @@ package cleaner
 import (
 	"context"
 	"time"
+	"unsafe"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
@@ -35,26 +36,30 @@ const (
 
 type Cleaner struct {
 	state *state.State
-	emoji Emoji
-	media Media
 }
 
 func New(state *state.State) *Cleaner {
 	c := new(Cleaner)
 	c.state = state
-	c.emoji.Cleaner = c
-	c.media.Cleaner = c
 	return c
 }
 
 // Emoji returns the emoji set of cleaner utilities.
 func (c *Cleaner) Emoji() *Emoji {
-	return &c.emoji
+	if unsafe.Sizeof(Emoji{}) != unsafe.Sizeof(Cleaner{}) ||
+		unsafe.Offsetof(Emoji{}.Cleaner) != 0 {
+		panic(gtserror.New("compile time unsafe pointer assertion"))
+	}
+	return (*Emoji)(unsafe.Pointer(c))
 }
 
 // Media returns the media set of cleaner utilities.
 func (c *Cleaner) Media() *Media {
-	return &c.media
+	if unsafe.Sizeof(Media{}) != unsafe.Sizeof(Cleaner{}) ||
+		unsafe.Offsetof(Media{}.Cleaner) != 0 {
+		panic(gtserror.New("compile time unsafe pointer assertion"))
+	}
+	return (*Media)(unsafe.Pointer(c))
 }
 
 // haveFiles returns whether all of the provided files exist within current storage.
