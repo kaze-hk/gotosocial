@@ -208,14 +208,20 @@ func (f *DB) createPollOptionables(
 			return gtserror.Newf("poll vote in status %s invalid: %s", statusURI, name)
 		}
 
-		// Append the option index to choices.
+		// Append option index to choices.
 		choices = append(choices, choice)
 	}
+
+	// Ensure status is set on the poll,
+	// which will be sent in some manner to
+	// the workers for further processing.
+	poll := inReplyTo.Poll
+	poll.Status = inReplyTo
 
 	if vote != nil {
 		// Ensure this isn't a multiple vote
 		// by same account in the same poll.
-		if !*inReplyTo.Poll.Multiple {
+		if !*poll.Multiple {
 			log.Warnf(ctx, "%s has already voted in single-choice poll %s", requester.URI, inReplyTo.URI)
 			return nil // this is a useful warning for admins to report to us from logs
 		}
@@ -235,11 +241,8 @@ func (f *DB) createPollOptionables(
 
 		// Populate the poll vote,
 		// later used in fedi worker.
-		vote.Poll = inReplyTo.Poll
 		vote.Account = requester
-
-		// TODO: would it be useful to store an UpdatedAt field
-		// on poll votes? i'm not sure we'd actually use it...
+		vote.Poll = poll
 
 		// Enqueue an update event for poll vote to fedi API worker.
 		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
@@ -259,8 +262,8 @@ func (f *DB) createPollOptionables(
 				Choices:   choices,
 				AccountID: requester.ID,
 				Account:   requester,
-				PollID:    inReplyTo.PollID,
-				Poll:      inReplyTo.Poll,
+				PollID:    poll.ID,
+				Poll:      poll,
 			},
 			Receiving:  receiver,
 			Requesting: requester,
