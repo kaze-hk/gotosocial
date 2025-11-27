@@ -1,4 +1,4 @@
-//go:build (linux || darwin) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_flock || sqlite3_dotlk)
+//go:build (linux || darwin) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le || loong64) && !(sqlite3_flock || sqlite3_dotlk)
 
 package vfs
 
@@ -9,8 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tetratelabs/wazero/api"
 	"golang.org/x/sys/unix"
+
+	"github.com/tetratelabs/wazero/api"
 
 	"github.com/ncruces/go-sqlite3/internal/util"
 )
