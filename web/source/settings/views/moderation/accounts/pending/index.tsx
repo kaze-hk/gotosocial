@@ -53,7 +53,7 @@ export default function AccountsPending() {
 					list, and use the controls at the bottom of the account detail view.
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/admin/signups/"
+					href="https://docs.gotosocial.org/en/stable/admin/signups/"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

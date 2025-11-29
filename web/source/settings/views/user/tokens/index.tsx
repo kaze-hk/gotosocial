@@ -36,7 +36,7 @@ export default function Tokens() {
 					</strong>
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#access-tokens"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#access-tokens"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

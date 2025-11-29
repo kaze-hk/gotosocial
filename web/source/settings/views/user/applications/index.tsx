@@ -30,7 +30,7 @@ export default function Applications() {
 					To manage an application, click on it to go to the detailed view.
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#applications"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#applications"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

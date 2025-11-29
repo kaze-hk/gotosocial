@@ -47,7 +47,7 @@ export default function BasicSettings({ account }: { account: Account }) {
 			<div className="form-section-docs">
 				<h3>Basic</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings#post-settings"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings#post-settings"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

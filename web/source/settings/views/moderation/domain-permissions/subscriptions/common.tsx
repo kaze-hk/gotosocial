@@ -36,7 +36,7 @@ export function DomainPermissionSubscriptionHelpText() {
 export function DomainPermissionSubscriptionDocsLink() {
 	return (
 		<a
-			href="https://docs.gotosocial.org/en/latest/admin/settings/#domain-permission-subscriptions"
+			href="https://docs.gotosocial.org/en/stable/admin/settings/#domain-permission-subscriptions"
 			target="_blank"
 			className="docslink"
 			rel="noreferrer"

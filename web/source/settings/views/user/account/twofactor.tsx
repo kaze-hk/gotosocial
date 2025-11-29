@@ -296,7 +296,7 @@ function TwoFactorHeader({ blurb }: { blurb: ReactNode }) {
 			<h3>Two-Factor Authentication</h3>
 			{blurb}
 			<a
-				href="https://docs.gotosocial.org/en/latest/user_guide/settings/#two-factor"
+				href="https://docs.gotosocial.org/en/stable/user_guide/settings/#two-factor"
 				target="_blank"
 				className="docslink"
 				rel="noreferrer"

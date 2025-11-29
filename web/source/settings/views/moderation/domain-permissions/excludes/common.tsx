@@ -43,7 +43,7 @@ export function DomainPermissionExcludeHelpText() {
 export function DomainPermissionExcludeDocsLink() {
 	return (
 		<a
-			href="https://docs.gotosocial.org/en/latest/admin/settings/#domain-permission-excludes"
+			href="https://docs.gotosocial.org/en/stable/admin/settings/#domain-permission-excludes"
 			target="_blank"
 			className="docslink"
 			rel="noreferrer"

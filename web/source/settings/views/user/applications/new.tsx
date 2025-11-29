@@ -93,7 +93,7 @@ export default function NewApp() {
 					<HighlightedCode code={callbackURL} lang="url" />
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#applications"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#applications"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

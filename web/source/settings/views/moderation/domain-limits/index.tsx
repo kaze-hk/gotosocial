@@ -76,7 +76,7 @@ export default function DomainLimitsOverview() {
 							<br/>
 							<br/>
 							<a
-								href="https://docs.gotosocial.org/en/latest/admin/domain_limits/"
+								href="https://docs.gotosocial.org/en/stable/admin/domain_limits/"
 								target="_blank"
 								className="docslink"
 								rel="noreferrer"

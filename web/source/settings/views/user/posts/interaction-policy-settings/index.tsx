@@ -140,7 +140,7 @@ function InteractionPoliciesForm({ defaultPolicies }: InteractionPoliciesFormPro
 					be able to like, reply-to, and boost your own posts.
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings#default-interaction-policies"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings#default-interaction-policies"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

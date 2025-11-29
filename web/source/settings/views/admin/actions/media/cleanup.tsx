@@ -46,7 +46,7 @@ export default function Cleanup({}) {
 					Also cleans up unused headers and avatars from the media cache.
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/admin/media_caching/"
+					href="https://docs.gotosocial.org/en/stable/admin/media_caching/"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

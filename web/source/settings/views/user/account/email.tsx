@@ -66,7 +66,7 @@ export default function EmailChange({user, oidcEnabled}: { user: User, oidcEnabl
 					To change the email address you use to log in, contact your OIDC provider.
 				</p> }
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#email-change"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#email-change"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

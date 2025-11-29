@@ -147,7 +147,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 					<br/>After changing settings and/or uploading a new avatar or header, be sure to scroll to the bottom of this page and click "Save profile info" to confirm your changes.
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#profile"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#profile"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
@@ -252,7 +252,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 			<div className="form-section-docs">
 				<h3>Basic Information</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#basic-information"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#basic-information"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
@@ -288,7 +288,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 			<div className="form-section-docs">
 				<h3>Visibility and privacy</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#visibility-and-privacy"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#visibility-and-privacy"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
@@ -331,7 +331,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 			<div className="form-section-docs">
 				<h3>Advanced</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#advanced"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#advanced"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

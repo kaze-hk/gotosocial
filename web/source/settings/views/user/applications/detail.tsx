@@ -168,7 +168,7 @@ function AccessTokenForm({ app }: { app: App }) {
 					where you can view your new access token.
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/api/authentication/"
+					href="https://docs.gotosocial.org/en/stable/api/authentication/"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

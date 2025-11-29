@@ -60,7 +60,7 @@ export default function PasswordChange({ oidcEnabled }: { oidcEnabled?: boolean 
 					To change your password, you should instead contact your OIDC provider.
 				</p> }
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#password-change"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#password-change"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

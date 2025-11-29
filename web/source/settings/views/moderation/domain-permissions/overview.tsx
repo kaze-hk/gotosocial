@@ -92,7 +92,7 @@ function BlockHelperText() {
 			the remote server. This extends to all subdomains as well, so blocking 'example.com' also blocks 'social.example.com'.
 			<br/>
 			<a
-				href="https://docs.gotosocial.org/en/latest/admin/domain_blocks/"
+				href="https://docs.gotosocial.org/en/stable/admin/domain_blocks/"
 				target="_blank"
 				className="docslink"
 				rel="noreferrer"
@@ -117,7 +117,7 @@ function AllowHelperText() {
 			before importing the list.
 			<br/>
 			<a
-				href="https://docs.gotosocial.org/en/latest/admin/federation_modes/"
+				href="https://docs.gotosocial.org/en/stable/admin/federation_modes/"
 				target="_blank"
 				className="docslink"
 				rel="noreferrer"

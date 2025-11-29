@@ -160,7 +160,7 @@ export default function HeaderPermsOverview() {
 					</> }
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/admin/request_filtering_modes/"
+					href="https://docs.gotosocial.org/en/stable/admin/request_filtering_modes/"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

@@ -32,7 +32,7 @@ export function DomainPermissionDraftHelpText() {
 export function DomainPermissionDraftDocsLink() {
 	return (
 		<a
-			href="https://docs.gotosocial.org/en/latest/admin/settings/#domain-permission-drafts"
+			href="https://docs.gotosocial.org/en/stable/admin/settings/#domain-permission-drafts"
 			target="_blank"
 			className="docslink"
 			rel="noreferrer"

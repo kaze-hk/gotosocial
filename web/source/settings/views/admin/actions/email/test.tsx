@@ -46,7 +46,7 @@ export default function Test({}) {
 					If you do not have SMTP configured for your instance, this will do nothing.
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/configuration/smtp/"
+					href="https://docs.gotosocial.org/en/stable/configuration/smtp/"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

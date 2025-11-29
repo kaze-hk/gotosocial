@@ -58,7 +58,7 @@ function MigrationForm({ data: profile }) {
 				hand, has serious and irreversible consequences.
 			</p>
 			<p>
-				For more information on account migration, please see <a href="https://docs.gotosocial.org/en/latest/user_guide/settings/#migration" target="_blank" className="docslink" rel="noreferrer">the documentation</a>.
+				For more information on account migration, please see <a href="https://docs.gotosocial.org/en/stable/user_guide/settings/#migration" target="_blank" className="docslink" rel="noreferrer">the documentation</a>.
 			</p>
 			<AliasForm data={profile} />
 			<MoveForm data={profile} />
@@ -86,7 +86,7 @@ function AliasForm({ data: profile }) {
 			<div className="form-section-docs">
 				<h3>Alias Account</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/migration"
+					href="https://docs.gotosocial.org/en/stable/user_guide/migration"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
@@ -192,7 +192,7 @@ function MoveForm({ data: profile }) {
 				</dl>
 				<br/>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/migration"
+					href="https://docs.gotosocial.org/en/stable/user_guide/migration"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

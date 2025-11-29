@@ -45,7 +45,7 @@ export default function Import() {
 			<div className="form-section-docs">
 				<h3>Import Data</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#import"
+					href="https://docs.gotosocial.org/en/stable/user_guide/settings/#import"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

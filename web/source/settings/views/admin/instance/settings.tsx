@@ -92,7 +92,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 			<div className="form-section-docs">
 				<h3>Appearance</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/admin/settings/#instance-appearance"
+					href="https://docs.gotosocial.org/en/stable/admin/settings/#instance-appearance"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
@@ -135,7 +135,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 			<div className="form-section-docs">
 				<h3>Descriptors</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/admin/settings/#instance-descriptors"
+					href="https://docs.gotosocial.org/en/stable/admin/settings/#instance-descriptors"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
@@ -171,7 +171,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 			<div className="form-section-docs">
 				<h3>Contact info</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/admin/settings/#instance-contact-info"
+					href="https://docs.gotosocial.org/en/stable/admin/settings/#instance-contact-info"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"

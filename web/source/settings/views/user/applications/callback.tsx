@@ -97,7 +97,7 @@ function AccessForAppForm({ data: app, code }: { data: App, code: string }) {
 					<br/><strong>Your access token provides access to your account; store it as carefully as you would store a password!</strong>
 				</p>
 				<a
-					href="https://docs.gotosocial.org/en/latest/api/authentication/#verifying"
+					href="https://docs.gotosocial.org/en/stable/api/authentication/#verifying"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
