@@ -28,7 +28,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
-	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/stream"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
 )
@@ -169,21 +168,6 @@ func (p *Processor) GetFilterKeyword(
 
 // OnFilterChanged ...
 func (p *Processor) OnFilterChanged(ctx context.Context, requester *gtsmodel.Account) {
-
-	// Get list of list IDs created by this requesting account.
-	listIDs, err := p.state.DB.GetListIDsByAccountID(ctx, requester.ID)
-	if err != nil {
-		log.Errorf(ctx, "error getting account '%s' lists: %v", requester.Username, err)
-	}
-
-	// Unprepare this requester's home timeline.
-	p.state.Caches.Timelines.Home.Unprepare(requester.ID)
-
-	// Unprepare list timelines.
-	for _, id := range listIDs {
-		p.state.Caches.Timelines.List.Unprepare(id)
-	}
-
 	// Send filter changed event for account.
 	p.stream.FiltersChanged(ctx, requester)
 }

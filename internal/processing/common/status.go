@@ -303,24 +303,3 @@ func (p *Processor) GetVisibleAPIStatuses(
 
 	return apiStatuses
 }
-
-// InvalidateTimelinedStatus is a shortcut function for invalidating the cached
-// representation one status in the home timeline and all list timelines of the
-// given accountID. It should only be called in cases where a status update
-// does *not* need to be passed into the processor via the worker queue, since
-// such invalidation will, in that case, be handled by the processor instead.
-func (p *Processor) InvalidateTimelinedStatus(ctx context.Context, accountID string, statusID string) error {
-	// Get lists first + bail if this fails.
-	lists, err := p.state.DB.GetListsByAccountID(ctx, accountID)
-	if err != nil {
-		return gtserror.Newf("db error getting lists for account %s: %w", accountID, err)
-	}
-
-	// Unprepare item from home + list timelines.
-	p.state.Caches.Timelines.Home.MustGet(accountID).UnprepareByStatusIDs(statusID)
-	for _, list := range lists {
-		p.state.Caches.Timelines.List.MustGet(list.ID).UnprepareByStatusIDs(statusID)
-	}
-
-	return nil
-}

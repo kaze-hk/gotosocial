@@ -22,6 +22,7 @@ import (
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"github.com/gin-gonic/gin"
 )
 
@@ -132,13 +133,17 @@ func (m *Module) TagTimelineGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 20, 40, 1)
+	tagName, errWithCode := apiutil.ParseTagName(c.Param(apiutil.TagNameKey))
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	tagName, errWithCode := apiutil.ParseTagName(c.Param(apiutil.TagNameKey))
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		40, // max limit
+		20, // default limit
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -148,10 +153,7 @@ func (m *Module) TagTimelineGETHandler(c *gin.Context) {
 		c.Request.Context(),
 		authed.Account,
 		tagName,
-		c.Query(apiutil.MaxIDKey),
-		c.Query(apiutil.SinceIDKey),
-		c.Query(apiutil.MinIDKey),
-		limit,
+		page,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

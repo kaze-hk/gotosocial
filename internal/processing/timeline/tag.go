@@ -39,12 +39,11 @@ func (p *Processor) TagTimelineGet(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	tagName string,
-	maxID string,
-	sinceID string,
-	minID string,
-	limit int,
-) (*apimodel.PageableResponse, gtserror.WithCode) {
-
+	page *paging.Page,
+) (
+	*apimodel.PageableResponse,
+	gtserror.WithCode,
+) {
 	// Fetch the requested tag with name.
 	tag, errWithCode := p.getTag(ctx, tagName)
 	if errWithCode != nil {
@@ -59,6 +58,9 @@ func (p *Processor) TagTimelineGet(
 		return nil, gtserror.NewWithCode(http.StatusNotFound, text)
 	}
 
+	// Get tag ID.
+	tagID := tag.ID
+
 	// Fetch status timeline for tag.
 	return p.getStatusTimeline(ctx,
 
@@ -66,17 +68,12 @@ func (p *Processor) TagTimelineGet(
 		// account.
 		requester,
 
-		// No
-		// cache.
-		nil,
+		// Keyed-by-tag-ID, tag timeline cache.
+		p.state.Caches.Timelines.Tag.MustGet(tagID),
 
 		// Current
 		// page.
-		&paging.Page{
-			Min:   paging.EitherMinID(minID, sinceID),
-			Max:   paging.MaxID(maxID),
-			Limit: limit,
-		},
+		page,
 
 		// Tag timeline name's endpoint.
 		"/api/v1/timelines/tag/"+tagName,
@@ -90,11 +87,15 @@ func (p *Processor) TagTimelineGet(
 
 		// Database load function.
 		func(pg *paging.Page) (statuses []*gtsmodel.Status, err error) {
-			return p.state.DB.GetTagTimeline(ctx, tag.ID, pg)
+			return p.state.DB.GetTagTimeline(ctx, tagID, pg)
 		},
 
 		// Filtering function,
 		// i.e. filter before caching.
+		nil,
+
+		// Post filtering funtion,
+		// i.e. filter after caching.
 		func(s *gtsmodel.Status) bool {
 
 			// Check the visibility of passed status to requesting user.
@@ -117,26 +118,24 @@ func (p *Processor) TagTimelineGet(
 
 			return false
 		},
-
-		// Post filtering funtion,
-		// i.e. filter after caching.
-		nil,
 	)
 }
 
 func (p *Processor) getTag(ctx context.Context, tagName string) (*gtsmodel.Tag, gtserror.WithCode) {
-	// Normalize + validate tag name.
-	tagNameNormal, ok := text.NormalizeHashtag(tagName)
+	// Normalize and validate provided tag name.
+	normal, ok := text.NormalizeHashtag(tagName)
 	if !ok {
-		err := gtserror.Newf("string '%s' could not be normalized to a valid hashtag", tagName)
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		const text = "invalid hashtag name"
+		return nil, gtserror.NewErrorBadRequest(
+			errors.New(text),
+			text,
+		)
 	}
 
 	// Ensure we have tag with this name in the db.
-	tag, err := p.state.DB.GetTagByName(ctx, tagNameNormal)
+	tag, err := p.state.DB.GetTagByName(ctx, normal)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		// Real db error.
-		err = gtserror.Newf("db error getting tag by name: %w", err)
+		err := gtserror.Newf("db error getting tag by name: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

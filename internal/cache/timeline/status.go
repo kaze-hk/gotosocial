@@ -54,13 +54,6 @@ type StatusMeta struct {
 	// to it being a recently repeated boost.
 	repeatBoost bool
 
-	// prepared contains prepared frontend API
-	// model for the referenced status. This may
-	// or may-not be nil depending on whether the
-	// status has been "unprepared" since the last
-	// call to "prepare" the frontend model.
-	prepared *apimodel.Status
-
 	// loaded is a temporary field that may be
 	// set for a newly loaded timeline status
 	// so that statuses don't need to be loaded
@@ -88,7 +81,7 @@ type StatusMeta struct {
 // This unfortunately can lead to situations where posts need
 // to be fetched from the database, but the cache isn't aware
 // they exist and instead returns an incomplete selection.
-// This problem is best outlined by the follow simple example:
+// This problem is best outlined by the following simple example:
 //
 // "what if my timeline cache contains posts 0-to-6 and 8-to-12,
 // and i make a request for posts between 4-and-10 with no limit,
@@ -147,11 +140,6 @@ func (t *StatusTimeline) Init(cap int) {
 
 		// Timeline item copy function.
 		Copy: func(s *StatusMeta) *StatusMeta {
-			var prepared *apimodel.Status
-			if s.prepared != nil {
-				prepared = new(apimodel.Status)
-				*prepared = *s.prepared
-			}
 			return &StatusMeta{
 				ID:               s.ID,
 				AccountID:        s.AccountID,
@@ -159,7 +147,6 @@ func (t *StatusTimeline) Init(cap int) {
 				BoostOfAccountID: s.BoostOfAccountID,
 				repeatBoost:      s.repeatBoost,
 				loaded:           nil, // NEVER stored
-				prepared:         prepared,
 			}
 		},
 	})
@@ -529,9 +516,9 @@ func loadStatusTimeline(
 	return apiStatuses, nil
 }
 
-// InsertOne allows you to insert a single status into the timeline, with optional prepared API model.
-// The return value indicates whether status should be skipped from streams, e.g. if already boosted recently.
-func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.Status) (skip bool) {
+// InsertOne allows you to insert a single status into the timeline. The return value
+// indicates whether status should be skipped from streams, e.g. if already boosted recently.
+func (t *StatusTimeline) InsertOne(status *gtsmodel.Status) (skip bool) {
 
 	// If timeline no preloaded, i.e.
 	// no-one using it, don't insert.
@@ -576,7 +563,6 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 		BoostOfAccountID: status.BoostOfAccountID,
 		repeatBoost:      skip,
 		loaded:           nil,
-		prepared:         prepared,
 	})
 
 	return
@@ -634,74 +620,6 @@ func (t *StatusTimeline) RemoveByAccountIDs(accountIDs ...string) {
 	t.cache.Invalidate(t.idx_BoostOfAccountID, keys...)
 }
 
-// UnprepareByStatusIDs removes cached frontend API models for all cached
-// timeline entries pertaining to status ID, including boosts of given status.
-func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
-	keys := make([]structr.Key, len(statusIDs))
-	if len(keys) != len(statusIDs) {
-		panic(gtserror.New("BCE"))
-	}
-
-	// Nil check indices outside loops.
-	if t.idx_ID == nil ||
-		t.idx_BoostOfID == nil {
-		panic("indices are nil")
-	}
-
-	// Convert statusIDs to index keys.
-	for i, id := range statusIDs {
-		keys[i] = structr.MakeKey(id)
-	}
-
-	// Unprepare all statuses stored under StatusMeta.ID.
-	for meta := range t.cache.RangeKeysUnsafe(t.idx_ID, keys...) {
-		meta.prepared = nil
-	}
-
-	// Unprepare all statuses stored under StatusMeta.BoostOfID.
-	for meta := range t.cache.RangeKeysUnsafe(t.idx_BoostOfID, keys...) {
-		meta.prepared = nil
-	}
-}
-
-// UnprepareByAccountIDs removes cached frontend API models for all cached
-// timeline entries authored by account ID, including boosts by account ID.
-func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
-	keys := make([]structr.Key, len(accountIDs))
-	if len(keys) != len(accountIDs) {
-		panic(gtserror.New("BCE"))
-	}
-
-	// Nil check indices outside loops.
-	if t.idx_AccountID == nil ||
-		t.idx_BoostOfAccountID == nil {
-		panic("indices are nil")
-	}
-
-	// Convert accountIDs to index keys.
-	for i, id := range accountIDs {
-		keys[i] = structr.MakeKey(id)
-	}
-
-	// Unprepare all statuses stored under StatusMeta.AccountID.
-	for meta := range t.cache.RangeKeysUnsafe(t.idx_AccountID, keys...) {
-		meta.prepared = nil
-	}
-
-	// Unprepare all statuses stored under StatusMeta.BoostOfAccountID.
-	for meta := range t.cache.RangeKeysUnsafe(t.idx_BoostOfAccountID, keys...) {
-		meta.prepared = nil
-	}
-}
-
-// UnprepareAll removes cached frontend API
-// models for all cached timeline entries.
-func (t *StatusTimeline) UnprepareAll() {
-	for _, value := range t.cache.RangeUnsafe(structr.Asc) {
-		value.prepared = nil
-	}
-}
-
 // Trim will ensure that receiving timeline is less than or
 // equal in length to the given threshold percentage of the
 // timeline's preconfigured maximum capacity. This will always
@@ -748,20 +666,16 @@ func prepareStatuses(
 			continue
 		}
 
-		if meta.prepared == nil {
-			var err error
-
-			// Prepare the provided status to frontend.
-			meta.prepared, err = prepareAPI(meta.loaded)
-			if err != nil {
-				log.Errorf(ctx, "error preparing status %s: %v", meta.loaded.URI, err)
-				continue
-			}
+		// Prepare provided status for frontend.
+		prepared, err := prepareAPI(meta.loaded)
+		if err != nil {
+			log.Errorf(ctx, "error preparing status %s: %v", meta.loaded.URI, err)
+			continue
 		}
 
-		// Append to return slice.
-		if meta.prepared != nil {
-			apiStatuses = append(apiStatuses, meta.prepared)
+		// Append return slice.
+		if prepared != nil {
+			apiStatuses = append(apiStatuses, prepared)
 		}
 	}
 
@@ -816,7 +730,6 @@ func toStatusMeta(in []*StatusMeta, statuses []*gtsmodel.Status) []*StatusMeta {
 			BoostOfID:        s.BoostOfID,
 			BoostOfAccountID: s.BoostOfAccountID,
 			loaded:           s,
-			prepared:         nil,
 		}
 	})
 }

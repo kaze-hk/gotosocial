@@ -68,10 +68,6 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 	// Invalidate this account's Move(s).
 	c.DB.Move.Invalidate("OriginURI", account.URI)
 	c.DB.Move.Invalidate("TargetURI", account.URI)
-
-	// Invalidate cached timeline author entries.
-	c.Timelines.Home.UnprepareByAccountIDs(account.ID)
-	c.Timelines.List.UnprepareByAccountIDs(account.ID)
 }
 
 func (c *Caches) OnInvalidateApplication(app *gtsmodel.Application) {
@@ -287,19 +283,11 @@ func (c *Caches) OnInvalidateMedia(media *gtsmodel.MediaAttachment) {
 		(media.Header != nil && *media.Header) {
 		// Invalidate cache of attaching account.
 		c.DB.Account.Invalidate("ID", media.AccountID)
-
-		// Invalidate cached timeline author entries.
-		c.Timelines.Home.UnprepareByAccountIDs(media.AccountID)
-		c.Timelines.List.UnprepareByAccountIDs(media.AccountID)
 	}
 
 	if media.StatusID != "" {
 		// Invalidate cache of attaching status.
 		c.DB.Status.Invalidate("ID", media.StatusID)
-
-		// Invalidate cached timeline status entries.
-		c.Timelines.Home.UnprepareByStatusIDs(media.StatusID)
-		c.Timelines.List.UnprepareByStatusIDs(media.StatusID)
 	}
 }
 
@@ -309,10 +297,6 @@ func (c *Caches) OnInvalidatePoll(poll *gtsmodel.Poll) {
 
 	// Invalidate cache of poll vote IDs.
 	c.DB.PollVoteIDs.Invalidate(poll.ID)
-
-	// Invalidate cached timeline status entries.
-	c.Timelines.Home.UnprepareByStatusIDs(poll.StatusID)
-	c.Timelines.List.UnprepareByStatusIDs(poll.StatusID)
 }
 
 func (c *Caches) OnInvalidatePollVote(vote *gtsmodel.PollVote) {

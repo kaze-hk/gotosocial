@@ -44,19 +44,38 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 		return gtserror.Newf("error populating status with id %s: %w", status.ID, err)
 	}
 
+	// Local and public timeline caches
+	// are global, i.e. *not* per-user,
+	// so we only want to insert once.
+	var localOnce, publicOnce bool
+
 	// Timeline the status for local users
 	// on the public and local timelines.
 	s.timelineStatusForPublic(ctx, status,
 
 		// local timelining and streaming function
 		func(account *gtsmodel.Account, apiStatus *apimodel.Status) {
-			// TODO: here it can be inserted into local timeline cache
+			if !localOnce {
+				localOnce = true
+
+				// Insert the status into the local timeline cache.
+				_ = s.State.Caches.Timelines.Local.InsertOne(status)
+			}
+
+			// Stream the status model as local timeline update event.
 			s.Stream.Update(ctx, account, apiStatus, stream.TimelineLocal)
 		},
 
 		// public timelining and streaming function
 		func(account *gtsmodel.Account, apiStatus *apimodel.Status) {
-			// TODO: here it can be inserted into public timeline cache
+			if !publicOnce {
+				publicOnce = true
+
+				// Insert the status into the public timeline cache.
+				_ = s.State.Caches.Timelines.Public.InsertOne(status)
+			}
+
+			// Stream the status model as public timeline update event.
 			s.Stream.Update(ctx, account, apiStatus, stream.TimelinePublic)
 		},
 	)
@@ -68,11 +87,9 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 
 		// home timelining and streaming function
 		func(account *gtsmodel.Account, apiStatus *apimodel.Status) {
-			timeline := s.State.Caches.Timelines.Home.MustGet(account.ID)
 
-			// Insert status to timeline cache regardless of
-			// if API model was succesfully prepared or not.
-			repeatBoost := timeline.InsertOne(status, apiStatus)
+			// Insert this new status into the relevant list timeline cache.
+			repeatBoost := s.State.Caches.Timelines.Home.InsertOne(account.ID, status)
 
 			if !repeatBoost {
 				// Only stream if not repeated boost of recent status.
@@ -82,11 +99,9 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 
 		// list timelining and streaming function
 		func(list *gtsmodel.List, account *gtsmodel.Account, apiStatus *apimodel.Status) {
-			timeline := s.State.Caches.Timelines.List.MustGet(list.ID)
 
-			// Insert status to timeline cache regardless of
-			// if API model was succesfully prepared or not.
-			repeatBoost := timeline.InsertOne(status, apiStatus)
+			// Insert this new status into the relevant list timeline cache.
+			repeatBoost := s.State.Caches.Timelines.List.InsertOne(list.ID, status)
 
 			if !repeatBoost {
 				// Only stream if not repeated boost of recent status.
@@ -108,6 +123,9 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 			}
 		},
 	)
+
+	// Append to any tag timelines.
+	s.timelineStatusForTags(status)
 
 	// Notify each local account mentioned by status.
 	if err := s.notifyMentions(ctx, status); err != nil {
@@ -547,6 +565,34 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 	}
 }
 
+// timelineStatusForTags attempts to insert given status into relevant tag timeline caches.
+func (s *Surface) timelineStatusForTags(status *gtsmodel.Status) {
+	if status.Visibility != gtsmodel.VisibilityPublic ||
+		status.BoostOfID != "" {
+		// Only include "public" non-boost
+		// statuses in tag timelines.
+		return
+	}
+
+	// Gather timelineable tag IDs from status.
+	tagIDs := xslices.GatherIf(nil, status.Tags,
+		func(tag *gtsmodel.Tag) (string, bool) {
+			return tag.ID, (*tag.Useable) &&
+				(*tag.Listable)
+		})
+
+	if len(tagIDs) == 0 {
+		// No tags to
+		// act on.
+		return
+	}
+
+	for _, tagID := range tagIDs {
+		// Insert new status into the relevant tag timeline cache.
+		_ = s.State.Caches.Timelines.Tag.InsertOne(tagID, status)
+	}
+}
+
 // prepareStatusForTimeline attempts to prepare the given status for
 // a timeline owned by the given account, first passing it through
 // appropriate visibility function, mute checks and status filtering
@@ -665,8 +711,7 @@ func (s *Surface) isListEligible(
 		//
 		// Check if replied-to account is
 		// followed by list owner account.
-		follows, err := s.State.DB.IsFollowing(
-			ctx,
+		follows, err := s.State.DB.IsFollowing(ctx,
 			list.AccountID,
 			status.InReplyToAccountID,
 		)
@@ -684,30 +729,21 @@ func (s *Surface) isListEligible(
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
 func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) {
+	s.State.Caches.Timelines.Public.RemoveByStatusIDs(statusID)
+	s.State.Caches.Timelines.Local.RemoveByStatusIDs(statusID)
 	s.State.Caches.Timelines.Home.RemoveByStatusIDs(statusID)
 	s.State.Caches.Timelines.List.RemoveByStatusIDs(statusID)
+	s.State.Caches.Timelines.Tag.RemoveByStatusIDs(statusID)
 	s.Stream.Delete(ctx, statusID)
-}
-
-// invalidateStatusFromTimelines does cache invalidation on the given status by
-// unpreparing it from all timelines, forcing it to be prepared again (with updated
-// stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
-// both for the status itself, and for any boosts of the status.
-func (s *Surface) invalidateStatusFromTimelines(statusID string) {
-	s.State.Caches.Timelines.Home.UnprepareByStatusIDs(statusID)
-	s.State.Caches.Timelines.List.UnprepareByStatusIDs(statusID)
 }
 
 // removeTimelineEntriesByAccount removes all cached timeline entries authored by account ID.
 func (s *Surface) removeTimelineEntriesByAccount(accountID string) {
+	s.State.Caches.Timelines.Public.RemoveByAccountIDs(accountID)
+	s.State.Caches.Timelines.Local.RemoveByAccountIDs(accountID)
 	s.State.Caches.Timelines.Home.RemoveByAccountIDs(accountID)
 	s.State.Caches.Timelines.List.RemoveByAccountIDs(accountID)
-}
-
-// removeTimelineEntriesByAccount invalidates all cached timeline entries authored by account ID.
-func (s *Surface) invalidateTimelineEntriesByAccount(accountID string) {
-	s.State.Caches.Timelines.Home.UnprepareByAccountIDs(accountID)
-	s.State.Caches.Timelines.List.UnprepareByAccountIDs(accountID)
+	s.State.Caches.Timelines.Tag.RemoveByAccountIDs(accountID)
 }
 
 func (s *Surface) removeRelationshipFromTimelines(ctx context.Context, timelineAccountID string, targetAccountID string) {

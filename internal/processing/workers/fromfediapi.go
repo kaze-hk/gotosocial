@@ -373,13 +373,6 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
-	if status.InReplyToID != "" {
-		// Interaction counts changed on the replied status; uncache the
-		// prepared version from all timelines. The status dereferencer
-		// functions will ensure necessary ancestors exist before this point.
-		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
-	}
-
 	return nil
 }
 
@@ -483,10 +476,6 @@ func (p *fediAPI) CreateReplyRequest(ctx context.Context, fMsg *messages.FromFed
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
-	// Interaction counts changed on the replied status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
-
 	return nil
 }
 
@@ -530,9 +519,6 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 		}
 	}
 
-	// Interaction counts changed, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(status.ID)
-
 	return nil
 }
 
@@ -564,9 +550,6 @@ func (p *fediAPI) UpdatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 			log.Errorf(ctx, "error federating status update: %v", err)
 		}
 	}
-
-	// Interaction counts changed, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(reply.ID)
 
 	return nil
 }
@@ -700,10 +683,6 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
 
-	// Interaction counts changed on the faved status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(fave.StatusID)
-
 	return nil
 }
 
@@ -780,10 +759,6 @@ func (p *fediAPI) CreateLikeRequest(ctx context.Context, fMsg *messages.FromFedi
 	if err := p.surface.notifyFave(ctx, req.Like); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
-
-	// Interaction counts changed on the faved status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(req.Like.StatusID)
 
 	return nil
 }
@@ -897,10 +872,6 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		log.Errorf(ctx, "error notifying announce: %v", err)
 	}
 
-	// Interaction counts changed on the original status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
-
 	return nil
 }
 
@@ -988,10 +959,6 @@ func (p *fediAPI) CreateAnnounceRequest(ctx context.Context, fMsg *messages.From
 	if err := p.surface.timelineAndNotifyStatus(ctx, boost); err != nil {
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
-
-	// Interaction counts changed on the boosted status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
 	return nil
 }
@@ -1099,9 +1066,6 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg *messages.FromFediAPI)
 		log.Errorf(ctx, "error refreshing account: %v", err)
 	}
 
-	// Account representation has changed, invalidate from timelines.
-	p.surface.invalidateTimelineEntriesByAccount(account.ID)
-
 	return nil
 }
 
@@ -1130,10 +1094,6 @@ func (p *fediAPI) AcceptReply(ctx context.Context, fMsg *messages.FromFediAPI) e
 	if err := p.federate.CreateStatus(ctx, reply); err != nil {
 		log.Errorf(ctx, "error federating announce: %v", err)
 	}
-
-	// Interaction counts changed on the replied-to status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
 
 	return nil
 }
@@ -1179,16 +1139,6 @@ func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFed
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
-	// Interaction counts changed on the interacted status;
-	// uncache the prepared version from all timelines.
-	if reply.InReplyToID != "" {
-		p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
-	}
-
-	if reply.BoostOfID != "" {
-		p.surface.invalidateStatusFromTimelines(reply.BoostOfID)
-	}
-
 	return nil
 }
 
@@ -1230,10 +1180,6 @@ func (p *fediAPI) AcceptPoliteReplyRequest(ctx context.Context, fMsg *messages.F
 		log.Errorf(ctx, "error federating announce: %v", err)
 	}
 
-	// Interaction counts changed on the replied-to status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
-
 	return nil
 }
 
@@ -1252,10 +1198,6 @@ func (p *fediAPI) AcceptAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 	if err := p.federate.Announce(ctx, boost); err != nil {
 		log.Errorf(ctx, "error federating announce: %v", err)
 	}
-
-	// Interaction counts changed on the boosted status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
 	return nil
 }
@@ -1295,9 +1237,6 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 	if err := p.surface.timelineAndNotifyStatusUpdate(ctx, status); err != nil {
 		log.Errorf(ctx, "error streaming status edit: %v", err)
 	}
-
-	// Status representation changed, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(status.ID)
 
 	return nil
 }
@@ -1346,12 +1285,6 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		copyToSinBin,
 	); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
-	}
-
-	if status.InReplyToID != "" {
-		// Interaction counts changed on the replied status;
-		// uncache the prepared version from all timelines.
-		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
 
 	return nil
@@ -1552,10 +1485,6 @@ func (p *fediAPI) UndoAnnounce(
 	// Remove the boost wrapper from all timelines.
 	p.surface.deleteStatusFromTimelines(ctx, boost.ID)
 
-	// Interaction counts changed on the boosted status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
-
 	return nil
 }
 
@@ -1565,9 +1494,7 @@ func (p *fediAPI) UndoFave(ctx context.Context, fMsg *messages.FromFediAPI) erro
 		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", fMsg.GTSModel)
 	}
 
-	// Interaction counts changed on the faved status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(statusFave.StatusID)
+	_ = statusFave
 
 	return nil
 }

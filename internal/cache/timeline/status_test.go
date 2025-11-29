@@ -189,71 +189,6 @@ func TestStatusTimelineLoadLimit(t *testing.T) {
 	assert.Len(t, apiStatuses, page.Limit)
 }
 
-func TestStatusTimelineUnprepare(t *testing.T) {
-	var tt StatusTimeline
-	tt.Init(1000)
-
-	// Clone the input test status data.
-	data := slices.Clone(testStatusMeta)
-
-	// Bodge some 'prepared'
-	// models on test data.
-	for _, meta := range data {
-		meta.prepared = &apimodel.Status{}
-	}
-
-	// Insert test data into timeline.
-	_ = tt.cache.Insert(data...)
-
-	for _, meta := range data {
-		// Unprepare this status with ID.
-		tt.UnprepareByStatusIDs(meta.ID)
-
-		// Check the item is unprepared.
-		value := getStatusByID(&tt, meta.ID)
-		assert.Nil(t, value.prepared)
-	}
-
-	// Clear and reinsert.
-	tt.cache.Clear()
-	tt.cache.Insert(data...)
-
-	for _, meta := range data {
-		// Unprepare this status with boost ID.
-		tt.UnprepareByStatusIDs(meta.BoostOfID)
-
-		// Check the item is unprepared.
-		value := getStatusByID(&tt, meta.ID)
-		assert.Nil(t, value.prepared)
-	}
-
-	// Clear and reinsert.
-	tt.cache.Clear()
-	tt.cache.Insert(data...)
-
-	for _, meta := range data {
-		// Unprepare this status with account ID.
-		tt.UnprepareByAccountIDs(meta.AccountID)
-
-		// Check the item is unprepared.
-		value := getStatusByID(&tt, meta.ID)
-		assert.Nil(t, value.prepared)
-	}
-
-	// Clear and reinsert.
-	tt.cache.Clear()
-	tt.cache.Insert(data...)
-
-	for _, meta := range data {
-		// Unprepare this status with boost account ID.
-		tt.UnprepareByAccountIDs(meta.BoostOfAccountID)
-
-		// Check the item is unprepared.
-		value := getStatusByID(&tt, meta.ID)
-		assert.Nil(t, value.prepared)
-	}
-}
-
 func TestStatusTimelineRemove(t *testing.T) {
 	var tt StatusTimeline
 	tt.Init(1000)
@@ -342,7 +277,7 @@ func TestStatusTimelineInserts(t *testing.T) {
 
 	// Insert boost into the timeline
 	// checking for 'repeatBoost' notifier.
-	repeatBoost := tt.InsertOne(boost, nil)
+	repeatBoost := tt.InsertOne(boost)
 	assert.True(t, repeatBoost)
 
 	// This should be the new 'max'
@@ -357,8 +292,8 @@ func TestStatusTimelineInserts(t *testing.T) {
 
 	// Insert boosts into the timeline, ensuring
 	// first is not 'repeat', but second one is.
-	repeatBoost1 := tt.InsertOne(boost1, nil)
-	repeatBoost2 := tt.InsertOne(boost2, nil)
+	repeatBoost1 := tt.InsertOne(boost1)
+	repeatBoost2 := tt.InsertOne(boost2)
 	assert.False(t, repeatBoost1)
 	assert.True(t, repeatBoost2)
 }

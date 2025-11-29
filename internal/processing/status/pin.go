@@ -120,11 +120,6 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := p.c.InvalidateTimelinedStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
-		err = gtserror.Newf("error invalidating status from timelines: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
@@ -179,11 +174,6 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 		"statuses_pinned_count",
 	); err != nil {
 		err = gtserror.Newf("db error updating stats: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if err := p.c.InvalidateTimelinedStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
-		err = gtserror.Newf("error invalidating status from timelines: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

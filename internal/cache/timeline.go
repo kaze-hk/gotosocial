@@ -18,11 +18,21 @@
 package cache
 
 import (
+	"time"
+
 	"code.superseriousbusiness.org/gotosocial/internal/cache/timeline"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
 type TimelineCaches struct {
+	// Public provides an instance-level
+	// cache of the public status timeline.
+	Public timeline.StatusTimeline
+
+	// Local provides an instance-level
+	// cache of the local status timeline.
+	Local timeline.StatusTimeline
+
 	// Home provides a concurrency-safe map of status timeline
 	// caches for home timelines, keyed by home's account ID.
 	Home timeline.StatusTimelines
@@ -30,22 +40,56 @@ type TimelineCaches struct {
 	// List provides a concurrency-safe map of status
 	// timeline caches for lists, keyed by list ID.
 	List timeline.StatusTimelines
+
+	// Tag provides a concurrency-safe map of status
+	// timeline caches for tags, keyed by tag ID.
+	Tag timeline.StatusTimelines
+}
+
+func (c *Caches) initPublicTimeline() {
+	// TODO: configurable
+	cap := 800
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.Timelines.Public.Init(cap)
+}
+
+func (c *Caches) initLocalTimeline() {
+	// TODO: configurable
+	cap := 800
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.Timelines.Local.Init(cap)
 }
 
 func (c *Caches) initHomeTimelines() {
 	// TODO: configurable
+	timeout := 30 * time.Minute
 	cap := 800
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.Timelines.Home.Init(cap)
+	c.Timelines.Home.Init(cap, timeout)
 }
 
 func (c *Caches) initListTimelines() {
 	// TODO: configurable
+	timeout := 30 * time.Minute
 	cap := 800
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.Timelines.List.Init(cap)
+	c.Timelines.List.Init(cap, timeout)
+}
+
+func (c *Caches) initTagTimelines() {
+	// TODO: configurable
+	timeout := 10 * time.Minute
+	cap := 400
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.Timelines.Tag.Init(cap, timeout)
 }

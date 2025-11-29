@@ -366,12 +366,6 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		}
 	}
 
-	if status.InReplyToID != "" {
-		// Interaction counts changed on the replied status;
-		// uncache the prepared version from all timelines.
-		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
-	}
-
 	return nil
 }
 
@@ -409,9 +403,6 @@ func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg *messages.FromClien
 			log.Errorf(ctx, "error federating poll vote: %v", err)
 		}
 	}
-
-	// Interaction counts changed on the source status, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(vote.Poll.StatusID)
 
 	return nil
 }
@@ -559,10 +550,6 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		log.Errorf(ctx, "error federating like: %v", err)
 	}
 
-	// Interaction counts changed on the faved status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(fave.StatusID)
-
 	return nil
 }
 
@@ -663,10 +650,6 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		log.Errorf(ctx, "error federating announce: %v", err)
 	}
 
-	// Interaction counts changed on the boosted status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
-
 	return nil
 }
 
@@ -719,9 +702,6 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error streaming status edit: %v", err)
 	}
 
-	// Status representation has changed, invalidate from timelines.
-	p.surface.invalidateStatusFromTimelines(status.ID)
-
 	return nil
 }
 
@@ -734,9 +714,6 @@ func (p *clientAPI) UpdateAccount(ctx context.Context, cMsg *messages.FromClient
 	if err := p.federate.UpdateAccount(ctx, account); err != nil {
 		log.Errorf(ctx, "error federating account update: %v", err)
 	}
-
-	// Account representation has changed, invalidate from timelines.
-	p.surface.invalidateTimelineEntriesByAccount(account.ID)
 
 	return nil
 }
@@ -860,10 +837,6 @@ func (p *clientAPI) UndoFave(ctx context.Context, cMsg *messages.FromClientAPI) 
 		log.Errorf(ctx, "error federating like undo: %v", err)
 	}
 
-	// Interaction counts changed on the faved status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(statusFave.StatusID)
-
 	return nil
 }
 
@@ -883,10 +856,6 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg *messages.FromClientA
 	if err := p.federate.UndoAnnounce(ctx, status); err != nil {
 		log.Errorf(ctx, "error federating announce undo: %v", err)
 	}
-
-	// Interaction counts changed on the boosted status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(status.BoostOfID)
 
 	return nil
 }
@@ -939,12 +908,6 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 
 	if err := p.federate.DeleteStatus(ctx, status); err != nil {
 		log.Errorf(ctx, "error federating status delete: %v", err)
-	}
-
-	if status.InReplyToID != "" {
-		// Interaction counts changed on the replied status;
-		// uncache the prepared version from all timelines.
-		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
 
 	return nil
@@ -1147,10 +1110,6 @@ func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI
 		log.Errorf(ctx, "error federating approval of like: %v", err)
 	}
 
-	// Interaction counts changed on the faved status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(req.Like.StatusID)
-
 	return nil
 }
 
@@ -1171,10 +1130,6 @@ func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAP
 	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
 		log.Errorf(ctx, "error federating approval of reply: %v", err)
 	}
-
-	// Interaction counts changed on the replied status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
 
 	return nil
 }
@@ -1201,10 +1156,6 @@ func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClien
 	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
 		log.Errorf(ctx, "error federating approval of announce: %v", err)
 	}
-
-	// Interaction counts changed on the original status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
 	return nil
 }

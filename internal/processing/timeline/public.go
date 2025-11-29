@@ -61,8 +61,8 @@ func (p *Processor) publicTimelineGet(
 		// can be nil.
 		requester,
 
-		// No cache.
-		nil,
+		// Global public timeline cache.
+		&p.state.Caches.Timelines.Public,
 
 		// Current
 		// page.
@@ -87,6 +87,10 @@ func (p *Processor) publicTimelineGet(
 
 		// Pre-filtering function,
 		// i.e. filter before caching.
+		nil,
+
+		// Post filtering funtion,
+		// i.e. filter after caching.
 		func(s *gtsmodel.Status) bool {
 
 			// Check the visibility of passed status to requesting user.
@@ -109,10 +113,6 @@ func (p *Processor) publicTimelineGet(
 
 			return false
 		},
-
-		// Post filtering funtion,
-		// i.e. filter after caching.
-		nil,
 	)
 }
 
@@ -130,8 +130,8 @@ func (p *Processor) localTimelineGet(
 		// can be nil.
 		requester,
 
-		// No cache.
-		nil,
+		// Global local timeline cache.
+		&p.state.Caches.Timelines.Local,
 
 		// Current
 		// page.
@@ -156,6 +156,10 @@ func (p *Processor) localTimelineGet(
 
 		// Filtering function,
 		// i.e. filter before caching.
+		nil,
+
+		// Post filtering funtion,
+		// i.e. filter after caching.
 		func(s *gtsmodel.Status) bool {
 
 			// Check the visibility of passed status to requesting user.
@@ -176,9 +180,5 @@ func (p *Processor) localTimelineGet(
 
 			return false
 		},
-
-		// Post filtering funtion,
-		// i.e. filter after caching.
-		nil,
 	)
 }
