@@ -1,6 +1,7 @@
 package mempool
 
 import (
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -70,18 +71,15 @@ const (
 )
 
 type internal struct {
-	// fast-access ring-buffer of
-	// pointers accessible by index.
-	//
-	// if Go ever exposes goroutine IDs
-	// to us we can make this a lot faster.
-	ring  [20]unsafe.Pointer
-	index atomic.Uint32
-
 	// underlying pool and
 	// slow mutex protection.
 	pool  UnsafeSimplePool
 	mutex sync.Mutex
+
+	// fast-access ring-buffer of
+	// pointers accessible by PID
+	// (running goroutine index).
+	ring atomic_pointer
 }
 
 func (p *internal) Check(fn func(current, victim int) bool) func(current, victim int) bool {
@@ -100,40 +98,131 @@ func (p *internal) Check(fn func(current, victim int) bool) func(current, victim
 }
 
 func (p *internal) Get() unsafe.Pointer {
-	const cap = uint32(cap(p.ring))
-	idx := p.index.Load() % cap
-	if ptr := atomic.SwapPointer(&p.ring[idx], nil); ptr != nil {
-		p.index.Add(^uint32(0)) // i.e. -1
+	pid := procPin()
+	ptr := p.local(pid).Swap(nil)
+	procUnpin()
+
+	if ptr != nil {
 		return ptr
 	}
+
 	p.mutex.Lock()
-	ptr := p.pool.Get()
+	ptr = p.pool.Get()
 	p.mutex.Unlock()
 	return ptr
 }
 
 func (p *internal) Put(ptr unsafe.Pointer) {
-	const cap = uint32(cap(p.ring))
-	idx := p.index.Add(1) % cap
-	if ptr := atomic.SwapPointer(&p.ring[idx], ptr); ptr != nil {
-		p.mutex.Lock()
-		p.pool.Put(ptr)
-		p.mutex.Unlock()
+	pid := procPin()
+	ptr = p.local(pid).Swap(ptr)
+	procUnpin()
+
+	if ptr == nil {
+		return
 	}
+
+	p.mutex.Lock()
+	p.pool.Put(ptr)
+	p.mutex.Unlock()
 }
 
 func (p *internal) GC() {
-	for i := range p.ring {
-		atomic.StorePointer(&p.ring[i], nil)
-	}
+	p.ring.Store(nil)
 	p.mutex.Lock()
 	p.pool.GC()
 	p.mutex.Unlock()
 }
 
-func (p *internal) Size() int {
+func (p *internal) Size() (sz int) {
+	if ptr := p.ring.Load(); ptr != nil {
+		sz += len(*(*[]pointer_elem)(ptr))
+	}
 	p.mutex.Lock()
-	sz := p.pool.Size()
+	sz += p.pool.Size()
 	p.mutex.Unlock()
-	return sz
+	return
 }
+
+// local returns an atomic_pointer from the fast-access
+// ring buffer for the given goroutine PID index.
+func (p *internal) local(pid uint) *pointer_elem {
+	for {
+		// Load current ring.
+		ptr := p.ring.Load()
+		if ptr != nil {
+
+			// Check if pid within ring length.
+			ring := *(*[]pointer_elem)(ptr)
+			if pid < uint(len(ring)) {
+				return &ring[pid]
+			}
+		}
+
+		// Unpin before calling GOMAXPROCS,
+		// which acquires a blocking mutex
+		// lock on scheduler and may cause
+		// goroutine to be rescheduled.
+		procUnpin()
+
+		// Allocate new ring buffer capable
+		// of accomodating an index of 'pid'.
+		ring := make([]pointer_elem, maxprocs())
+
+		// Repin and get a (potentially)
+		// different goroutine PID index.
+		pid = procPin()
+
+		// Attempt to replace
+		// ring ptr with new.
+		if pid < uint(len(ring)) &&
+			p.ring.CAS(ptr, unsafe.Pointer(&ring)) {
+			return &ring[pid]
+		}
+	}
+}
+
+// atomic_pointer wraps an unsafe.Pointer with
+// receiver methods for their atomic counterparts.
+type atomic_pointer struct{ p unsafe.Pointer }
+
+func (p *atomic_pointer) Load() unsafe.Pointer {
+	return atomic.LoadPointer(&p.p)
+}
+
+func (p *atomic_pointer) Store(ptr unsafe.Pointer) {
+	atomic.StorePointer(&p.p, ptr)
+}
+
+func (p *atomic_pointer) CAS(old, new unsafe.Pointer) bool {
+	return atomic.CompareAndSwapPointer(&p.p, old, new)
+}
+
+// pointer_elem wraps an unsafe.Pointer to make
+// swapping of a slice element nicer on the eyes.
+//
+// THIS IS THE TRUE VIBE CODING, NONE OF THAT LLM
+// DOG-ARSE BULLSHIT. WRITE CODE WITH *NICE VIBES*.
+type pointer_elem struct{ p unsafe.Pointer }
+
+func (p *pointer_elem) Swap(new unsafe.Pointer) unsafe.Pointer {
+	old := p.p
+	p.p = new
+	return old
+}
+
+// maxprocs prevents runtime.GOMAXPROCS() from
+// being inlined, making it more likely for its
+// caller to be capable of being inlined.
+//
+//go:noinline
+func maxprocs() int {
+	return runtime.GOMAXPROCS(0)
+}
+
+// note is int in runtime, but should never be negative.
+//
+//go:linkname procPin runtime.procPin
+func procPin() uint
+
+//go:linkname procUnpin runtime.procUnpin
+func procUnpin()
