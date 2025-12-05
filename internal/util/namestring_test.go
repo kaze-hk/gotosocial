@@ -85,6 +85,8 @@ func (suite *NamestringSuite) TestExtractNamestring() {
 		{in: "@stonerkitty.monster@stonerkitty.monster", username: "stonerkitty.monster", host: "stonerkitty.monster"},
 		{in: "@stonerkitty.monster", username: "stonerkitty.monster"},
 		{in: "@someone@somewhere", username: "someone", host: "somewhere"},
+		{in: "@boobs@⚧.org", username: "boobs", host: "⚧.org"},
+		{in: "@⚧@⚧.org", username: "⚧", host: "⚧.org"},
 		{in: "", err: "couldn't match namestring "},
 	}
 

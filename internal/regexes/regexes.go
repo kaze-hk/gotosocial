@@ -41,8 +41,8 @@ const (
 	accepts   = "accepts"
 
 	alphaNumeric             = `\p{L}\p{M}*|\p{N}`                                       // A single number or script character in any language, including chars with accents.
-	usernameGrp              = `(?:` + alphaNumeric + `|\.|\-|\_)`                       // Non-capturing group that matches against a single valid username character.
-	domainGrp                = `(?:` + alphaNumeric + `|\.|\-|\:)`                       // Non-capturing group that matches against a single valid domain character.
+	usernameGrp              = `(?:` + alphaNumeric + `|\.|\-|\_|` + unicodeEmoji + `)`  // Non-capturing group that matches against a single valid username character, including emojis.
+	domainGrp                = `(?:` + alphaNumeric + `|\.|\-|\:|` + unicodeEmoji + `)`  // Non-capturing group that matches against a single valid domain character, including emojis.
 	mentionName              = `^@(` + usernameGrp + `+)(?:@(` + domainGrp + `+))?$`     // Extract parts of one mention, maybe including domain.
 	mentionFinder            = `(?:^|\s)(@` + usernameGrp + `+(?:@` + domainGrp + `+)?)` // Extract all mentions from a text, each mention may include domain.
 	emojiShortcode           = `\w{1,30}`                                                // Pattern for emoji shortcodes. maximumEmojiShortcodeLength = 30
