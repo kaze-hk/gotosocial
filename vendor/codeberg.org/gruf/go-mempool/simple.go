@@ -15,30 +15,30 @@ type SimplePool[T any] struct {
 	// New is an optionally provided
 	// allocator used when no value
 	// is available for use in pool.
-	New func() T
+	New func() *T
 
 	// Reset is an optionally provided
 	// value resetting function called
 	// on passed value to Put().
-	Reset func(T) bool
+	Reset func(*T) bool
 }
 
-func (p *SimplePool[T]) Get() T {
+func (p *SimplePool[T]) Get() *T {
 	if ptr := p.UnsafeSimplePool.Get(); ptr != nil {
-		return *(*T)(ptr)
+		return (*T)(ptr)
 	}
-	var t T
+	var t *T
 	if p.New != nil {
 		t = p.New()
 	}
 	return t
 }
 
-func (p *SimplePool[T]) Put(t T) {
+func (p *SimplePool[T]) Put(t *T) {
 	if p.Reset != nil && !p.Reset(t) {
 		return
 	}
-	ptr := unsafe.Pointer(&t)
+	ptr := unsafe.Pointer(t)
 	p.UnsafeSimplePool.Put(ptr)
 }
 

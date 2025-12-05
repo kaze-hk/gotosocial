@@ -22,7 +22,7 @@ require (
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv/v2 v2.0.7
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
-	codeberg.org/gruf/go-mempool v0.0.0-20251203105841-4b67fa2f3984
+	codeberg.org/gruf/go-mempool v0.0.0-20251204130024-3960fdb6198a
 	codeberg.org/gruf/go-mmap v0.0.0-20251111184116-345a42dab154
 	codeberg.org/gruf/go-mutexes v1.5.8
 	codeberg.org/gruf/go-runners v1.7.0
@@ -56,7 +56,7 @@ require (
 	github.com/pquerna/otp v1.5.0
 	github.com/rivo/uniseg v0.4.7
 	github.com/spf13/cast v1.10.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1

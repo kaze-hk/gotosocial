@@ -9,23 +9,24 @@ import (
 	"golang.org/x/sys/cpu"
 )
 
-// Pool provides a form of SimplePool
-// with the addition of concurrency safety.
+// Pool provides a form of SimplePool with the
+// addition of concurrency safety, and a fast-access
+// ring buffer to reduce main mutex contention.
 type Pool[T any] struct {
 	UnsafePool
 
 	// New is an optionally provided
 	// allocator used when no value
 	// is available for use in pool.
-	New func() T
+	New func() *T
 
 	// Reset is an optionally provided
 	// value resetting function called
 	// on passed value to Put().
-	Reset func(T) bool
+	Reset func(*T) bool
 }
 
-func NewPool[T any](new func() T, reset func(T) bool, check func(current, victim int) bool) Pool[T] {
+func NewPool[T any](new func() *T, reset func(*T) bool, check func(current, victim int) bool) Pool[T] {
 	return Pool[T]{
 		New:        new,
 		Reset:      reset,
@@ -33,34 +34,50 @@ func NewPool[T any](new func() T, reset func(T) bool, check func(current, victim
 	}
 }
 
-func (p *Pool[T]) Get() T {
+func (p *Pool[T]) Get() *T {
 	if ptr := p.UnsafePool.Get(); ptr != nil {
-		return *(*T)(ptr)
+		return (*T)(ptr)
 	}
-	var t T
+	var t *T
 	if p.New != nil {
 		t = p.New()
 	}
 	return t
 }
 
-func (p *Pool[T]) Put(t T) {
+func (p *Pool[T]) Put(t *T) {
 	if p.Reset != nil && !p.Reset(t) {
 		return
 	}
-	ptr := unsafe.Pointer(&t)
+	ptr := unsafe.Pointer(t)
 	p.UnsafePool.Put(ptr)
 }
 
-// UnsafePool provides a form of UnsafeSimplePool
-// with the addition of concurrency safety.
+func (p *Pool[T]) Shard() PoolShard[T] {
+	return PoolShard[T]{
+		original:        p,
+		UnsafePoolShard: p.UnsafePool.Shard(),
+	}
+}
+
+// UnsafePool provides a form of UnsafeSimplePool with
+// the addition of concurrency safety, and a fast-access
+// ring buffer to reduce main mutex contention.
 type UnsafePool struct {
-	internal
-	_ [cache_line_bytes - unsafe.Sizeof(internal{})%cache_line_bytes]byte
+	pool_internal
+	_ [cache_line_bytes - unsafe.Sizeof(pool_internal{})%cache_line_bytes]byte
+}
+
+// Shard returns a new UnsafePoolShard with a reference
+// to this original pool. See type for more usage info.
+func (p *UnsafePool) Shard() UnsafePoolShard {
+	return UnsafePoolShard{shard_internal: shard_internal{
+		pool: p,
+	}}
 }
 
 func NewUnsafePool(check func(current, victim int) bool) UnsafePool {
-	return UnsafePool{internal: internal{
+	return UnsafePool{pool_internal: pool_internal{
 		pool: UnsafeSimplePool{Check: check},
 	}}
 }
@@ -70,7 +87,7 @@ const (
 	cache_line_bytes = unsafe.Sizeof(cpu.CacheLinePad{})
 )
 
-type internal struct {
+type pool_internal struct {
 	// underlying pool and
 	// slow mutex protection.
 	pool  UnsafeSimplePool
@@ -79,10 +96,10 @@ type internal struct {
 	// fast-access ring-buffer of
 	// pointers accessible by PID
 	// (running goroutine index).
-	ring atomic_pointer
+	ring locals_ring
 }
 
-func (p *internal) Check(fn func(current, victim int) bool) func(current, victim int) bool {
+func (p *pool_internal) Check(fn func(current, victim int) bool) func(current, victim int) bool {
 	p.mutex.Lock()
 	if fn == nil {
 		if p.pool.Check == nil {
@@ -97,9 +114,9 @@ func (p *internal) Check(fn func(current, victim int) bool) func(current, victim
 	return fn
 }
 
-func (p *internal) Get() unsafe.Pointer {
+func (p *pool_internal) Get() unsafe.Pointer {
 	pid := procPin()
-	ptr := p.local(pid).Swap(nil)
+	ptr := p.ring.local(pid).Swap(nil)
 	procUnpin()
 
 	if ptr != nil {
@@ -112,9 +129,9 @@ func (p *internal) Get() unsafe.Pointer {
 	return ptr
 }
 
-func (p *internal) Put(ptr unsafe.Pointer) {
+func (p *pool_internal) Put(ptr unsafe.Pointer) {
 	pid := procPin()
-	ptr = p.local(pid).Swap(ptr)
+	ptr = p.ring.local(pid).Swap(ptr)
 	procUnpin()
 
 	if ptr == nil {
@@ -126,29 +143,39 @@ func (p *internal) Put(ptr unsafe.Pointer) {
 	p.mutex.Unlock()
 }
 
-func (p *internal) GC() {
-	p.ring.Store(nil)
+func (p *pool_internal) GC() {
+	p.ring.clear()
 	p.mutex.Lock()
 	p.pool.GC()
 	p.mutex.Unlock()
 }
 
-func (p *internal) Size() (sz int) {
-	if ptr := p.ring.Load(); ptr != nil {
-		sz += len(*(*[]pointer_elem)(ptr))
-	}
+func (p *pool_internal) Size() (sz int) {
+	sz += p.ring.len()
 	p.mutex.Lock()
 	sz += p.pool.Size()
 	p.mutex.Unlock()
 	return
 }
 
+// locals_ring contains an atomically updated pointer to
+// a ring buffer of pointer_elems, each accessed strictly
+// by a single goroutine of known (and pinned) index.
+//
+// once a ring buffer is potentially in use, it is not
+// possible to access any of the elems except individually
+// within the guarantee of procPin(). even if you call clear(),
+// you can never guarantee that another goroutine doesn't hold
+// a pointer to the old ring buffer and is going to make a non
+// atomic read / write to a particular pointer_elem.
+type locals_ring struct{ p unsafe.Pointer }
+
 // local returns an atomic_pointer from the fast-access
 // ring buffer for the given goroutine PID index.
-func (p *internal) local(pid uint) *pointer_elem {
+func (r *locals_ring) local(pid uint) *pointer_elem {
 	for {
-		// Load current ring.
-		ptr := p.ring.Load()
+		// Load current ring from ptr.
+		ptr := atomic.LoadPointer(&r.p)
 		if ptr != nil {
 
 			// Check if pid within ring length.
@@ -167,6 +194,7 @@ func (p *internal) local(pid uint) *pointer_elem {
 		// Allocate new ring buffer capable
 		// of accomodating an index of 'pid'.
 		ring := make([]pointer_elem, maxprocs())
+		newptr := unsafe.Pointer(&ring)
 
 		// Repin and get a (potentially)
 		// different goroutine PID index.
@@ -175,27 +203,25 @@ func (p *internal) local(pid uint) *pointer_elem {
 		// Attempt to replace
 		// ring ptr with new.
 		if pid < uint(len(ring)) &&
-			p.ring.CAS(ptr, unsafe.Pointer(&ring)) {
+			atomic.CompareAndSwapPointer(&r.p,
+				ptr,
+				newptr,
+			) {
 			return &ring[pid]
 		}
 	}
 }
 
-// atomic_pointer wraps an unsafe.Pointer with
-// receiver methods for their atomic counterparts.
-type atomic_pointer struct{ p unsafe.Pointer }
-
-func (p *atomic_pointer) Load() unsafe.Pointer {
-	return atomic.LoadPointer(&p.p)
+// len returns ring buffer length.
+func (r *locals_ring) len() int {
+	if ptr := atomic.LoadPointer(&r.p); ptr != nil {
+		return len(*(*[]pointer_elem)(ptr))
+	}
+	return 0
 }
 
-func (p *atomic_pointer) Store(ptr unsafe.Pointer) {
-	atomic.StorePointer(&p.p, ptr)
-}
-
-func (p *atomic_pointer) CAS(old, new unsafe.Pointer) bool {
-	return atomic.CompareAndSwapPointer(&p.p, old, new)
-}
+// clear will drop the current pointer to ring buffer.
+func (r *locals_ring) clear() { atomic.StorePointer(&r.p, nil) }
 
 // pointer_elem wraps an unsafe.Pointer to make
 // swapping of a slice element nicer on the eyes.
@@ -215,9 +241,7 @@ func (p *pointer_elem) Swap(new unsafe.Pointer) unsafe.Pointer {
 // caller to be capable of being inlined.
 //
 //go:noinline
-func maxprocs() int {
-	return runtime.GOMAXPROCS(0)
-}
+func maxprocs() int { return runtime.GOMAXPROCS(0) }
 
 // note is int in runtime, but should never be negative.
 //
