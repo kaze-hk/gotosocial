@@ -376,13 +376,20 @@ func NormalizeIncomingValue(item WithValue, rawJSON map[string]interface{}) {
 	item.SetSchemaValue(valueProp)
 }
 
-// NormalizeIncomingOneOf normalizes all oneOf (if any) of the given
-// item, replacing the 'name' field of each oneOf with the raw 'name'
-// value from the raw json object map, and doing sanitization
-// on the result.
+// NormalizeIncomingOneOf normalizes all oneOf|anyOf (if any) of the given
+// item, replacing the 'name' field of each oneOf|anyOf with the raw 'name'
+// value from the raw json object map, and doing sanitization on the result.
 //
 // noop if there are no oneOf; noop if oneOf is not expected format.
-func NormalizeIncomingPollOptions(item WithOneOf, rawJSON map[string]interface{}) {
+func NormalizeIncomingPollOptions(item interface {
+	WithOneOf
+	WithAnyOf
+}, rawJSON map[string]interface{}) {
+	normalizeIncomingWithOneOf(item, rawJSON)
+	normalizeIncomingWithAnyOf(item, rawJSON)
+}
+
+func normalizeIncomingWithOneOf(item WithOneOf, rawJSON map[string]interface{}) {
 	var oneOf []interface{}
 
 	// Get the raw one-of JSON data.
@@ -402,7 +409,7 @@ func NormalizeIncomingPollOptions(item WithOneOf, rawJSON map[string]interface{}
 		return
 	}
 
-	// Check we have useable one-of JSON-vs-unmarshaled data.
+	// Check we have useable one-of JSON vs. unmarshaled data.
 	if l := oneOfProp.Len(); l == 0 || l != len(oneOf) {
 		return
 	}
@@ -425,6 +432,57 @@ func NormalizeIncomingPollOptions(item WithOneOf, rawJSON map[string]interface{}
 
 		// Get the corresponding raw one-of data.
 		rawChoice, ok := oneOf[i].(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		NormalizeIncomingName(choiceable, rawChoice)
+	}
+}
+
+func normalizeIncomingWithAnyOf(item WithAnyOf, rawJSON map[string]interface{}) {
+	var anyOf []interface{}
+
+	// Get the raw any-of JSON data.
+	rawAnyOf, ok := rawJSON["anyOf"]
+	if !ok {
+		return
+	}
+
+	// Convert to slice if not already, so we can iterate.
+	if anyOf, ok = rawAnyOf.([]interface{}); !ok {
+		anyOf = []interface{}{rawAnyOf}
+	}
+
+	// Extract the any-of property from interface.
+	anyOfProp := item.GetActivityStreamsAnyOf()
+	if anyOfProp == nil {
+		return
+	}
+
+	// Check we have useable any-of JSON vs. unmarshaled data.
+	if l := anyOfProp.Len(); l == 0 || l != len(anyOf) {
+		return
+	}
+
+	// Get start and end of iter.
+	start := anyOfProp.Begin()
+	end := anyOfProp.End()
+
+	// Iterate a counter, from start through to end iter item.
+	for i, iter := 0, start; iter != end; i, iter = i+1, iter.Next() {
+		// Get item type.
+		t := iter.GetType()
+
+		// Check fulfills Choiceable type
+		// (this accounts for nil input type).
+		choiceable, ok := t.(PollOptionable)
+		if !ok {
+			continue
+		}
+
+		// Get the corresponding raw one-of data.
+		rawChoice, ok := anyOf[i].(map[string]interface{})
 		if !ok {
 			continue
 		}
@@ -461,21 +519,7 @@ func NormalizeIncomingPollOptions(item WithOneOf, rawJSON map[string]interface{}
 //
 // Noop for items with no attachments, or with attachments that are already a slice.
 func NormalizeOutgoingAttachmentProp(item WithAttachment, rawJSON map[string]interface{}) {
-	attachment, ok := rawJSON["attachment"]
-	if !ok {
-		// No 'attachment',
-		// nothing to change.
-		return
-	}
-
-	if _, ok := attachment.([]interface{}); ok {
-		// Already slice,
-		// nothing to change.
-		return
-	}
-
-	// Coerce single-object to slice.
-	rawJSON["attachment"] = []interface{}{attachment}
+	coercePropertyToArray(rawJSON, "attachment")
 }
 
 // NormalizeOutgoingAlsoKnownAsProp replaces single-entry alsoKnownAs values with
@@ -491,21 +535,7 @@ func NormalizeOutgoingAttachmentProp(item WithAttachment, rawJSON map[string]int
 //
 // Noop for items with no attachments, or with attachments that are already a slice.
 func NormalizeOutgoingAlsoKnownAsProp(item WithAlsoKnownAs, rawJSON map[string]interface{}) {
-	alsoKnownAs, ok := rawJSON["alsoKnownAs"]
-	if !ok {
-		// No 'alsoKnownAs',
-		// nothing to change.
-		return
-	}
-
-	if _, ok := alsoKnownAs.([]interface{}); ok {
-		// Already slice,
-		// nothing to change.
-		return
-	}
-
-	// Coerce single-object to slice.
-	rawJSON["alsoKnownAs"] = []interface{}{alsoKnownAs}
+	coercePropertyToArray(rawJSON, "alsoKnownAs")
 }
 
 // NormalizeOutgoingContentProp normalizes go-fed's funky formatting of content and
@@ -616,7 +646,7 @@ func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface
 //		}
 //	}
 //
-// Noop for items with no attachments, or with attachments that are already a slice.
+// Noop for items with no interaction policies, or with policies that are already a slice.
 func NormalizeOutgoingInteractionPolicyProp(item WithInteractionPolicy, rawJSON map[string]interface{}) {
 	policy, ok := rawJSON["interactionPolicy"]
 	if !ok {
@@ -637,42 +667,20 @@ func NormalizeOutgoingInteractionPolicyProp(item WithInteractionPolicy, rawJSON 
 		"canReply",
 		"canAnnounce",
 	} {
-		// Either "canAnnounce",
-		// "canLike", or "canApprove"
-		rulesVal, ok := policyMap[rulesKey]
+		// Either "canAnnounce", "canLike", or "canApprove"
+		rulesValMap, ok := policyMap[rulesKey].(map[string]interface{})
 		if !ok {
-			// Not set.
-			return
-		}
 
-		rulesValMap, ok := rulesVal.(map[string]interface{})
-		if !ok {
 			// Malformed or not
-			// present skip.
+			// present, skip it.
 			return
 		}
 
-		for _, PolicyValuesKey := range []string{
-			"automaticApproval",
-			"manualApproval",
-			"always",           // deprecated
-			"approvalRequired", // deprecated
-		} {
-			PolicyValuesVal, ok := rulesValMap[PolicyValuesKey]
-			if !ok {
-				// Not set.
-				continue
-			}
-
-			if _, ok := PolicyValuesVal.([]interface{}); ok {
-				// Already slice,
-				// nothing to change.
-				continue
-			}
-
-			// Coerce single-object to slice.
-			rulesValMap[PolicyValuesKey] = []interface{}{PolicyValuesVal}
-		}
+		// Coerce single objects to arrays.
+		coercePropertyToArray(rulesValMap, "automaticApproval")
+		coercePropertyToArray(rulesValMap, "manualApproval")
+		coercePropertyToArray(rulesValMap, "always")           // deprecated
+		coercePropertyToArray(rulesValMap, "approvalRequired") // deprecated
 	}
 }
 
@@ -765,4 +773,52 @@ func NormalizeOutgoingObjectProp(item WithObject, rawJSON map[string]interface{}
 	}
 
 	return nil
+}
+
+// NormalizeOutgoingOneOrAnyOfProp replaces single-entry oneOf or anyOf values
+// with single-entry arrays, for better compatibility with other AP implementations.
+//
+// Ie:
+//
+//	"oneOf": {}
+//
+// or
+//
+//	"anyOf": {}
+//
+// becomes:
+//
+//	"oneOf": [{}]
+//
+// or
+//
+//	"anyOf": [{}]
+//
+// Noop for items with no interaction policies, or with policies that are already a slice.
+func NormalizeOutgoingOneOrAnyOfProp(item interface {
+	WithOneOf
+	WithAnyOf
+}, rawJSON map[string]interface{}) {
+	coercePropertyToArray(rawJSON, "oneOf")
+	coercePropertyToArray(rawJSON, "anyOf")
+}
+
+// coercePropertyToArray coerces the property contained at key in map
+// to an array if it isn't already, i.e. if not an []interface{} type.
+func coercePropertyToArray(data map[string]interface{}, key string) {
+	property, ok := data[key]
+	if !ok {
+		// No key found,
+		// nothing to change.
+		return
+	}
+
+	if _, ok := property.([]interface{}); ok {
+		// Already
+		// a slice.
+		return
+	}
+
+	// Coerce single-object to slice.
+	data[key] = []interface{}{property}
 }

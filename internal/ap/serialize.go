@@ -39,7 +39,7 @@ import (
 //   - Any Accountable type:    'attachment' property will always be made into an array.
 //   - Any Statusable type:     'attachment' property will always be made into an array; 'content', 'contentMap', and 'interactionPolicy' will be normalized.
 //   - Any Activityable type:   any 'object's set on an activity will be custom serialized as above.
-func Serialize(t vocab.Type) (m map[string]interface{}, e error) {
+func Serialize(t vocab.Type) (map[string]interface{}, error) {
 	switch tn := t.GetTypeName(); {
 	case tn == ObjectOrderedCollection ||
 		tn == ObjectOrderedCollectionPage:
@@ -56,40 +56,7 @@ func Serialize(t vocab.Type) (m map[string]interface{}, e error) {
 	}
 }
 
-// serializeWithOrderedItems is a custom serializer
-// for any type that has an `orderedItems` property.
-// Unlike the standard streams.Serialize function,
-// this serializer normalizes the orderedItems
-// value to always be an array/slice, regardless
-// of how many items are contained therein.
-//
-// See:
-//   - https://github.com/go-fed/activity/issues/139
-//   - https://github.com/mastodon/mastodon/issues/24225
-func serializeWithOrderedItems(t vocab.Type) (map[string]interface{}, error) {
-	data, err := streams.Serialize(t)
-	if err != nil {
-		return nil, err
-	}
-
-	orderedItems, ok := data["orderedItems"]
-	if !ok {
-		// No 'orderedItems', nothing to change.
-		return data, nil
-	}
-
-	if _, ok := orderedItems.([]interface{}); ok {
-		// Already slice.
-		return data, nil
-	}
-
-	// Coerce single-object to slice.
-	data["orderedItems"] = []interface{}{orderedItems}
-
-	return data, nil
-}
-
-// SerializeAccountable is a custom serializer for any Accountable type.
+// serializeAccountable is a custom serializer for any Accountable type.
 // This serializer rewrites certain values of the Accountable, if present,
 // to always be an array/slice.
 //
@@ -153,8 +120,13 @@ func serializeStatusable(t vocab.Type, includeContext bool) (map[string]interfac
 
 	NormalizeOutgoingAttachmentProp(statusable, data)
 	NormalizeOutgoingContentProp(statusable, data)
+
 	if wip, ok := statusable.(WithInteractionPolicy); ok {
 		NormalizeOutgoingInteractionPolicyProp(wip, data)
+	}
+
+	if poll, ok := statusable.(Pollable); ok {
+		NormalizeOutgoingOneOrAnyOfProp(poll, data)
 	}
 
 	return data, nil
@@ -185,5 +157,24 @@ func serializeActivityable(t vocab.Type, includeContext bool) (map[string]interf
 		return nil, err
 	}
 
+	return data, nil
+}
+
+// serializeWithOrderedItems is a custom serializer
+// for any type that has an `orderedItems` property.
+// Unlike the standard streams.Serialize function,
+// this serializer normalizes the orderedItems
+// value to always be an array/slice, regardless
+// of how many items are contained therein.
+//
+// See:
+//   - https://github.com/go-fed/activity/issues/139
+//   - https://github.com/mastodon/mastodon/issues/24225
+func serializeWithOrderedItems(t vocab.Type) (map[string]interface{}, error) {
+	data, err := streams.Serialize(t)
+	if err != nil {
+		return nil, err
+	}
+	coercePropertyToArray(data, "orderedItems")
 	return data, nil
 }
