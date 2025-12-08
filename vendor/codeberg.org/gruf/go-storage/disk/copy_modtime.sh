@@ -12,7 +12,7 @@ for file in "$(go env GOROOT)"/src/os/stat_{linux,netbsd,openbsd,freebsd,darwin}
     echo "    \"time\""                                  >> "$out"
     echo ")"                                             >> "$out"
     echo ""                                              >> "$out"
-    echo "func modtime(sys *syscall.Stat_t) time.Time {" >> "$out"
+    echo "func modtime(sys syscall.Stat_t) time.Time {" >> "$out"
     echo "    return ${modtime}"                         >> "$out"
     echo "}"                                             >> "$out"
     gofmt -w "$out"

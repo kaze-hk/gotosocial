@@ -271,7 +271,7 @@ codeberg.org/gruf/go-mangler/v2
 # codeberg.org/gruf/go-maps v1.0.4
 ## explicit; go 1.20
 codeberg.org/gruf/go-maps
-# codeberg.org/gruf/go-mempool v0.0.0-20251204130024-3960fdb6198a
+# codeberg.org/gruf/go-mempool v0.0.0-20251205182607-a05549c9a993
 ## explicit; go 1.24.0
 codeberg.org/gruf/go-mempool
 # codeberg.org/gruf/go-mmap v0.0.0-20251111184116-345a42dab154
@@ -289,7 +289,7 @@ codeberg.org/gruf/go-sched
 # codeberg.org/gruf/go-split v1.2.0
 ## explicit; go 1.20
 codeberg.org/gruf/go-split
-# codeberg.org/gruf/go-storage v0.5.0
+# codeberg.org/gruf/go-storage v0.6.0
 ## explicit; go 1.23.0
 codeberg.org/gruf/go-storage
 codeberg.org/gruf/go-storage/disk

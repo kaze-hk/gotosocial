@@ -53,6 +53,8 @@ func (p *Pool[T]) Put(t *T) {
 	p.UnsafePool.Put(ptr)
 }
 
+// Shard returns a new PoolShard[T] with a reference
+// to this original pool. See type for more usage info.
 func (p *Pool[T]) Shard() PoolShard[T] {
 	return PoolShard[T]{
 		original:        p,

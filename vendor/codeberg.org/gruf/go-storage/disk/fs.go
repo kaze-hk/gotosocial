@@ -1,242 +1,414 @@
 package disk
 
 import (
-	"errors"
-	"fmt"
-	"io/fs"
 	"os"
+	"strings"
 	"syscall"
 
 	"codeberg.org/gruf/go-fastpath/v2"
+	"codeberg.org/gruf/go-storage"
 	"codeberg.org/gruf/go-storage/internal"
 )
 
-// open file for read args.
-var readArgs = OpenArgs{
-	Flags: syscall.O_RDONLY,
-	Perms: 0,
+// FS is a simple wrapper around a base directory
+// path to provide file system operations within
+// that directory. It also translates ENOENT and
+// EEXIST errors to their equivalent storage errors.
+//
+// The uninitialized FS is safe to use,
+// it will simply use the current dir.
+type FS struct{ base string }
+
+// NewFS returns a new FS{} with base path.
+func NewFS(base string) FS { return FS{base} }
+
+// String returns the defined FS{} base path.
+func (fs FS) String() string { return fs.base }
+
+// Open performs syscall.Open() on the file at relative path, with given OpenArgs{}.
+//
+// NOTE: this does not perform much of the wrapping that os.OpenFile() does, it may
+// not set appropriate arguments for opening files other than regular / directories!
+func (fs FS) Open(path string, args OpenArgs) (*os.File, error) {
+
+	// Generate path from relative.
+	path, err := fs.Filepath(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Open file path with args.
+	file, err := open(path, args)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, path)
+
+	case syscall.EEXIST:
+		if args.Flags&syscall.O_EXCL != 0 {
+			// Translate already exists errors and wrap with the path.
+			err = internal.ErrWithKey(storage.ErrAlreadyExists, path)
+		}
+	}
+
+	return file, err
 }
 
-// walkDir traverses the dir tree of the supplied path, performing the supplied walkFn on each entry.
-func walkDir(pb *fastpath.Builder, path string, walkFn func(string, fs.DirEntry) error) error {
+// Chown performs syscall.Chown() on the file in FS at relative path.
+func (fs FS) Chown(path string, uid, gid int) error {
 
-	// Read directory entries at path.
-	entries, err := readDir(path)
+	// Generate path from relative.
+	path, err := fs.Filepath(path)
 	if err != nil {
 		return err
 	}
 
-	// frame represents a directory entry
-	// walk-loop snapshot, taken when a sub
-	// directory requiring iteration is found
-	type frame struct {
-		path    string
-		entries []fs.DirEntry
+	// Perform chmown on file.
+	err = chown(path, uid, gid)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, path)
 	}
 
-	// stack contains a list of held snapshot
-	// frames, representing unfinished upper
-	// layers of a directory structure yet to
-	// be traversed.
-	var stack []frame
-
-outer:
-	for {
-		if len(entries) == 0 {
-			if len(stack) == 0 {
-				// Reached end
-				break outer
-			}
-
-			// Pop frame from stack
-			frame := stack[len(stack)-1]
-			stack = stack[:len(stack)-1]
-
-			// Update loop vars
-			entries = frame.entries
-			path = frame.path
-		}
-
-		for len(entries) > 0 {
-			// Pop next entry from queue
-			entry := entries[0]
-			entries = entries[1:]
-
-			// Pass to provided walk function
-			if err := walkFn(path, entry); err != nil {
-				return err
-			}
-
-			if entry.IsDir() {
-				// Push current frame to stack
-				stack = append(stack, frame{
-					path:    path,
-					entries: entries,
-				})
-
-				// Update current directory path
-				path = pb.Join(path, entry.Name())
-
-				// Read next directory entries
-				next, err := readDir(path)
-				if err != nil {
-					return err
-				}
-
-				// Set next entries
-				entries = next
-
-				continue outer
-			}
-		}
-	}
-
-	return nil
-}
-
-// cleanDirs traverses the dir tree of supplied
-// path, removing any folders with zero children.
-func cleanDirs(path string) error {
-	pb := internal.GetPathBuilder()
-	err := cleanDir(pb, path, true)
-	internal.PutPathBuilder(pb)
 	return err
 }
 
-// cleanDir performs the actual dir cleaning logic for the above top-level version.
-func cleanDir(pb *fastpath.Builder, path string, top bool) error {
+// Chmod performs syscall.Chmod() on the file in FS at relative path.
+func (fs FS) Chmod(path string, mode uint32) error {
 
-	// Get directory entries at path.
-	entries, err := readDir(path)
+	// Generate path from relative.
+	path, err := fs.Filepath(path)
 	if err != nil {
 		return err
 	}
 
-	// If no entries, delete dir.
-	if !top && len(entries) == 0 {
-		return rmdir(path)
+	// Perform chmod on file.
+	err = chmod(path, mode)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, path)
 	}
 
-	var errs []error
-
-	// Iterate all directory entries.
-	for _, entry := range entries {
-
-		if entry.IsDir() {
-			// Calculate directory path.
-			dir := pb.Join(path, entry.Name())
-
-			// Recursively clean sub-dir entries, adding errs.
-			if err := cleanDir(pb, dir, false); err != nil {
-				err = fmt.Errorf("error(s) cleaning subdir %s: %w", dir, err)
-				errs = append(errs, err)
-			}
-		}
-	}
-
-	// Return combined errors.
-	return errors.Join(errs...)
+	return err
 }
 
-// readDir will open file at path, read the unsorted list of entries, then close.
-func readDir(path string) ([]fs.DirEntry, error) {
+// ReadDir gathers entries from WalkDir() and allocates a DirEntry{} for each.
+func (fs FS) ReadDir(path string) ([]DirEntry, error) {
 
-	// Open directory at path for read.
-	file, err := open(path, readArgs)
+	// Generate path from relative.
+	path, err := fs.Filepath(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// Read ALL directory entries.
-	entries, err := file.ReadDir(-1)
+	var entries []DirEntry
 
-	// Done with file
-	_ = file.Close()
-
-	return entries, err
-}
-
-// open is a simple wrapper around syscall.Open().
-func open(path string, args OpenArgs) (*os.File, error) {
-	var fd int
-	err := retryOnEINTR(func() (err error) {
-		fd, err = syscall.Open(path, args.Flags, args.Perms)
-		return
-	})
-	if err != nil {
+	// Gather entries as returnable DirEntry{} type.
+	if err := readdir(path, func(ent *Dirent) error {
+		entries = append(entries, DirEntry{
+			Path: ent.NameStr(),
+			Type: ent.Type,
+		})
+		return nil
+	}); err != nil {
 		return nil, err
 	}
-	return os.NewFile(uintptr(fd), path), nil
+
+	return entries, nil
 }
 
-// stat is a simple wrapper around syscall.Stat().
-func stat(path string) (*syscall.Stat_t, error) {
-	var stat syscall.Stat_t
-	err := retryOnEINTR(func() error {
-		return syscall.Stat(path, &stat)
-	})
-	if err != nil {
-		if err == syscall.ENOENT {
-			// not-found is no error
-			err = nil
-		}
-		return nil, err
+// Walk performs syscall.ReadDirent() on dir tree in FS at relative path, passing each entry
+// to given function. NOTE: DIRENT MEMORY IS NOT SAFE FOR REUSE OUTSIDE OF EACH FUNCTION CALL.
+func (fs FS) Walk(path string, each func(dir string, ent *Dirent) error) error {
+	if each == nil {
+		panic("nil func")
 	}
-	return &stat, nil
-}
 
-// lstat is a simple wrapper around syscall.Lstat().
-func lstat(path string) (*syscall.Stat_t, error) {
-	var stat syscall.Stat_t
-	err := retryOnEINTR(func() error {
-		return syscall.Lstat(path, &stat)
-	})
+	// Acquire path builder buffer.
+	pb := internal.GetPathBuilder()
+	defer internal.PutPathBuilder(pb)
+
+	// Generate path from relative.
+	path, err := fs.filepath(pb, path)
 	if err != nil {
-		if err == syscall.ENOENT {
-			// not-found is no error
-			err = nil
-		}
-		return nil, err
-	}
-	return &stat, nil
-}
-
-// unlink is a simple wrapper around syscall.Unlink().
-func unlink(path string) error {
-	return retryOnEINTR(func() error {
-		return syscall.Unlink(path)
-	})
-}
-
-// rmdir is a simple wrapper around syscall.Rmdir().
-func rmdir(path string) error {
-	return retryOnEINTR(func() error {
-		return syscall.Rmdir(path)
-	})
-}
-
-// symlink is a simple wrapper around syscall.Symlink()
-func symlink(oldpath, newpath string) error {
-	return retryOnEINTR(func() error {
-		return syscall.Symlink(oldpath, newpath)
-	})
-}
-
-// link is a simple wrapper around syscall.Link()
-func link(oldpath, newpath string) error {
-	return retryOnEINTR(func() error {
-		return syscall.Link(oldpath, newpath)
-	})
-}
-
-// retryOnEINTR is a low-level filesystem function
-// for retrying syscalls on O_EINTR received.
-func retryOnEINTR(do func() error) error {
-	for {
-		err := do()
-		if err == syscall.EINTR {
-			continue
-		}
 		return err
+	}
+
+	// Walk entire directory tree, only passing through the relative dir path.
+	return walk_dir(pb, path, func(absdir, reldir string, ent *Dirent) error {
+		return each(reldir, ent)
+	})
+}
+
+// WalkDir performs syscall.ReadDirent() on dir in FS at relative path, passing each entry
+// to given function. NOTE: DIRENT MEMORY IS NOT SAFE FOR REUSE OUTSIDE OF EACH FUNCTION CALL.
+func (fs FS) WalkDir(path string, each func(ent *Dirent) error) error {
+
+	// Generate path from relative.
+	path, err := fs.Filepath(path)
+	if err != nil {
+		return err
+	}
+
+	// Read directory entries.
+	err = readdir(path, each)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, path)
+	}
+
+	return err
+}
+
+// Stat performs syscall.Stat() on the file in FS at relative path.
+func (fs FS) Stat(path string) (syscall.Stat_t, error) {
+	var stat_t syscall.Stat_t
+
+	// Generate path from relative.
+	path, err := fs.Filepath(path)
+	if err != nil {
+		return stat_t, err
+	}
+
+	// Stat file info on disk.
+	err = stat(path, &stat_t)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, path)
+	}
+
+	return stat_t, err
+}
+
+// Lstat performs syscall.Lstat() on the file in FS at relative path.
+func (fs FS) Lstat(path string) (syscall.Stat_t, error) {
+	var stat_t syscall.Stat_t
+
+	// Generate path from relative.
+	path, err := fs.Filepath(path)
+	if err != nil {
+		return stat_t, err
+	}
+
+	// Stat file info on disk.
+	err = lstat(path, &stat_t)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, path)
+	}
+
+	return stat_t, err
+}
+
+// Unlink performs syscall.Unlink() on the file in FS at relative path.
+func (fs FS) Unlink(path string) error {
+
+	// Generate path from relative.
+	path, err := fs.Filepath(path)
+	if err != nil {
+		return err
+	}
+
+	// Remove reg file.
+	err = unlink(path)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, path)
+	}
+
+	return err
+}
+
+// Rmdir performs syscall.Rmdir() on the dir in FS at relative path.
+func (fs FS) Rmdir(path string) error {
+
+	// Generate path from relative.
+	path, err := fs.Filepath(path)
+	if err != nil {
+		return err
+	}
+
+	// Remove dir file.
+	err = rmdir(path)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, path)
+	}
+
+	return err
+}
+
+// Rename performs syscall.Rename() on the old and new paths in FS.
+func (fs FS) Rename(oldpath, newpath string) error {
+
+	// Acquire path builder buffer.
+	pb := internal.GetPathBuilder()
+
+	// Generate file path for old path.
+	old, err1 := fs.filepath(pb, oldpath)
+
+	// Generate file path for new path.
+	new, err2 := fs.filepath(pb, newpath)
+
+	// Done with path buffer.
+	internal.PutPathBuilder(pb)
+
+	if err1 != nil {
+		return err1
+	} else if err2 != nil {
+		return err2
+	}
+
+	// Rename old to new file.
+	err := rename(old, new)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, oldpath)
+	}
+
+	return err
+}
+
+// Symlink performs syscall.Symlink() on the source and destination paths in FS.
+func (fs FS) Symlink(oldpath, newpath string) error {
+
+	// Acquire path builder buffer.
+	pb := internal.GetPathBuilder()
+
+	// Generate file path for old path.
+	old, err1 := fs.filepath(pb, oldpath)
+
+	// Generate file path for new path.
+	new, err2 := fs.filepath(pb, newpath)
+
+	// Done with path buffer.
+	internal.PutPathBuilder(pb)
+
+	if err1 != nil {
+		return err1
+	} else if err2 != nil {
+		return err2
+	}
+
+	// Create disk symlink.
+	err := symlink(old, new)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, oldpath)
+	}
+
+	return err
+}
+
+// Link performs syscall.Link() on the source and destination paths in FS.
+func (fs FS) Link(oldpath, newpath string) error {
+
+	// Acquire path builder buffer.
+	pb := internal.GetPathBuilder()
+
+	// Generate file path for old path.
+	old, err1 := fs.filepath(pb, oldpath)
+
+	// Generate file path for new path.
+	new, err2 := fs.filepath(pb, newpath)
+
+	// Done with path buffer.
+	internal.PutPathBuilder(pb)
+
+	if err1 != nil {
+		return err1
+	} else if err2 != nil {
+		return err2
+	}
+
+	// Create disk hardlink.
+	err := link(old, new)
+	switch err {
+
+	case syscall.ENOENT:
+		// Translate not-found errors and wrap with the path.
+		err = internal.ErrWithKey(storage.ErrNotFound, oldpath)
+	}
+
+	return err
+}
+
+// Filepath checks and returns a cleaned filepath within FS{} base.
+func (fs FS) Filepath(path string) (string, error) {
+	pb := internal.GetPathBuilder()
+	path, err := fs.filepath(pb, path)
+	internal.PutPathBuilder(pb)
+	return path, err
+}
+
+// filepath performs the "meat" of Filepath(), working with an existing fastpath.Builder{}.
+func (fs FS) filepath(pb *fastpath.Builder, path string) (string, error) {
+	old := path
+
+	// Build from base.
+	pb.Append(fs.base)
+	pb.Append(path)
+
+	// Take COPY of bytes.
+	path = string(pb.B)
+
+	// Check for dir traversal outside base.
+	if isDirTraversal(fs.base, path) {
+		return "", internal.ErrWithKey(storage.ErrInvalidKey, old)
+	}
+
+	return path, nil
+}
+
+// isDirTraversal will check if rootPlusPath is a dir traversal outside of root,
+// assuming that both are cleaned and that rootPlusPath is path.Join(root, somePath).
+func isDirTraversal(root, rootPlusPath string) bool {
+	switch root {
+
+	// Root is $PWD, check
+	// for traversal out of
+	case "", ".":
+		return strings.HasPrefix(rootPlusPath, "../")
+
+	// Root is *root*, ensure
+	// it's not trying escape
+	case "/":
+		switch l := len(rootPlusPath); {
+		case l == 3: // i.e. root=/ plusPath=/..
+			return rootPlusPath[:3] == "/.."
+		case l >= 4: // i.e. root=/ plusPath=/../[etc]
+			return rootPlusPath[:4] == "/../"
+		}
+		return false
+	}
+	switch {
+
+	// The path MUST be prefixed by storage root
+	case !strings.HasPrefix(rootPlusPath, root):
+		return true
+
+	// In all other cases,
+	// check not equal
+	default:
+		return len(root) == len(rootPlusPath)
 	}
 }

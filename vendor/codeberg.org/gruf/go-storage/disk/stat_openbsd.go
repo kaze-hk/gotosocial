@@ -5,6 +5,6 @@ import (
 	"time"
 )
 
-func modtime(sys *syscall.Stat_t) time.Time {
+func modtime(sys syscall.Stat_t) time.Time {
 	return time.Unix(sys.Mtim.Unix())
 }

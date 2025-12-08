@@ -42,8 +42,8 @@ codeberg.org/gruf/go-mangler/v2 v2.0.6 h1:c3cwnI6Mi17EAwGSYGNMN6+9PMzaIj2GLAKx9D
 codeberg.org/gruf/go-mangler/v2 v2.0.6/go.mod h1:CXIm7zAWPdNmZVAGM1NRiF/ekJTPE7YTb8kiRxiEFaQ=
 codeberg.org/gruf/go-maps v1.0.4 h1:K+Ww4vvR3TZqm5jqrKVirmguZwa3v1VUvmig2SE8uxY=
 codeberg.org/gruf/go-maps v1.0.4/go.mod h1:ASX7osM7kFwt5O8GfGflcFjrwYGD8eIuRLl/oMjhEi8=
-codeberg.org/gruf/go-mempool v0.0.0-20251204130024-3960fdb6198a h1:9hAjHt7MNAjX7yodnnCr2A8edvHNoOvYdl6BfAsca1w=
-codeberg.org/gruf/go-mempool v0.0.0-20251204130024-3960fdb6198a/go.mod h1:761koiXmqfgzvu5mez2Rk7YlwWilpqJ/zv5hIA6NoNI=
+codeberg.org/gruf/go-mempool v0.0.0-20251205182607-a05549c9a993 h1:TtU8vQ1yuX//VYVFAH5fUSTpv93u9JYiumA6QlmIM8c=
+codeberg.org/gruf/go-mempool v0.0.0-20251205182607-a05549c9a993/go.mod h1:761koiXmqfgzvu5mez2Rk7YlwWilpqJ/zv5hIA6NoNI=
 codeberg.org/gruf/go-mmap v0.0.0-20251111184116-345a42dab154 h1:2SSyx/7XgOOC9nKdlrgpxenz7oZlvUeLR+YEfjM6iS8=
 codeberg.org/gruf/go-mmap v0.0.0-20251111184116-345a42dab154/go.mod h1:kaHx5xHuLNf13iALbHiFpXmLeO33Ll/aW3mGkW8sI40=
 codeberg.org/gruf/go-mutexes v1.5.8 h1:HRGnvT4COb3jX9xdeoSUUbjPgmk5kXPuDfld9ksUJKA=
@@ -54,8 +54,8 @@ codeberg.org/gruf/go-sched v1.3.0 h1:3Y+Vb6p+rt05iUC6Oj3TDFc9GQZCDImDfTKSUKUI9WA
 codeberg.org/gruf/go-sched v1.3.0/go.mod h1:qL9MdPdBFaNXzSfumpQ18TStBAwnRddCTD+wlrZUEgI=
 codeberg.org/gruf/go-split v1.2.0 h1:PmzL23nVEVHm8VxjsJmv4m4wGQz2bGgQw52dgSSj65c=
 codeberg.org/gruf/go-split v1.2.0/go.mod h1:0rejWJpqvOoFAd7nwm5tIXYKaAqjtFGOXmTqQV+VO38=
-codeberg.org/gruf/go-storage v0.5.0 h1:c4rT1yOEVvBuPclWhppxmLYy+SN1qdgwFdZG7Icyn3s=
-codeberg.org/gruf/go-storage v0.5.0/go.mod h1:Zk/kpUMCikXQNJBHSjxygKwv7N/t8mJvg17sMjl29Xw=
+codeberg.org/gruf/go-storage v0.6.0 h1:xL5lProzy3y/bewWkEmoHnTwifdkjabzgL7TyUJ5sPs=
+codeberg.org/gruf/go-storage v0.6.0/go.mod h1:Zk/kpUMCikXQNJBHSjxygKwv7N/t8mJvg17sMjl29Xw=
 codeberg.org/gruf/go-structr v0.9.14 h1:mUxxyg2isIkJI+fOZM8CLMq/JwaDteYyP3GmTem62tk=
 codeberg.org/gruf/go-structr v0.9.14/go.mod h1:xd0c09WwcwXwzBGMnsyVsbgtOvbvcckPWyguS8XhVtE=
 codeberg.org/gruf/go-xunsafe v0.0.0-20250809104800-512a9df57d73 h1:pRaOwIOS1WSZoPCAvE0H1zpv+D4gF37OVppybffqdI8=

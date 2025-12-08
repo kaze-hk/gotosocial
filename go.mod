@@ -22,13 +22,13 @@ require (
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv/v2 v2.0.7
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
-	codeberg.org/gruf/go-mempool v0.0.0-20251204130024-3960fdb6198a
+	codeberg.org/gruf/go-mempool v0.0.0-20251205182607-a05549c9a993
 	codeberg.org/gruf/go-mmap v0.0.0-20251111184116-345a42dab154
 	codeberg.org/gruf/go-mutexes v1.5.8
 	codeberg.org/gruf/go-runners v1.7.0
 	codeberg.org/gruf/go-sched v1.3.0
 	codeberg.org/gruf/go-split v1.2.0
-	codeberg.org/gruf/go-storage v0.5.0
+	codeberg.org/gruf/go-storage v0.6.0
 	codeberg.org/gruf/go-structr v0.9.14
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.7.5
