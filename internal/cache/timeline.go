@@ -66,7 +66,7 @@ func (c *Caches) initLocalTimeline() {
 
 func (c *Caches) initHomeTimelines() {
 	// TODO: configurable
-	timeout := 30 * time.Minute
+	timeout := 6 * time.Hour
 	cap := 800
 
 	log.Infof(nil, "cache size = %d", cap)
@@ -76,7 +76,7 @@ func (c *Caches) initHomeTimelines() {
 
 func (c *Caches) initListTimelines() {
 	// TODO: configurable
-	timeout := 30 * time.Minute
+	timeout := 1 * time.Hour
 	cap := 800
 
 	log.Infof(nil, "cache size = %d", cap)
