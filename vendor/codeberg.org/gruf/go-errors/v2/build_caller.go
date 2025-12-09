@@ -3,10 +3,6 @@
 
 package errors
 
-import (
-	_ "unsafe"
-)
-
 // IncludesCaller is a compile-time flag used to indicate whether
 // to include calling function prefix on error wrap / creation.
 const IncludesCaller = true

@@ -3,30 +3,25 @@ package errors
 import (
 	"fmt"
 	"runtime"
+
+	callers "codeberg.org/gruf/go-caller"
 )
 
 // New returns a new error created from message.
-//
-// Note this function cannot be inlined, to ensure expected
-// and consistent behaviour in setting trace / caller info.
-//
-//go:noinline
 func New(msg string) error {
 	var c caller
 	var t trace
 	if IncludesCaller {
 		pcs := make([]uintptr, 1)
 		_ = runtime.Callers(2, pcs)
-		fn := runtime.FuncForPC(pcs[0])
-		c.set(funcName(fn))
+		c.set(callers.Get(pcs[0]))
 	}
 	if IncludesStacktrace {
-		pcs := make([]uintptr, 10)
+		pcs := make([]uintptr, StacktraceSize)
 		n := runtime.Callers(2, pcs)
-		iter := runtime.CallersFrames(pcs[:n])
-		t.set(gatherFrames(iter, n))
+		t.set(pcs[:n])
 	}
-	return &_errormsg{
+	return &errormsg{
 		cfn: c,
 		msg: msg,
 		trc: t,
@@ -34,27 +29,20 @@ func New(msg string) error {
 }
 
 // Newf returns a new error created from message format and args.
-//
-// Note this function cannot be inlined, to ensure expected
-// and consistent behaviour in setting trace / caller info.
-//
-//go:noinline
 func Newf(msgf string, args ...interface{}) error {
 	var c caller
 	var t trace
 	if IncludesCaller {
 		pcs := make([]uintptr, 1)
 		_ = runtime.Callers(2, pcs)
-		fn := runtime.FuncForPC(pcs[0])
-		c.set(funcName(fn))
+		c.set(callers.Get(pcs[0]))
 	}
 	if IncludesStacktrace {
-		pcs := make([]uintptr, 10)
+		pcs := make([]uintptr, StacktraceSize)
 		n := runtime.Callers(2, pcs)
-		iter := runtime.CallersFrames(pcs[:n])
-		t.set(gatherFrames(iter, n))
+		t.set(pcs[:n])
 	}
-	return &_errormsg{
+	return &errormsg{
 		cfn: c,
 		msg: fmt.Sprintf(msgf, args...),
 		trc: t,
@@ -63,27 +51,20 @@ func Newf(msgf string, args ...interface{}) error {
 
 // NewAt returns a new error created, skipping 'skip'
 // frames for trace / caller information, from message.
-//
-// Note this function cannot be inlined, to ensure expected
-// and consistent behaviour in setting trace / caller info.
-//
-//go:noinline
 func NewAt(skip int, msg string) error {
 	var c caller
 	var t trace
 	if IncludesCaller {
 		pcs := make([]uintptr, 1)
 		_ = runtime.Callers(skip+1, pcs)
-		fn := runtime.FuncForPC(pcs[0])
-		c.set(funcName(fn))
+		c.set(callers.Get(pcs[0]))
 	}
 	if IncludesStacktrace {
-		pcs := make([]uintptr, 10)
+		pcs := make([]uintptr, StacktraceSize)
 		n := runtime.Callers(skip+1, pcs)
-		iter := runtime.CallersFrames(pcs[:n])
-		t.set(gatherFrames(iter, n))
+		t.set(pcs[:n])
 	}
-	return &_errormsg{
+	return &errormsg{
 		cfn: c,
 		msg: msg,
 		trc: t,
@@ -91,11 +72,6 @@ func NewAt(skip int, msg string) error {
 }
 
 // Wrap will wrap supplied error within a new error created from message.
-//
-// Note this function cannot be inlined, to ensure expected
-// and consistent behaviour in setting trace / caller info.
-//
-//go:noinline
 func Wrap(err error, msg string) error {
 	if err == nil {
 		panic("cannot wrap nil error")
@@ -105,16 +81,14 @@ func Wrap(err error, msg string) error {
 	if IncludesCaller {
 		pcs := make([]uintptr, 1)
 		_ = runtime.Callers(2, pcs)
-		fn := runtime.FuncForPC(pcs[0])
-		c.set(funcName(fn))
+		c.set(callers.Get(pcs[0]))
 	}
 	if IncludesStacktrace {
-		pcs := make([]uintptr, 10)
+		pcs := make([]uintptr, StacktraceSize)
 		n := runtime.Callers(2, pcs)
-		iter := runtime.CallersFrames(pcs[:n])
-		t.set(gatherFrames(iter, n))
+		t.set(pcs[:n])
 	}
-	return &_errorwrap{
+	return &errorwrap{
 		cfn: c,
 		msg: msg,
 		err: err,
@@ -123,11 +97,6 @@ func Wrap(err error, msg string) error {
 }
 
 // Wrapf will wrap supplied error within a new error created from message format and args.
-//
-// Note this function cannot be inlined, to ensure expected
-// and consistent behaviour in setting trace / caller info.
-//
-//go:noinline
 func Wrapf(err error, msgf string, args ...interface{}) error {
 	if err == nil {
 		panic("cannot wrap nil error")
@@ -137,16 +106,14 @@ func Wrapf(err error, msgf string, args ...interface{}) error {
 	if IncludesCaller {
 		pcs := make([]uintptr, 1)
 		_ = runtime.Callers(2, pcs)
-		fn := runtime.FuncForPC(pcs[0])
-		c.set(funcName(fn))
+		c.set(callers.Get(pcs[0]))
 	}
 	if IncludesStacktrace {
-		pcs := make([]uintptr, 10)
+		pcs := make([]uintptr, StacktraceSize)
 		n := runtime.Callers(2, pcs)
-		iter := runtime.CallersFrames(pcs[:n])
-		t.set(gatherFrames(iter, n))
+		t.set(pcs[:n])
 	}
-	return &_errorwrap{
+	return &errorwrap{
 		cfn: c,
 		msg: fmt.Sprintf(msgf, args...),
 		err: err,
@@ -156,11 +123,6 @@ func Wrapf(err error, msgf string, args ...interface{}) error {
 
 // WrapAt wraps error within new error created from message,
 // skipping 'skip' frames for trace / caller information.
-//
-// Note this function cannot be inlined, to ensure expected
-// and consistent behaviour in setting trace / caller info.
-//
-//go:noinline
 func WrapAt(skip int, err error, msg string) error {
 	if err == nil {
 		panic("cannot wrap nil error")
@@ -170,16 +132,14 @@ func WrapAt(skip int, err error, msg string) error {
 	if IncludesCaller {
 		pcs := make([]uintptr, 1)
 		_ = runtime.Callers(skip+1, pcs)
-		fn := runtime.FuncForPC(pcs[0])
-		c.set(funcName(fn))
+		c.set(callers.Get(pcs[0]))
 	}
 	if IncludesStacktrace {
-		pcs := make([]uintptr, 10)
+		pcs := make([]uintptr, StacktraceSize)
 		n := runtime.Callers(skip+1, pcs)
-		iter := runtime.CallersFrames(pcs[:n])
-		t.set(gatherFrames(iter, n))
+		t.set(pcs[:n])
 	}
-	return &_errorwrap{
+	return &errorwrap{
 		cfn: c,
 		msg: msg,
 		err: err,
@@ -193,22 +153,74 @@ func Stacktrace(err error) Callers {
 		// compile-time check
 		return nil
 	}
-	if e := AsV2[*_errormsg](err); err != nil {
-		return e.trc.value()
+
+	// Check for usable type.
+	switch t := err.(type) {
+	case nil:
+		return nil
+	case *errormsg:
+		return t.trc.value()
+	case *errorwrap:
+		return t.trc.value()
+	case interface{ As(any) bool }:
+		if e := new(errormsg); t.As(&e) {
+			return e.trc.value()
+		}
+		if e := new(errorwrap); t.As(&e) {
+			return e.trc.value()
+		}
 	}
-	if e := AsV2[*_errorwrap](err); err != nil {
-		return e.trc.value()
+
+	// Above is fast-path without
+	// needing to allocate a slice
+	// or enter a loop.
+	var errs []error
+
+	// Try unwrap errors.
+	switch u := err.(type) {
+	case interface{ Unwrap() error }:
+		errs = append(errs, u.Unwrap())
+	case interface{ Unwrap() []error }:
+		errs = append(errs, u.Unwrap()...)
 	}
+
+	for len(errs) > 0 {
+		// Pop next error to check.
+		err := errs[len(errs)-1]
+		errs = errs[:len(errs)-1]
+
+		// Handle depending on type.
+		switch t := err.(type) {
+		case nil:
+			return nil
+		case *errormsg:
+			return t.trc.value()
+		case *errorwrap:
+			return t.trc.value()
+		case interface{ As(any) bool }:
+			if e := new(errormsg); t.As(&e) {
+				return e.trc.value()
+			}
+			if e := new(errorwrap); t.As(&e) {
+				return e.trc.value()
+			}
+		case interface{ Unwrap() error }:
+			errs = append(errs, t.Unwrap())
+		case interface{ Unwrap() []error }:
+			errs = append(errs, t.Unwrap()...)
+		}
+	}
+
 	return nil
 }
 
-type _errormsg struct {
+type errormsg struct {
 	cfn caller
 	msg string
 	trc trace
 }
 
-func (err *_errormsg) Error() string {
+func (err *errormsg) Error() string {
 	if IncludesCaller {
 		fn := err.cfn.value()
 		return fn + " " + err.msg
@@ -217,19 +229,19 @@ func (err *_errormsg) Error() string {
 	}
 }
 
-func (err *_errormsg) Is(other error) bool {
-	oerr, ok := other.(*_errormsg)
+func (err *errormsg) Is(other error) bool {
+	oerr, ok := other.(*errormsg)
 	return ok && oerr.msg == err.msg
 }
 
-type _errorwrap struct {
+type errorwrap struct {
 	cfn caller
 	msg string
 	err error // wrapped
 	trc trace
 }
 
-func (err *_errorwrap) Error() string {
+func (err *errorwrap) Error() string {
 	if IncludesCaller {
 		fn := err.cfn.value()
 		return fn + " " + err.msg + ": " + err.err.Error()
@@ -238,11 +250,11 @@ func (err *_errorwrap) Error() string {
 	}
 }
 
-func (err *_errorwrap) Is(other error) bool {
-	oerr, ok := other.(*_errorwrap)
+func (err *errorwrap) Is(other error) bool {
+	oerr, ok := other.(*errorwrap)
 	return ok && oerr.msg == err.msg
 }
 
-func (err *_errorwrap) Unwrap() error {
+func (err *errorwrap) Unwrap() error {
 	return err.err
 }

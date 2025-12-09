@@ -8,22 +8,26 @@ import (
 	"unsafe"
 )
 
-// Callers ...
+// Callers is a wrapper around []runtime.Frame
+// to add useful serialization functions.
 type Callers []runtime.Frame
 
-// MarshalJSON implements json.Marshaler to provide an easy, simple default.
+// MarshalJSON implements json.Marshaler
+// to provide an easy, simple default.
 func (c Callers) MarshalJSON() ([]byte, error) {
-	// JSON-able frame type
 	type jsonFrame struct {
 		Func string `json:"func"`
 		File string `json:"file"`
 		Line int    `json:"line"`
 	}
 
-	// Allocate expected size jsonFrame slice
+	// Allocate expected size jsonFrame slice.
 	jsonFrames := make([]jsonFrame, len(c))
+	if len(jsonFrames) != len(c) {
+		panic("bound check elimination")
+	}
 
-	// Convert each to jsonFrame object
+	// Convert each to jsonFrame object.
 	for i := 0; i < len(c); i++ {
 		frame := c[i]
 		jsonFrames[i] = jsonFrame{
@@ -33,26 +37,27 @@ func (c Callers) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	// marshal converted frames
+	// Marshal converted frames.
 	return json.Marshal(jsonFrames)
 }
 
-// String will return a simple string representation of receiving Callers slice.
+// String will return a simple string
+// representation of receiving Callers slice.
 func (c Callers) String() string {
-	// Guess-timate to reduce allocs
-	buf := make([]byte, 0, 64*len(c))
 
+	// Guess-timate to reduce allocs.
+	buf := make([]byte, 0, 64*len(c))
 	for i := 0; i < len(c); i++ {
 		frame := c[i]
 
-		// Append formatted caller info
+		// Append formatted caller info.
 		fn := funcName(frame.Func)
 		buf = append(buf, fn+"()\n\t"+frame.File+":"...)
 		buf = strconv.AppendInt(buf, int64(frame.Line), 10)
 		buf = append(buf, '\n')
 	}
 
-	return *(*string)(unsafe.Pointer(&buf))
+	return unsafe.String(&buf[0], len(buf))
 }
 
 // funcName formats a function name to a quickly-readable string.
@@ -78,20 +83,4 @@ func funcName(fn *runtime.Func) string {
 	}
 
 	return name
-}
-
-// gatherFrames collates runtime frames from a frame iterator.
-func gatherFrames(iter *runtime.Frames, n int) Callers {
-	if iter == nil {
-		return nil
-	}
-	frames := make([]runtime.Frame, 0, n)
-	for {
-		f, ok := iter.Next()
-		if !ok {
-			break
-		}
-		frames = append(frames, f)
-	}
-	return frames
 }
