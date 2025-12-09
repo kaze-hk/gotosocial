@@ -409,6 +409,18 @@ func (a *Account) IsMoving() bool {
 	return a.MovedToURI != "" || a.MoveID != ""
 }
 
+// HeaderSet returns true if acct
+// has a HeaderMediaAttachmentID set.
+func (a *Account) HeaderSet() bool {
+	return a.HeaderMediaAttachmentID != ""
+}
+
+// AvatarSet returns true if acct
+// has a AvatarMediaAttachmentID set.
+func (a *Account) AvatarSet() bool {
+	return a.AvatarMediaAttachmentID != ""
+}
+
 // AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.
 type AccountToEmoji struct {
 	AccountID string   `bun:"type:CHAR(26),unique:accountemoji,nullzero,notnull"`

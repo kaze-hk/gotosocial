@@ -53,6 +53,7 @@ type MediaStandardTestSuite struct {
 	testAttachments       map[string]*gtsmodel.MediaAttachment
 	testStatuses          map[string]*gtsmodel.Status
 	testRemoteAttachments map[string]testrig.RemoteAttachmentFile
+	testDomainLimits      map[string]*gtsmodel.DomainLimit
 
 	// module being tested
 	mediaProcessor mediaprocessing.Processor
@@ -66,6 +67,7 @@ func (suite *MediaStandardTestSuite) SetupSuite() {
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testRemoteAttachments = testrig.NewTestFediAttachments("../../../testrig/media")
+	suite.testDomainLimits = testrig.NewTestDomainLimits()
 }
 
 func (suite *MediaStandardTestSuite) SetupTest() {

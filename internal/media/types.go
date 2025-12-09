@@ -78,6 +78,12 @@ type AdditionalMediaInfo struct {
 	// Y focus coordinate for
 	// this media; defaults to 0.
 	FocusY *float32
+
+	// Set this to "true" if media originates
+	// from a domain that has a domain limit
+	// in place with a media policy of "reject".
+	// In this case, the media will not downloaded.
+	RejectMedia *bool
 }
 
 // AdditionalEmojiInfo represents additional information
@@ -111,6 +117,12 @@ type AdditionalEmojiInfo struct {
 	// ID of the category this emoji
 	// should be placed in; defaults to "".
 	CategoryID *string
+
+	// Set this to "true" if emoji originates
+	// from a domain that has a domain limit
+	// in place with a media policy of "reject".
+	// In this case, the emoji will not downloaded.
+	RejectMedia *bool
 }
 
 // DataFunc represents a function used to retrieve the raw bytes of a piece of media.

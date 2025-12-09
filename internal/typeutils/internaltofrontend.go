@@ -871,13 +871,6 @@ func TagToAPITag(tag *gtsmodel.Tag, stubHistory bool, following *bool) apimodel.
 // for serialization on the API.
 //
 // Requesting account can be nil.
-//
-// filterContext can be the empty string
-// if these statuses are not being filtered.
-//
-// If there is a matching "hide" filter, the returned
-// status will be nil with a ErrHideStatus error; callers
-// need to handle that case by excluding it from results.
 func (c *Converter) StatusToAPIStatus(
 	ctx context.Context,
 	status *gtsmodel.Status,
@@ -1209,6 +1202,20 @@ func (c *Converter) baseStatusToFrontend(
 		}
 	}
 
+	// Check if domain is limited, as this
+	// will affect how we have to serialize it.
+	limit, err := c.state.DB.MatchDomainLimit(ctx, status.Account.Domain)
+	if err != nil {
+		return nil, gtserror.Newf("error matching domain limit: %w", err)
+	}
+
+	// Override sensitivity
+	// if domain limit says so.
+	sensitive := *status.Sensitive
+	if !sensitive && limit.MediaMarkSensitive() {
+		sensitive = true
+	}
+
 	repliesCount, err := c.state.DB.CountStatusReplies(ctx, status.ID)
 	if err != nil {
 		return nil, gtserror.Newf("error counting replies: %w", err)
@@ -1249,7 +1256,7 @@ func (c *Converter) baseStatusToFrontend(
 		CreatedAt:          util.FormatISO8601(status.CreatedAt),
 		InReplyToID:        nil, // Set below.
 		InReplyToAccountID: nil, // Set below.
-		Sensitive:          *status.Sensitive,
+		Sensitive:          sensitive,
 		Visibility:         VisToAPIVis(status.Visibility),
 		LocalOnly:          status.IsLocalOnly(),
 		Language:           nil, // Set below.
@@ -1896,9 +1903,8 @@ func (c *Converter) NotificationToAPINotification(
 	}, nil
 }
 
-// ConversationToAPIConversation converts a conversation into its API representation.
-// The conversation status will be filtered using the notification filter context,
-// and may be nil if the status was hidden.
+// ConversationToAPIConversation converts
+// a conversation into its API representation.
 func (c *Converter) ConversationToAPIConversation(
 	ctx context.Context,
 	conversation *gtsmodel.Conversation,

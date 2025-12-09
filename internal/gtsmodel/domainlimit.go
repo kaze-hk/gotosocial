@@ -85,6 +85,20 @@ const (
 	MediaPolicyReject MediaPolicy = 3
 )
 
+// MediaReject returns true if this domain
+// limit is not nil and its MediaPolicy
+// says that media should be rejected.
+func (l *DomainLimit) MediaReject() bool {
+	return l != nil && l.MediaPolicy == MediaPolicyReject
+}
+
+// MediaMarkSensitive returns true if this
+// domain limit is not nil and its MediaPolicy
+// says that media should be marked sensitive.
+func (l *DomainLimit) MediaMarkSensitive() bool {
+	return l != nil && l.MediaPolicy == MediaPolicyMarkSensitive
+}
+
 type FollowsPolicy enumType
 
 const (

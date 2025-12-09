@@ -1575,6 +1575,20 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
 }`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestStatusToFrontendMarkSensitive() {
+	var (
+		ctx               = suite.T().Context()
+		testStatus        = suite.testStatuses["remote_account_1_status_1"]
+		requestingAccount = suite.testAccounts["admin_account"]
+	)
+
+	// There's a domain limit in place on fossbros-anonymous.io, so this
+	// status should be marked sensitive when serialized via the API.
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(ctx, testStatus, requestingAccount)
+	suite.NoError(err)
+	suite.True(apiStatus.Sensitive)
+}
+
 func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval() {
 	var (
 		testStatus        = suite.testStatuses["admin_account_status_5"]
@@ -2618,7 +2632,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "edited_at": null,
       "in_reply_to_id": null,
       "in_reply_to_account_id": null,
-      "sensitive": false,
+      "sensitive": true,
       "spoiler_text": "",
       "visibility": "unlisted",
       "language": "en",

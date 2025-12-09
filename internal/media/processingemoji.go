@@ -34,14 +34,41 @@ import (
 // ProcessingEmoji represents an emoji currently processing. It exposes
 // various functions for retrieving data from the process.
 type ProcessingEmoji struct {
-	emoji     *gtsmodel.Emoji   // processing emoji details
-	instAccID string            // instance account ID
-	newPathID string            // new emoji path ID to use when being refreshed
-	dataFn    DataFunc          // load-data function, returns media stream
-	done      bool              // done is set when process finishes with non ctx canceled type error
-	proc      runners.Processor // proc helps synchronize only a singular running processing instance
-	err       error             // error stores permanent error value when done
-	mgr       *Manager          // mgr instance (access to db / storage)
+	// Processing emoji details.
+	emoji *gtsmodel.Emoji
+
+	// Instance account ID, used to
+	// construct emoji storage path.
+	instAccID string
+
+	// New emoji path ID to
+	// use when being refreshed.
+	newPathID string
+
+	// Load-data function,
+	// returns media stream.
+	dataFn DataFunc
+
+	// done is set when process finishes
+	// with non ctx canceled type error
+	done bool
+
+	// proc helps synchronize only a
+	// singular running processing instance
+	proc runners.Processor
+
+	// error stores permanent
+	// error value when done
+	err error
+
+	// mgr instance, for access to
+	// db / storage during processing
+	mgr *Manager
+
+	// true if this emoji should not
+	// be downloaded, ie., should be
+	// returned as placeholder only.
+	stubOnly bool
 }
 
 // Load blocks until the static and fullsize image has been processed, and then returns the completed emoji.
@@ -126,9 +153,9 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 				// (i.e. no ctx canceled).
 				ctx = context.WithoutCancel(ctx)
 
-				// On error, clean
-				// downloaded files.
-				if err != nil {
+				// On error or stub, ensure
+				// no downloaded files remain.
+				if err != nil || p.stubOnly {
 					p.cleanup(ctx)
 				}
 
@@ -143,6 +170,17 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 				p.err = err
 			}
 		}()
+
+		// If we're only stubbing, skip
+		// calling store() to cache the emoji.
+		//
+		// Any files that may have been stored
+		// for it previously will be cleaned up
+		// by the deferred function above.
+		if p.stubOnly {
+			err = nil
+			return err
+		}
 
 		// Attempt to store media and calculate
 		// full-size media attachment details.

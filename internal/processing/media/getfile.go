@@ -95,6 +95,22 @@ func (p *Processor) GetFile(
 		}
 	}
 
+	// Check if there's a limit on
+	// the account's (sub)domain.
+	limit, err := p.state.DB.MatchDomainLimit(ctx, acct.Domain)
+	if err != nil {
+		err := gtserror.Newf("error matching domain limit: %w", err)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	// If media from this domain is rejected,
+	// just return 404 and don't try to serve
+	// it or forward to it.
+	if limit.MediaReject() {
+		err := gtserror.Newf("rejecting media from %s", limit.Domain)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
 	// The way we store emojis is a bit different
 	// from the way we store other attachments,
 	// so we need to take different steps depending
@@ -350,7 +366,8 @@ func (p *Processor) getEmojiContent(
 		// Attempt to recache this remote emoji.
 		emoji, err = p.federator.RecacheEmoji(ctx,
 			emoji,
-			false,
+			media.AdditionalEmojiInfo{},
+			false, // async
 		)
 		if err != nil {
 			err := gtserror.Newf("error recaching emoji %s: %w", emoji.URI, err)

@@ -55,7 +55,7 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
   "edited_at": null,
   "in_reply_to_id": null,
   "in_reply_to_account_id": null,
-  "sensitive": false,
+  "sensitive": true,
   "spoiler_text": "",
   "visibility": "unlisted",
   "language": "en",

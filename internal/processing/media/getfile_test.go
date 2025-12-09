@@ -19,6 +19,7 @@ package media_test
 
 import (
 	"io"
+	"net/http"
 	"path"
 	"testing"
 
@@ -198,6 +199,36 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	suite.Equal(thumbnailBytes, b)
 	suite.Equal("image/jpeg", content.ContentType)
 	suite.EqualValues(testAttachment.Thumbnail.FileSize, content.ContentLength)
+}
+
+func (suite *GetFileTestSuite) TestGetRemoteFileRejectMedia() {
+	ctx := suite.T().Context()
+
+	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	fileName := path.Base(testAttachment.File.Path)
+
+	// Update the existing domain limit on
+	// fossbros-anonymous.io to reject media.
+	limit := new(gtsmodel.DomainLimit)
+	*limit = *suite.testDomainLimits["fossbros-anonymous.io"]
+	limit.MediaPolicy = gtsmodel.MediaPolicyReject
+	if err := suite.state.DB.UpdateDomainLimit(ctx, limit, "media_policy"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Try to get the content. This should return a 404 since
+	// we're now rejecting media from fossbros-anonymous.io.
+	content, errWithCode := suite.mediaProcessor.GetFile(ctx, nil, &apimodel.GetContentRequestForm{
+		AccountID: testAttachment.AccountID,
+		MediaType: string(media.TypeAttachment),
+		MediaSize: string(media.SizeOriginal),
+		FileName:  fileName,
+	})
+
+	suite.EqualError(errWithCode, "GetFile: rejecting media from fossbros-anonymous.io")
+	suite.Equal(http.StatusNotFound, errWithCode.Code())
+	suite.Equal("Not Found", errWithCode.Safe())
+	suite.Nil(content)
 }
 
 func TestGetFileTestSuite(t *testing.T) {

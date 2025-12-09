@@ -40,6 +40,9 @@ import (
 // exist it will be newly inserted into the database
 // followed by dereferencing the actual media file.
 //
+// If RejectMedia is set to true on the given
+// info struct, the media will only be stubbed.
+//
 // Please note that even if an error is returned,
 // an emoji model may still be returned if the error
 // was only encountered during actual dereferencing.
@@ -138,6 +141,9 @@ func (d *Dereferencer) GetEmoji(
 // information provided in media.AdditionEmojiInfo{}.
 // (note that is a no-op to pass in a local emoji).
 //
+// If RejectMedia is set to true on the given
+// info struct, the emoji will only be stubbed.
+//
 // Please note that even if an error is returned,
 // an emoji model may still be returned if the error
 // was only encountered during actual dereferencing.
@@ -166,7 +172,7 @@ func (d *Dereferencer) RefreshEmoji(
 		// We still want to make sure
 		// the emoji is cached. Simply
 		// check whether emoji is cached.
-		return d.RecacheEmoji(ctx, emoji, async)
+		return d.RecacheEmoji(ctx, emoji, info, async)
 	}
 
 	// Generate emoji shortcode@domain
@@ -235,6 +241,7 @@ func (d *Dereferencer) RefreshEmoji(
 func (d *Dereferencer) RecacheEmoji(
 	ctx context.Context,
 	emoji *gtsmodel.Emoji,
+	info media.AdditionalEmojiInfo,
 	async bool,
 ) (
 	*gtsmodel.Emoji,
@@ -296,6 +303,7 @@ func (d *Dereferencer) RecacheEmoji(
 			processing, err := d.mediaManager.CacheEmoji(ctx,
 				emoji,
 				data,
+				info,
 			)
 			return processing, nil, err
 		},
@@ -406,6 +414,7 @@ func (d *Dereferencer) fetchEmojis(
 	ctx context.Context,
 	existing []*gtsmodel.Emoji,
 	emojis []*gtsmodel.Emoji, // newly dereferenced
+	rejectMedia bool,
 ) (
 	[]*gtsmodel.Emoji,
 	bool, // any changes?
@@ -413,6 +422,13 @@ func (d *Dereferencer) fetchEmojis(
 ) {
 	// Track any changes.
 	changed := false
+
+	// If we're rejecting media from this
+	// domain, set this once outside the loop.
+	var rejectMediaPtr *bool
+	if rejectMedia {
+		rejectMediaPtr = &rejectMedia
+	}
 
 	for i, placeholder := range emojis {
 		// Look for an existing emoji with shortcode + domain.
@@ -426,14 +442,24 @@ func (d *Dereferencer) fetchEmojis(
 			// indicate we should force a refresh.
 			force := emojiChanged(existing, placeholder)
 
-			// Ensure that the existing emoji model is up-to-date and cached.
-			existing, err := d.RefreshEmoji(ctx, existing, media.AdditionalEmojiInfo{
-
-				// Set latest values from placeholder.
+			// Set latest values from placeholder.
+			info := media.AdditionalEmojiInfo{
 				URI:                  &placeholder.URI,
 				ImageRemoteURL:       &placeholder.ImageRemoteURL,
 				ImageStaticRemoteURL: &placeholder.ImageStaticRemoteURL,
-			}, force, true)
+				// Pass rejectMedia ptr to derefencer
+				// to skip downloading if necessary.
+				RejectMedia: rejectMediaPtr,
+			}
+
+			// Ensure that the existing emoji model is up-to-date and cached.
+			existing, err := d.RefreshEmoji(
+				ctx,
+				existing,
+				info,
+				force,
+				true, // async
+			)
 			if err != nil {
 				log.Errorf(ctx, "error refreshing emoji: %v", err)
 
@@ -451,6 +477,20 @@ func (d *Dereferencer) fetchEmojis(
 		// Emojis changed!
 		changed = true
 
+		// Prepare emoji info, including the
+		// rejectMedia flag if necessary.
+		info := media.AdditionalEmojiInfo{
+			URI:                  &placeholder.URI,
+			ImageRemoteURL:       &placeholder.ImageRemoteURL,
+			ImageStaticRemoteURL: &placeholder.ImageStaticRemoteURL,
+		}
+
+		// If set, pass rejectMedia flag to
+		// derefencer to skip downloading.
+		if rejectMedia {
+			info.RejectMedia = &rejectMedia
+		}
+
 		// Fetch this newly added emoji,
 		// this function handles the case
 		// of existing cached emojis and
@@ -459,13 +499,9 @@ func (d *Dereferencer) fetchEmojis(
 			placeholder.Shortcode,
 			placeholder.Domain,
 			placeholder.ImageRemoteURL,
-			media.AdditionalEmojiInfo{
-				URI:                  &placeholder.URI,
-				ImageRemoteURL:       &placeholder.ImageRemoteURL,
-				ImageStaticRemoteURL: &placeholder.ImageStaticRemoteURL,
-			},
-			false,
-			true, // async
+			info,
+			false, // refresh
+			true,  // async
 		)
 		if err != nil {
 			if emoji == nil {

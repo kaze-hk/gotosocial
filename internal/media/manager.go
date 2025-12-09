@@ -160,7 +160,7 @@ func (m *Manager) CreateMedia(
 	}
 
 	// Pass prepared media as ready to be cached.
-	return m.CacheMedia(attachment, data), nil
+	return m.CacheMedia(attachment, data, info), nil
 }
 
 // CacheMedia wraps a media model (assumed already
@@ -170,11 +170,13 @@ func (m *Manager) CreateMedia(
 func (m *Manager) CacheMedia(
 	media *gtsmodel.MediaAttachment,
 	data DataFunc,
+	info AdditionalMediaInfo,
 ) *ProcessingMedia {
 	return &ProcessingMedia{
-		media:  media,
-		dataFn: data,
-		mgr:    m,
+		media:    media,
+		dataFn:   data,
+		mgr:      m,
+		stubOnly: util.PtrOrZero(info.RejectMedia),
 	}
 }
 
@@ -322,6 +324,7 @@ func (m *Manager) CacheEmoji(
 	ctx context.Context,
 	emoji *gtsmodel.Emoji,
 	data DataFunc,
+	info AdditionalEmojiInfo,
 ) (
 	*ProcessingEmoji,
 	error,
@@ -347,6 +350,7 @@ func (m *Manager) CacheEmoji(
 		emoji:     emoji,
 		dataFn:    data,
 		mgr:       m,
+		stubOnly:  util.PtrOrZero(info.RejectMedia),
 	}, nil
 }
 
@@ -405,6 +409,7 @@ func (m *Manager) createOrUpdateEmoji(
 		emoji:     emoji,
 		dataFn:    data,
 		mgr:       m,
+		stubOnly:  util.PtrOrZero(info.RejectMedia),
 	}
 
 	return processingEmoji, nil

@@ -36,6 +36,9 @@ import (
 // information to set on the media attachment may also
 // be provided.
 //
+// If RejectMedia is set to true on the given
+// info struct, the media will only be stubbed.
+//
 // Please note that even if an error is returned,
 // a media model may still be returned if the error
 // was only encountered during actual dereferencing.
@@ -66,7 +69,7 @@ func (d *Dereferencer) GetMedia(
 		return nil, err
 	}
 
-	return d.processMediaSafeley(ctx,
+	return d.processMediaSafely(ctx,
 		remoteURL,
 		func() (*media.ProcessingMedia, error) {
 
@@ -102,6 +105,9 @@ func (d *Dereferencer) GetMedia(
 // storage and compared to extra info in information
 // in given gtsmodel.AdditionMediaInfo{}. This handles
 // the case of local emoji by returning early.
+//
+// If RejectMedia is set to true on the given
+// info struct, the media will only be stubbed.
 //
 // Please note that even if an error is returned,
 // a media model may still be returned if the error
@@ -149,7 +155,7 @@ func (d *Dereferencer) RefreshMedia(
 	}
 
 	// Pass along for safe processing.
-	return d.processMediaSafeley(ctx,
+	return d.processMediaSafely(ctx,
 		attach.RemoteURL,
 		func() (*media.ProcessingMedia, error) {
 
@@ -174,41 +180,9 @@ func (d *Dereferencer) RefreshMedia(
 			return d.mediaManager.CacheMedia(
 				attach,
 				data,
+				info,
 			), nil
 		},
-		async,
-	)
-}
-
-// updateAttachment handles the case of an existing media attachment
-// that *may* have changes or need recaching. it checks for changed
-// fields, updating in the database if so, and recaches uncached media.
-func (d *Dereferencer) updateAttachment(
-	ctx context.Context,
-	requestUser string,
-	existing *gtsmodel.MediaAttachment, // existing attachment
-	attach *gtsmodel.MediaAttachment, // (optional) changed media
-	async bool,
-) (
-	*gtsmodel.MediaAttachment, // always set
-	error,
-) {
-	var info media.AdditionalMediaInfo
-
-	if attach != nil {
-		// Set optional extra information,
-		// (will later check for changes).
-		info.Description = &attach.Description
-		info.Blurhash = &attach.Blurhash
-		info.RemoteURL = &attach.RemoteURL
-	}
-
-	// Ensure media is cached.
-	return d.RefreshMedia(ctx,
-		requestUser,
-		existing,
-		info,
-		false,
 		async,
 	)
 }
@@ -220,7 +194,7 @@ func (d *Dereferencer) updateAttachment(
 // determines whether to load it immediately, or in the background.
 // the provided process function can also optionally return ready
 // media model directly for catching just-cached race conditions.
-func (d *Dereferencer) processMediaSafeley(
+func (d *Dereferencer) processMediaSafely(
 	ctx context.Context,
 	remoteURL string,
 	process func() (*media.ProcessingMedia, error),

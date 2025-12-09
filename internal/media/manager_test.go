@@ -1052,6 +1052,59 @@ func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
 	}
 }
 
+func (suite *ManagerTestSuite) TestUncacheRejectedMedia() {
+	ctx := suite.T().Context()
+
+	// Copy test attachment.
+	attachment := new(gtsmodel.MediaAttachment)
+	*attachment = *suite.testAttachments["remote_account_1_status_1_attachment_1"]
+
+	// Take the storage addresses before uncaching.
+	originalPath := attachment.File.Path
+	thumbPath := attachment.Thumbnail.Path
+
+	// Try to recache attachment,
+	// passing RejectMedia in the info.
+	//
+	// This will keep metadata like image description
+	// and blurhash but throw away files themselves.
+	//
+	// Data function can be nil as it gets
+	// tossed anyway when we're rejecting media.
+	processing := suite.manager.CacheMedia(
+		attachment,
+		nil,
+		media.AdditionalMediaInfo{
+			RejectMedia: util.Ptr(true),
+		},
+	)
+
+	// Load the attachment.
+	// It should be marked as uncached
+	// despite being cached earlier.
+	attachment, err := processing.Load(ctx)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(*attachment.Cached)
+	suite.Equal(gtsmodel.FileTypeUnknown, attachment.Type)
+	suite.Zero(attachment.File)
+	suite.Zero(attachment.FileMeta)
+	suite.Zero(attachment.Thumbnail)
+
+	// Blurhash + description
+	// should be preserved.
+	suite.NotEmpty(attachment.Blurhash)
+	suite.NotEmpty(attachment.Description)
+
+	// Ensure no longer in storage.
+	for _, path := range []string{originalPath, thumbPath} {
+		if _, err := suite.storage.Get(ctx, path); !storage.IsNotFound(err) {
+			suite.FailNow("", "wanted %s to no longer be in storage", path)
+		}
+	}
+}
+
 func TestManagerTestSuite(t *testing.T) {
 	suite.Run(t, &ManagerTestSuite{})
 }

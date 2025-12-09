@@ -38,12 +38,34 @@ import (
 // currently being processed. It exposes functions
 // for retrieving data from the process.
 type ProcessingMedia struct {
-	media  *gtsmodel.MediaAttachment // processing media attachment details
-	dataFn DataFunc                  // load-data function, returns media stream
-	done   bool                      // done is set when process finishes with non ctx canceled type error
-	proc   runners.Processor         // proc helps synchronize only a singular running processing instance
-	err    error                     // error stores permanent error value when done
-	mgr    *Manager                  // mgr instance (access to db / storage)
+	// Processing media
+	// attachment details.
+	media *gtsmodel.MediaAttachment
+
+	// Load-data function,
+	// returns media stream.
+	dataFn DataFunc
+
+	// done is set when process finishes
+	// with non ctx canceled type error
+	done bool
+
+	// proc helps synchronize only a
+	// singular running processing instance
+	proc runners.Processor
+
+	// error stores permanent
+	// error value when done
+	err error
+
+	// mgr instance, for access to
+	// db / storage during processing
+	mgr *Manager
+
+	// true if this piece of media should
+	// not be downloaded, ie., should be
+	// stubbed as an Unknown type only
+	stubOnly bool
 }
 
 // MustLoad blocks until the thumbnail and fullsize image has been processed, and then returns the completed media.
@@ -125,8 +147,9 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 				// (i.e. no ctx canceled).
 				ctx = context.WithoutCancel(ctx)
 
-				// On error or unknown media types, perform error cleanup.
-				if err != nil || p.media.Type == gtsmodel.FileTypeUnknown {
+				// On error, stub, or unknown media
+				// types, perform error cleanup.
+				if err != nil || p.stubOnly || p.media.Type == gtsmodel.FileTypeUnknown {
 					p.cleanup(ctx)
 				}
 
@@ -141,6 +164,17 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 				p.err = err
 			}
 		}()
+
+		// If we're only stubbing, skip
+		// calling store() to cache the media.
+		//
+		// Any files that may have been stored
+		// for it previously will be cleaned up
+		// by the deferred function above.
+		if p.stubOnly {
+			err = nil
+			return err
+		}
 
 		// Attempt to store media and calculate
 		// full-size media attachment details.
@@ -167,7 +201,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 
 	var (
-		// predfine temporary media
+		// predefine temporary media
 		// file path variables so we
 		// can remove them on error.
 		temppath  string
@@ -231,7 +265,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	case gtsmodel.FileTypeImage,
 		gtsmodel.FileTypeVideo,
 		gtsmodel.FileTypeGifv:
-		// Attempt to clean as metadata from file as possible.
+		// Attempt to clean as much metadata from file as possible.
 		if err := clearMetadata(ctx, temppath); err != nil {
 			return gtserror.Newf("error cleaning metadata: %w", err)
 		}
