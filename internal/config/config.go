@@ -216,6 +216,9 @@ type MediaConfiguration struct {
 
 type CacheConfiguration struct {
 	S3ObjectInfo                         int           `name:"s3-object-info" usage:"Enables caching of S3 object information in the storage driver to reduce S3 calls, value is cache capacity."`
+	HomeTimelineTimeout                  time.Duration `name:"home-timeline-timeout" usage:"Duration before any one home timeline cache is unloaded from memory. Values <= 0 disable unloading."`
+	ListTimelineTimeout                  time.Duration `name:"list-timeline-timeout" usage:"Duration before any one list timeline cache is unloaded from memory. Values <= 0 disable unloading."`
+	TagTimelineTimeout                   time.Duration `name:"tag-timeline-timeout" usage:"Duration before any one tag timeline cache is unloaded from memory. Values <= 0 disable unloading."`
 	MemoryTarget                         bytesize.Size `name:"memory-target"`
 	AccountMemRatio                      float64       `name:"account-mem-ratio"`
 	AccountNoteMemRatio                  float64       `name:"account-note-mem-ratio"`

@@ -155,6 +155,9 @@ const (
 	MediaFfmpegPoolSizeFlag                       = "media-ffmpeg-pool-size"
 	MediaThumbMaxPixelsFlag                       = "media-thumb-max-pixels"
 	CacheS3ObjectInfoFlag                         = "cache-s3-object-info"
+	CacheHomeTimelineTimeoutFlag                  = "cache-home-timeline-timeout"
+	CacheListTimelineTimeoutFlag                  = "cache-list-timeline-timeout"
+	CacheTagTimelineTimeoutFlag                   = "cache-tag-timeline-timeout"
 	CacheMemoryTargetFlag                         = "cache-memory-target"
 	CacheAccountMemRatioFlag                      = "cache-account-mem-ratio"
 	CacheAccountNoteMemRatioFlag                  = "cache-account-note-mem-ratio"
@@ -356,6 +359,9 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Int("media-ffmpeg-pool-size", cfg.Media.FfmpegPoolSize, "Number of instances of the embedded ffmpeg WASM binary to add to the media processing pool. 0 or less uses GOMAXPROCS.")
 	flags.Int("media-thumb-max-pixels", cfg.Media.ThumbMaxPixels, "Max size in pixels of any one dimension of a thumbnail (as input media ratio is preserved).")
 	flags.Int("cache-s3-object-info", cfg.Cache.S3ObjectInfo, "Enables caching of S3 object information in the storage driver to reduce S3 calls, value is cache capacity.")
+	flags.Duration("cache-home-timeline-timeout", cfg.Cache.HomeTimelineTimeout, "Duration before any one home timeline cache is unloaded from memory. Values <= 0 disable unloading.")
+	flags.Duration("cache-list-timeline-timeout", cfg.Cache.ListTimelineTimeout, "Duration before any one list timeline cache is unloaded from memory. Values <= 0 disable unloading.")
+	flags.Duration("cache-tag-timeline-timeout", cfg.Cache.TagTimelineTimeout, "Duration before any one tag timeline cache is unloaded from memory. Values <= 0 disable unloading.")
 	flags.String("cache-memory-target", cfg.Cache.MemoryTarget.String(), "")
 	flags.Float64("cache-account-mem-ratio", cfg.Cache.AccountMemRatio, "")
 	flags.Float64("cache-account-note-mem-ratio", cfg.Cache.AccountNoteMemRatio, "")
@@ -422,7 +428,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 198)
+	cfgmap := make(map[string]any, 201)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-format"] = cfg.LogFormat
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
@@ -549,6 +555,9 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["media-ffmpeg-pool-size"] = cfg.Media.FfmpegPoolSize
 	cfgmap["media-thumb-max-pixels"] = cfg.Media.ThumbMaxPixels
 	cfgmap["cache-s3-object-info"] = cfg.Cache.S3ObjectInfo
+	cfgmap["cache-home-timeline-timeout"] = cfg.Cache.HomeTimelineTimeout
+	cfgmap["cache-list-timeline-timeout"] = cfg.Cache.ListTimelineTimeout
+	cfgmap["cache-tag-timeline-timeout"] = cfg.Cache.TagTimelineTimeout
 	cfgmap["cache-memory-target"] = cfg.Cache.MemoryTarget.String()
 	cfgmap["cache-account-mem-ratio"] = cfg.Cache.AccountMemRatio
 	cfgmap["cache-account-note-mem-ratio"] = cfg.Cache.AccountNoteMemRatio
@@ -1666,6 +1675,30 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.Cache.S3ObjectInfo, err = cast.ToIntE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> int for 'cache-s3-object-info': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["cache-home-timeline-timeout"]; ok {
+		var err error
+		cfg.Cache.HomeTimelineTimeout, err = cast.ToDurationE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> time.Duration for 'cache-home-timeline-timeout': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["cache-list-timeline-timeout"]; ok {
+		var err error
+		cfg.Cache.ListTimelineTimeout, err = cast.ToDurationE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> time.Duration for 'cache-list-timeline-timeout': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["cache-tag-timeline-timeout"]; ok {
+		var err error
+		cfg.Cache.TagTimelineTimeout, err = cast.ToDurationE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> time.Duration for 'cache-tag-timeline-timeout': %w", ival, err)
 		}
 	}
 
@@ -5029,6 +5062,72 @@ func GetCacheS3ObjectInfo() int { return global.GetCacheS3ObjectInfo() }
 // SetCacheS3ObjectInfo safely sets the value for global configuration 'Cache.S3ObjectInfo' field
 func SetCacheS3ObjectInfo(v int) { global.SetCacheS3ObjectInfo(v) }
 
+// GetCacheHomeTimelineTimeout safely fetches the Configuration value for state's 'Cache.HomeTimelineTimeout' field
+func (st *ConfigState) GetCacheHomeTimelineTimeout() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.HomeTimelineTimeout
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheHomeTimelineTimeout safely sets the Configuration value for state's 'Cache.HomeTimelineTimeout' field
+func (st *ConfigState) SetCacheHomeTimelineTimeout(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.HomeTimelineTimeout = v
+	st.reloadToViper()
+}
+
+// GetCacheHomeTimelineTimeout safely fetches the value for global configuration 'Cache.HomeTimelineTimeout' field
+func GetCacheHomeTimelineTimeout() time.Duration { return global.GetCacheHomeTimelineTimeout() }
+
+// SetCacheHomeTimelineTimeout safely sets the value for global configuration 'Cache.HomeTimelineTimeout' field
+func SetCacheHomeTimelineTimeout(v time.Duration) { global.SetCacheHomeTimelineTimeout(v) }
+
+// GetCacheListTimelineTimeout safely fetches the Configuration value for state's 'Cache.ListTimelineTimeout' field
+func (st *ConfigState) GetCacheListTimelineTimeout() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.ListTimelineTimeout
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheListTimelineTimeout safely sets the Configuration value for state's 'Cache.ListTimelineTimeout' field
+func (st *ConfigState) SetCacheListTimelineTimeout(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.ListTimelineTimeout = v
+	st.reloadToViper()
+}
+
+// GetCacheListTimelineTimeout safely fetches the value for global configuration 'Cache.ListTimelineTimeout' field
+func GetCacheListTimelineTimeout() time.Duration { return global.GetCacheListTimelineTimeout() }
+
+// SetCacheListTimelineTimeout safely sets the value for global configuration 'Cache.ListTimelineTimeout' field
+func SetCacheListTimelineTimeout(v time.Duration) { global.SetCacheListTimelineTimeout(v) }
+
+// GetCacheTagTimelineTimeout safely fetches the Configuration value for state's 'Cache.TagTimelineTimeout' field
+func (st *ConfigState) GetCacheTagTimelineTimeout() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.TagTimelineTimeout
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheTagTimelineTimeout safely sets the Configuration value for state's 'Cache.TagTimelineTimeout' field
+func (st *ConfigState) SetCacheTagTimelineTimeout(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.TagTimelineTimeout = v
+	st.reloadToViper()
+}
+
+// GetCacheTagTimelineTimeout safely fetches the value for global configuration 'Cache.TagTimelineTimeout' field
+func GetCacheTagTimelineTimeout() time.Duration { return global.GetCacheTagTimelineTimeout() }
+
+// SetCacheTagTimelineTimeout safely sets the value for global configuration 'Cache.TagTimelineTimeout' field
+func SetCacheTagTimelineTimeout(v time.Duration) { global.SetCacheTagTimelineTimeout(v) }
+
 // GetCacheMemoryTarget safely fetches the Configuration value for state's 'Cache.MemoryTarget' field
 func (st *ConfigState) GetCacheMemoryTarget() (v bytesize.Size) {
 	st.mutex.RLock()
@@ -7001,6 +7100,39 @@ func flattenConfigMap(cfgmap map[string]any) {
 		ival, ok := mapGet(cfgmap, key...)
 		if ok {
 			cfgmap["cache-s3-object-info"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"cache", "home-timeline-timeout"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["cache-home-timeline-timeout"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"cache", "list-timeline-timeout"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["cache-list-timeline-timeout"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"cache", "tag-timeline-timeout"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["cache-tag-timeline-timeout"] = ival
 			nestedKeys[key[0]] = struct{}{}
 			break
 		}

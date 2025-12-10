@@ -206,4 +206,37 @@ cache:
   # Examples: ["100MiB", "200MiB", "500MiB", "1GiB"]
   # Default: "100MiB"
   memory-target: "100MiB"
+
+  # cache.home-timeline-timeout (duration) determines
+  # the duration without use before any one home timeline
+  # is unloaded from memory.
+  #
+  # Things to bear in mind:
+  # - timeline queries are CPU intensive
+  # - cache timelines are relatively memory unintensive
+  # - increasing numbers of cache timelines in memory
+  #   each require a small CPU overhead to keep hydrated
+  home-timeline-timeout: "6h"
+
+  # cache.list-timeline-timeout (duration) determines
+  # the duration without use before any one list timeline
+  # is unloaded from memory.
+  #
+  # Things to bear in mind:
+  # - timeline queries are CPU intensive
+  # - cache timelines are relatively memory unintensive
+  # - increasing numbers of cache timelines in memory
+  #   each require a small CPU overhead to keep hydrated
+  list-timeline-timeout: "1h"
+
+  # cache.tag-timeline-timeout (duration) determines
+  # the duration without use before any one tag timeline
+  # is unloaded from memory.
+  #
+  # Things to bear in mind:
+  # - timeline queries are CPU intensive
+  # - cache timelines are relatively memory unintensive
+  # - increasing numbers of cache timelines in memory
+  #   each require a small CPU overhead to keep hydrated
+  tag-timeline-timeout: "10m"
 ```

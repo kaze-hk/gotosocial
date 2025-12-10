@@ -18,10 +18,9 @@
 package cache
 
 import (
-	"time"
-
 	"code.superseriousbusiness.org/gopkg/log"
 	"code.superseriousbusiness.org/gotosocial/internal/cache/timeline"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 )
 
 type TimelineCaches struct {
@@ -66,30 +65,30 @@ func (c *Caches) initLocalTimeline() {
 
 func (c *Caches) initHomeTimelines() {
 	// TODO: configurable
-	timeout := 6 * time.Hour
 	cap := 800
 
-	log.Infof(nil, "cache size = %d", cap)
+	timeout := config.GetCacheHomeTimelineTimeout()
+	log.Infof(nil, "cache size = %d, timeout = %s", cap, timeout)
 
 	c.Timelines.Home.Init(cap, timeout)
 }
 
 func (c *Caches) initListTimelines() {
 	// TODO: configurable
-	timeout := 1 * time.Hour
 	cap := 800
 
-	log.Infof(nil, "cache size = %d", cap)
+	timeout := config.GetCacheListTimelineTimeout()
+	log.Infof(nil, "cache size = %d, timeout = %s", cap, timeout)
 
 	c.Timelines.List.Init(cap, timeout)
 }
 
 func (c *Caches) initTagTimelines() {
 	// TODO: configurable
-	timeout := 10 * time.Minute
 	cap := 400
 
-	log.Infof(nil, "cache size = %d", cap)
+	timeout := config.GetCacheTagTimelineTimeout()
+	log.Infof(nil, "cache size = %d, timeout = %s", cap, timeout)
 
 	c.Timelines.Tag.Init(cap, timeout)
 }

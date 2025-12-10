@@ -84,10 +84,12 @@ func (t *StatusTimelines) MustGet(key string) *StatusTimeline {
 		return m, true
 	})
 
-	// Update timeline
-	// last use time.
-	now := time.Now()
-	tt.last.Store(&now)
+	if t.timeout > 0 {
+		// Update timeline
+		// last use time.
+		now := time.Now()
+		tt.last.Store(&now)
+	}
 
 	// Return embedded timeline.
 	return &tt.StatusTimeline
@@ -145,11 +147,31 @@ func (t *StatusTimelines) RemoveByAccountIDs(accountIDs ...string) {
 // Trim calls Trim() for each of the stored StatusTimeline{}s,
 // clearing and / or dropping timelines beyond timeout time.
 func (t *StatusTimelines) Trim() {
+	if t.timeout <= 0 {
+		// No timeout is set, perform
+		// a simple trim of timelines.
+		if p := t.ptr.Load(); p != nil {
+			for _, tt := range *p {
+				tt.Trim()
+			}
+		}
+		return
+	}
+
+	// Perform a more complex
+	// timeout based trimming.
+	t.trim()
+}
+
+func (t *StatusTimelines) trim() {
+	// A longer duration than timeout
+	// after which we mark an unused
+	// timeline as stale and *delete*
+	// from the timelines cache map.
 	var staleout time.Duration
-	timeout := t.timeout
 
 	// Clamp staleout check time to a minimum 1 hour.
-	if staleout = 10 * timeout; staleout < time.Hour {
+	if staleout = 10 * t.timeout; staleout < time.Hour {
 		staleout = time.Hour
 	}
 

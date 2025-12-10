@@ -279,7 +279,10 @@ db-sqlite-busy-timeout: "30m"
 # Default: ""
 db-postgres-connection-string: ""
 
+# GoToSocial cache
+# configuration opts.
 cache:
+
   # cache.memory-target sets a target limit that
   # the application will try to keep it's caches
   # within. This is based on estimated sizes of
@@ -298,6 +301,39 @@ cache:
   # Examples: [0, 8000, 16000, 2560000]
   # Default: 0
   s3-object-info: 0
+
+  # cache.home-timeline-timeout (duration) determines
+  # the duration without use before any one home timeline
+  # is unloaded from memory.
+  #
+  # Things to bear in mind:
+  # - timeline queries are CPU intensive
+  # - cache timelines are relatively memory unintensive
+  # - increasing numbers of cache timelines in memory
+  #   each require a small CPU overhead to keep hydrated
+  home-timeline-timeout: "6h"
+
+  # cache.list-timeline-timeout (duration) determines
+  # the duration without use before any one list timeline
+  # is unloaded from memory.
+  #
+  # Things to bear in mind:
+  # - timeline queries are CPU intensive
+  # - cache timelines are relatively memory unintensive
+  # - increasing numbers of cache timelines in memory
+  #   each require a small CPU overhead to keep hydrated
+  list-timeline-timeout: "1h"
+
+  # cache.tag-timeline-timeout (duration) determines
+  # the duration without use before any one tag timeline
+  # is unloaded from memory.
+  #
+  # Things to bear in mind:
+  # - timeline queries are CPU intensive
+  # - cache timelines are relatively memory unintensive
+  # - increasing numbers of cache timelines in memory
+  #   each require a small CPU overhead to keep hydrated
+  tag-timeline-timeout: "10m"
 
 ######################
 ##### WEB CONFIG #####
@@ -1141,7 +1177,6 @@ metrics-enabled: false
 
 # Settings for OUTGOING http client connections used by GoToSocial to make
 # requests to remote resources (status GETs, media GETs, inbox POSTs, etc).
-
 http-client:
 
   # Duration. Timeout to use for outgoing HTTP requests. If the timeout

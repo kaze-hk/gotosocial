@@ -168,6 +168,11 @@ var Defaults = Configuration{
 		// to those on metered S3 to tweak.
 		S3ObjectInfo: 0,
 
+		// Timeline trim eviction timeouts.
+		HomeTimelineTimeout: 6 * time.Hour,
+		ListTimelineTimeout: 2 * time.Hour,
+		TagTimelineTimeout:  10 * time.Minute,
+
 		// Rough memory target that the total
 		// size of all State.Caches will attempt
 		// to remain with. Emphasis on *rough*.
