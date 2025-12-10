@@ -56,7 +56,7 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
   "in_reply_to_id": null,
   "in_reply_to_account_id": null,
   "sensitive": true,
-  "spoiler_text": "",
+  "spoiler_text": "potentially annoying post ahead",
   "visibility": "unlisted",
   "language": "en",
   "uri": "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M",

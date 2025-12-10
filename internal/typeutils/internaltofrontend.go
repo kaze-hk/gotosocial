@@ -1209,12 +1209,24 @@ func (c *Converter) baseStatusToFrontend(
 		return nil, gtserror.Newf("error matching domain limit: %w", err)
 	}
 
-	// Override sensitivity
-	// if domain limit says so.
-	sensitive := *status.Sensitive
-	if !sensitive && limit.MediaMarkSensitive() {
-		sensitive = true
+	// Build content warning for this post.
+	contentWarning := status.ContentWarning
+	if limit != nil && limit.ContentWarning != "" {
+		if contentWarning == "" {
+			// Set content warning
+			// to limit content warning.
+			contentWarning = limit.ContentWarning
+		} else {
+			// Prepend content warning
+			// with limit content warning.
+			contentWarning = limit.ContentWarning + "; " + contentWarning
+		}
 	}
+
+	// Post is sensitive if there's a content
+	// warning, or it's explicitly marked as
+	// sensitive, or a domain limit says so.
+	sensitive := contentWarning != "" || *status.Sensitive || limit.MediaMarkSensitive()
 
 	repliesCount, err := c.state.DB.CountStatusReplies(ctx, status.ID)
 	if err != nil {
@@ -1281,7 +1293,7 @@ func (c *Converter) baseStatusToFrontend(
 		// Mastodon API says spoiler_text should be *text*, not HTML, so
 		// parse any HTML back to plaintext when serializing via the API,
 		// attempting to preserve semantic intent to keep it readable.
-		SpoilerText: text.ParseHTMLToPlain(status.ContentWarning),
+		SpoilerText: text.ParseHTMLToPlain(contentWarning),
 	}
 
 	if at := status.EditedAt; !at.IsZero() {
