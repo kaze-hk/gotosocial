@@ -153,38 +153,7 @@ func Stacktrace(err error) Callers {
 		// compile-time check
 		return nil
 	}
-
-	// Check for usable type.
-	switch t := err.(type) {
-	case nil:
-		return nil
-	case *errormsg:
-		return t.trc.value()
-	case *errorwrap:
-		return t.trc.value()
-	case interface{ As(any) bool }:
-		if e := new(errormsg); t.As(&e) {
-			return e.trc.value()
-		}
-		if e := new(errorwrap); t.As(&e) {
-			return e.trc.value()
-		}
-	}
-
-	// Above is fast-path without
-	// needing to allocate a slice
-	// or enter a loop.
-	var errs []error
-
-	// Try unwrap errors.
-	switch u := err.(type) {
-	case interface{ Unwrap() error }:
-		errs = append(errs, u.Unwrap())
-	case interface{ Unwrap() []error }:
-		errs = append(errs, u.Unwrap()...)
-	}
-
-	for len(errs) > 0 {
+	for errs := []error{err}; len(errs) > 0; {
 		// Pop next error to check.
 		err := errs[len(errs)-1]
 		errs = errs[:len(errs)-1]
@@ -197,20 +166,12 @@ func Stacktrace(err error) Callers {
 			return t.trc.value()
 		case *errorwrap:
 			return t.trc.value()
-		case interface{ As(any) bool }:
-			if e := new(errormsg); t.As(&e) {
-				return e.trc.value()
-			}
-			if e := new(errorwrap); t.As(&e) {
-				return e.trc.value()
-			}
 		case interface{ Unwrap() error }:
 			errs = append(errs, t.Unwrap())
 		case interface{ Unwrap() []error }:
 			errs = append(errs, t.Unwrap()...)
 		}
 	}
-
 	return nil
 }
 

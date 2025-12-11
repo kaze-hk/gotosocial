@@ -24,41 +24,7 @@ func As(err error, target any) bool { return errors.As(err, target) }
 // leveraging generics to handle allocation and
 // returning of a concrete generic parameter type.
 func AsV2[Type any](err error) Type {
-	if err == nil {
-		var zero Type
-		return zero
-	}
-
-	// Check direct type.
-	t, ok := err.(Type)
-	if ok {
-		return t
-	}
-
-	// Look for .As() support.
-	as, ok := err.(interface {
-		As(target any) bool
-	})
-
-	// Try to call .As().
-	if ok && as.As(&t) {
-		return t
-	}
-
-	// Above is fast-path without
-	// needing to allocate a slice
-	// or enter a loop.
-	var errs []error
-
-	// Try unwrap errors.
-	switch u := err.(type) {
-	case interface{ Unwrap() error }:
-		errs = append(errs, u.Unwrap())
-	case interface{ Unwrap() []error }:
-		errs = append(errs, u.Unwrap()...)
-	}
-
-	for len(errs) > 0 {
+	for errs := []error{err}; len(errs) > 0; {
 		// Pop next error to check.
 		err := errs[len(errs)-1]
 		errs = errs[:len(errs)-1]
@@ -82,15 +48,11 @@ func AsV2[Type any](err error) Type {
 			return t
 		}
 
-		// Try unwrap errors.
-		switch u := err.(type) {
-		case interface{ Unwrap() error }:
-			errs = append(errs, u.Unwrap())
-		case interface{ Unwrap() []error }:
-			errs = append(errs, u.Unwrap()...)
+		// Try unwrap any contained errors.
+		if e := UnwrapV2(err); len(e) > 0 {
+			errs = append(errs, e...)
 		}
 	}
-
 	var zero Type
 	return zero
 }

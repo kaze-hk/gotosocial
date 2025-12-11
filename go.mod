@@ -16,7 +16,7 @@ require (
 	codeberg.org/gruf/go-cache/v3 v3.6.2
 	codeberg.org/gruf/go-caller v0.0.0-20250806133437-db8d0b1f71cf
 	codeberg.org/gruf/go-debug v1.3.0
-	codeberg.org/gruf/go-errors/v2 v2.3.3
+	codeberg.org/gruf/go-errors/v2 v2.3.4
 	codeberg.org/gruf/go-fastcopy v1.1.3
 	codeberg.org/gruf/go-fastpath/v2 v2.0.1
 	codeberg.org/gruf/go-ffmpreg v0.6.16
@@ -49,7 +49,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/k3a/html2text v1.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/miekg/dns v1.1.68
+	github.com/miekg/dns v1.1.69
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ncruces/go-sqlite3 v0.30.3
