@@ -52,6 +52,7 @@ type WorkersTestSuite struct {
 	testActivities   map[string]testrig.ActivityWithSignature
 	testLists        map[string]*gtsmodel.List
 	testListEntries  map[string]*gtsmodel.ListEntry
+	testDomainLimits map[string]*gtsmodel.DomainLimit
 }
 
 func (suite *WorkersTestSuite) SetupSuite() {
@@ -74,6 +75,7 @@ func (suite *WorkersTestSuite) SetupSuite() {
 	suite.testBlocks = testrig.NewTestBlocks()
 	suite.testLists = testrig.NewTestLists()
 	suite.testListEntries = testrig.NewTestListEntries()
+	suite.testDomainLimits = testrig.NewTestDomainLimits()
 }
 
 func (suite *WorkersTestSuite) SetupTest() {

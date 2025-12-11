@@ -426,118 +426,133 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 }
 
 func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
-	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	var (
+		ctx           = suite.T().Context()
+		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		originAccount = suite.testAccounts["remote_account_1"]
+		targetAccount = suite.testAccounts["local_account_2"]
+	)
 	defer testrig.TearDownTestStructs(testStructs)
 
-	ctx := suite.T().Context()
+	// Update domain limit on fossbros-anonymous.io to no-op for this test.
+	domainLimit := new(gtsmodel.DomainLimit)
+	*domainLimit = *suite.testDomainLimits["fossbros-anonymous.io"]
+	domainLimit.FollowsPolicy = gtsmodel.FollowsPolicyNoAction
+	if err := testStructs.State.DB.UpdateDomainLimit(ctx, domainLimit); err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	originAccount := suite.testAccounts["remote_account_1"]
+	// Open notifs stream.
+	wssStream, errWithCode := testStructs.Processor.Stream().Open(
+		ctx,
+		targetAccount,
+		stream.TimelineHome,
+	)
+	if errWithCode != nil {
+		suite.FailNow(errWithCode.Error())
+	}
 
-	// target is a locked account
-	targetAccount := suite.testAccounts["local_account_2"]
-
-	wssStream, errWithCode := testStructs.Processor.Stream().Open(suite.T().Context(), targetAccount, stream.TimelineHome)
-	suite.NoError(errWithCode)
-
-	// put the follow request in the database as though it had passed through the federating db already
-	satanFollowRequestTurtle := &gtsmodel.FollowRequest{
+	// Put follow req in the db as though it
+	// had passed through the federating db already.
+	followReq := &gtsmodel.FollowRequest{
 		ID:              "01FGRYAVAWWPP926J175QGM0WV",
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
 		AccountID:       originAccount.ID,
 		Account:         originAccount,
 		TargetAccountID: targetAccount.ID,
 		TargetAccount:   targetAccount,
 		ShowReblogs:     util.Ptr(true),
-		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
+		URI:             originAccount.URI + "/follows/01FGRYAVAWWPP926J175QGM0WV",
 		Notify:          util.Ptr(false),
 	}
+	if err := testStructs.State.DB.Put(ctx, followReq); err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	err := testStructs.State.DB.Put(ctx, satanFollowRequestTurtle)
-	suite.NoError(err)
+	// Send follow request through to the worker.
+	if err := testStructs.Processor.Workers().ProcessFromFediAPI(
+		ctx,
+		&messages.FromFediAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       followReq,
+			Receiving:      targetAccount,
+			Requesting:     originAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	err = testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
-		APObjectType:   ap.ActivityFollow,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       satanFollowRequestTurtle,
-		Receiving:      targetAccount,
-		Requesting:     originAccount,
-	})
-	suite.NoError(err)
-
-	ctx, _ = context.WithTimeout(ctx, time.Second*5)
-	msg, ok := wssStream.Recv(suite.T().Context())
+	// Wait for a message in the stream.
+	ctx, done := context.WithTimeout(ctx, time.Second*5)
+	msg, ok := wssStream.Recv(ctx)
+	done()
 	suite.True(ok)
 
+	// Check notif is what we expect.
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
-	notif := &apimodel.Notification{}
-	err = json.Unmarshal([]byte(msg.Payload), notif)
-	suite.NoError(err)
-	suite.Equal("follow_request", notif.Type)
+	notif := new(apimodel.Notification)
+	if err := json.Unmarshal([]byte(msg.Payload), notif); err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(gtsmodel.NotificationFollowRequest.String(), notif.Type)
 	suite.Equal(originAccount.ID, notif.Account.ID)
 
-	// no messages should have been sent out, since we didn't need to federate an accept
+	// No messages should have been sent out, since
+	// we didn't need to federate accept or reject.
 	suite.Empty(testStructs.HTTPClient.SentMessages)
 }
 
-func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
-	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+func (suite *FromFediAPITestSuite) TestProcessFollowRequestReject() {
+	var (
+		ctx           = suite.T().Context()
+		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		originAccount = suite.testAccounts["remote_account_1"]
+		targetAccount = suite.testAccounts["local_account_1"]
+	)
 	defer testrig.TearDownTestStructs(testStructs)
 
-	ctx := suite.T().Context()
+	// Update domain limit on fossbros-anonymous.io to reject all for this test.
+	domainLimit := new(gtsmodel.DomainLimit)
+	*domainLimit = *suite.testDomainLimits["fossbros-anonymous.io"]
+	domainLimit.FollowsPolicy = gtsmodel.FollowsPolicyRejectAll
+	if err := testStructs.State.DB.UpdateDomainLimit(ctx, domainLimit); err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	originAccount := suite.testAccounts["remote_account_1"]
-
-	// target is an unlocked account
-	targetAccount := suite.testAccounts["local_account_1"]
-
-	wssStream, errWithCode := testStructs.Processor.Stream().Open(suite.T().Context(), targetAccount, stream.TimelineHome)
-	suite.NoError(errWithCode)
-
-	// put the follow request in the database as though it had passed through the federating db already
-	satanFollowRequestTurtle := &gtsmodel.FollowRequest{
+	// Put follow req in the db as though it
+	// had passed through the federating db already.
+	followReq := &gtsmodel.FollowRequest{
 		ID:              "01FGRYAVAWWPP926J175QGM0WV",
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
 		AccountID:       originAccount.ID,
 		Account:         originAccount,
 		TargetAccountID: targetAccount.ID,
 		TargetAccount:   targetAccount,
 		ShowReblogs:     util.Ptr(true),
-		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
+		URI:             originAccount.URI + "/follows/01FGRYAVAWWPP926J175QGM0WV",
 		Notify:          util.Ptr(false),
 	}
+	if err := testStructs.State.DB.Put(ctx, followReq); err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	err := testStructs.State.DB.Put(ctx, satanFollowRequestTurtle)
-	suite.NoError(err)
+	// Send follow request through to the worker.
+	if err := testStructs.Processor.Workers().ProcessFromFediAPI(
+		ctx,
+		&messages.FromFediAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       followReq,
+			Receiving:      targetAccount,
+			Requesting:     originAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	err = testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
-		APObjectType:   ap.ActivityFollow,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       satanFollowRequestTurtle,
-		Receiving:      targetAccount,
-		Requesting:     originAccount,
-	})
-	suite.NoError(err)
-
-	accept := &struct {
-		Actor  string `json:"actor"`
-		ID     string `json:"id"`
-		Object struct {
-			Actor  string `json:"actor"`
-			ID     string `json:"id"`
-			Object string `json:"object"`
-			To     string `json:"to"`
-			Type   string `json:"type"`
-		}
-		To   string `json:"to"`
-		Type string `json:"type"`
-	}{}
-
-	// an accept message should be sent to satan's inbox
-	var sent []byte
+	// A Reject message should
+	// be sent to satan's inbox.
 	if !testrig.WaitFor(func() bool {
 		delivery, ok := testStructs.State.Workers.Delivery.Queue.Pop()
 		if !ok {
@@ -546,39 +561,208 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 		if !testrig.EqualRequestURIs(delivery.Request.URL, *originAccount.SharedInboxURI) {
 			panic("differing request uris")
 		}
-		sent, err = io.ReadAll(delivery.Request.Body)
+
+		b, err := io.ReadAll(delivery.Request.Body)
 		if err != nil {
 			panic("error reading body: " + err.Error())
 		}
-		err = json.Unmarshal(sent, accept)
-		if err != nil {
-			panic("error unmarshaling json: " + err.Error())
+
+		raw := make(map[string]any)
+		if err := json.Unmarshal(b, &raw); err != nil {
+			suite.FailNow(err.Error())
 		}
+
+		if t := raw["type"].(string); t != "Reject" {
+			suite.FailNow("", "expected Reject, got %s", t)
+		}
+
+		return true
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
+}
+
+func (suite *FromFediAPITestSuite) TestProcessFollowRequestManuallyApprove() {
+	var (
+		ctx           = suite.T().Context()
+		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		originAccount = suite.testAccounts["remote_account_1"]
+		targetAccount = suite.testAccounts["local_account_1"]
+	)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	// Update domain limit on fossbros-anonymous.io to manual approval.
+	domainLimit := new(gtsmodel.DomainLimit)
+	*domainLimit = *suite.testDomainLimits["fossbros-anonymous.io"]
+	domainLimit.FollowsPolicy = gtsmodel.FollowsPolicyManualApproval
+	if err := testStructs.State.DB.UpdateDomainLimit(ctx, domainLimit); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Open notifs stream.
+	wssStream, errWithCode := testStructs.Processor.Stream().Open(
+		ctx,
+		targetAccount,
+		stream.TimelineHome,
+	)
+	if errWithCode != nil {
+		suite.FailNow(errWithCode.Error())
+	}
+
+	// Put follow req in the db as though it
+	// had passed through the federating db already.
+	followReq := &gtsmodel.FollowRequest{
+		ID:              "01FGRYAVAWWPP926J175QGM0WV",
+		AccountID:       originAccount.ID,
+		Account:         originAccount,
+		TargetAccountID: targetAccount.ID,
+		TargetAccount:   targetAccount,
+		ShowReblogs:     util.Ptr(true),
+		URI:             originAccount.URI + "/follows/01FGRYAVAWWPP926J175QGM0WV",
+		Notify:          util.Ptr(false),
+	}
+	if err := testStructs.State.DB.Put(ctx, followReq); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Send follow request through to the worker.
+	if err := testStructs.Processor.Workers().ProcessFromFediAPI(
+		ctx,
+		&messages.FromFediAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       followReq,
+			Receiving:      targetAccount,
+			Requesting:     originAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Wait for a message in the stream.
+	ctx, done := context.WithTimeout(ctx, time.Second*5)
+	msg, ok := wssStream.Recv(ctx)
+	done()
+	suite.True(ok)
+
+	// Check notif is what we expect.
+	suite.Equal(stream.EventTypeNotification, msg.Event)
+	suite.NotEmpty(msg.Payload)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
+	notif := new(apimodel.Notification)
+	if err := json.Unmarshal([]byte(msg.Payload), notif); err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(gtsmodel.NotificationFollowRequest.String(), notif.Type)
+	suite.Equal(originAccount.ID, notif.Account.ID)
+
+	// No messages should have been sent out, since
+	// we didn't need to federate accept or reject.
+	suite.Empty(testStructs.HTTPClient.SentMessages)
+}
+
+func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
+	var (
+		ctx           = suite.T().Context()
+		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		originAccount = suite.testAccounts["remote_account_1"]
+		targetAccount = suite.testAccounts["local_account_1"]
+	)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	// Update domain limit on fossbros-anonymous.io to no-op for this test.
+	domainLimit := new(gtsmodel.DomainLimit)
+	*domainLimit = *suite.testDomainLimits["fossbros-anonymous.io"]
+	domainLimit.FollowsPolicy = gtsmodel.FollowsPolicyNoAction
+	if err := testStructs.State.DB.UpdateDomainLimit(ctx, domainLimit); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Open notifs stream.
+	wssStream, errWithCode := testStructs.Processor.Stream().Open(
+		ctx,
+		targetAccount,
+		stream.TimelineHome,
+	)
+	if errWithCode != nil {
+		suite.FailNow(errWithCode.Error())
+	}
+
+	// Put follow req in the db as though it
+	// had passed through the federating db already.
+	followReq := &gtsmodel.FollowRequest{
+		ID:              "01FGRYAVAWWPP926J175QGM0WV",
+		AccountID:       originAccount.ID,
+		Account:         originAccount,
+		TargetAccountID: targetAccount.ID,
+		TargetAccount:   targetAccount,
+		ShowReblogs:     util.Ptr(true),
+		URI:             originAccount.URI + "/follows/01FGRYAVAWWPP926J175QGM0WV",
+		Notify:          util.Ptr(false),
+	}
+	if err := testStructs.State.DB.Put(ctx, followReq); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Send follow request through to the worker.
+	if err := testStructs.Processor.Workers().ProcessFromFediAPI(
+		ctx,
+		&messages.FromFediAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       followReq,
+			Receiving:      targetAccount,
+			Requesting:     originAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// An Accept message should
+	// be sent to satan's inbox.
+	if !testrig.WaitFor(func() bool {
+		delivery, ok := testStructs.State.Workers.Delivery.Queue.Pop()
+		if !ok {
+			return false
+		}
+		if !testrig.EqualRequestURIs(delivery.Request.URL, *originAccount.SharedInboxURI) {
+			panic("differing request uris")
+		}
+
+		b, err := io.ReadAll(delivery.Request.Body)
+		if err != nil {
+			panic("error reading body: " + err.Error())
+		}
+
+		raw := make(map[string]any)
+		if err := json.Unmarshal(b, &raw); err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		if t := raw["type"].(string); t != "Accept" {
+			suite.FailNow("", "expected Accept, got %s", t)
+		}
+
 		return true
 	}) {
 		suite.FailNow("timed out waiting for message")
 	}
 
-	suite.Equal(targetAccount.URI, accept.Actor)
-	suite.Equal(originAccount.URI, accept.Object.Actor)
-	suite.Equal(satanFollowRequestTurtle.URI, accept.Object.ID)
-	suite.Equal(targetAccount.URI, accept.Object.Object)
-	suite.Equal(targetAccount.URI, accept.Object.To)
-	suite.Equal("Follow", accept.Object.Type)
-	suite.Equal(originAccount.URI, accept.To)
-	suite.Equal("Accept", accept.Type)
-
-	ctx, _ = context.WithTimeout(ctx, time.Second*5)
-	msg, ok := wssStream.Recv(suite.T().Context())
+	// Wait for a message in the stream.
+	ctx, done := context.WithTimeout(ctx, time.Second*5)
+	msg, ok := wssStream.Recv(ctx)
+	done()
 	suite.True(ok)
 
+	// Check notif is what we expect.
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
 	notif := &apimodel.Notification{}
-	err = json.Unmarshal([]byte(msg.Payload), notif)
-	suite.NoError(err)
-	suite.Equal("follow", notif.Type)
+	if err := json.Unmarshal([]byte(msg.Payload), notif); err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(gtsmodel.NotificationFollow.String(), notif.Type)
 	suite.Equal(originAccount.ID, notif.Account.ID)
 }
 

@@ -28,6 +28,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/federation/dereferencing"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
 	"codeberg.org/gruf/go-kv/v2"
 
@@ -555,31 +556,130 @@ func (p *fediAPI) UpdatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 }
 
 func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg *messages.FromFediAPI) error {
-	followRequest, ok := fMsg.GTSModel.(*gtsmodel.FollowRequest)
+	followReq, ok := fMsg.GTSModel.(*gtsmodel.FollowRequest)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", fMsg.GTSModel)
 	}
 
-	if err := p.state.DB.PopulateFollowRequest(ctx, followRequest); err != nil {
+	if err := p.state.DB.PopulateFollowRequest(ctx, followReq); err != nil {
 		return gtserror.Newf("error populating follow request: %w", err)
 	}
 
-	if *followRequest.TargetAccount.Locked {
-		// Local account is locked: just notify the follow request.
-		if err := p.surface.notifyFollowRequest(ctx, followRequest); err != nil {
-			log.Errorf(ctx, "error notifying follow request: %v", err)
+	// Figure out what we should do with this follow request.
+	//
+	// If it's from a domain with a domain limit we may need
+	// to handle it differently depending on the Follows policy.
+	var (
+		// Assume not rejecting.
+		reject bool
+
+		// Assume accepting if our account isn't locked.
+		// We'll override this if necessary.
+		accept bool = !*followReq.TargetAccount.Locked
+	)
+
+	// See if there's a limit on the would-be follower's domain.
+	limit, err := p.state.DB.MatchDomainLimit(ctx, followReq.Account.Domain)
+	if err != nil {
+		return gtserror.Newf("error matching domain limit: %w", err)
+	}
+
+	if limit != nil {
+
+		// Limit is in place so
+		// check the follows policy.
+		switch limit.FollowsPolicy {
+
+		case gtsmodel.FollowsPolicyNoAction:
+			// Noop policy,
+			// let things proceed.
+
+		case gtsmodel.FollowsPolicyManualApproval:
+			// Don't reject but don't
+			// accept automatically either.
+			accept = false
+
+		case gtsmodel.FollowsPolicyRejectNonMutual:
+			// Check if our account
+			// follows the remote.
+			if mufo, err := p.state.DB.IsFollowing(
+				ctx,
+				followReq.TargetAccountID,
+				followReq.AccountID,
+			); err != nil {
+				return gtserror.Newf("db error checking following: %w", err)
+			} else if mufo {
+				// We follow the remote so
+				// leave reject = false.
+				break
+			}
+
+			// We don't follow the remote but
+			// do we follow *request* them?
+			if mufo, err := p.state.DB.IsFollowRequested(
+				ctx,
+				followReq.TargetAccountID,
+				followReq.AccountID,
+			); err != nil {
+				return gtserror.Newf("db error checking following: %w", err)
+			} else if mufo {
+				// We follow req the remote
+				// so leave reject = false.
+				break
+			}
+
+			// We don't follow or follow
+			// request the remote so
+			// reject their follow of us.
+			reject = true
+
+		case gtsmodel.FollowsPolicyRejectAll:
+			// Reject out of hand.
+			reject = true
+		}
+	}
+
+	if reject {
+		// We're rejecting this
+		// follow request out of hand.
+		//
+		// Delete the req from the db.
+		if err := p.state.DB.RejectFollowRequest(
+			ctx,
+			followReq.AccountID,
+			followReq.TargetAccountID,
+		); err != nil {
+			return gtserror.Newf("db error rejecting follow request: %w", err)
+		}
+
+		// Reconstruct + reject the follow.
+		follow := typeutils.FollowRequestToFollow(followReq)
+		if err := p.federate.RejectFollow(ctx, follow); err != nil {
+			log.Errorf(ctx, "error federating follow reject: %w", err)
+		}
+
+		// That's it, no need to
+		// notify the target account.
+		return nil
+	}
+
+	// If we're not accepting the follow
+	// request automatically, just notify
+	// about it and leave.
+	if !accept {
+		if err := p.surface.notifyFollowRequest(ctx, followReq); err != nil {
+			return gtserror.Newf("error notifying follow request: %w", err)
 		}
 
 		return nil
 	}
 
-	// Local account is not locked:
 	// Automatically accept the follow request
 	// and notify about the new follower.
 	follow, err := p.state.DB.AcceptFollowRequest(
 		ctx,
-		followRequest.AccountID,
-		followRequest.TargetAccountID,
+		followReq.AccountID,
+		followReq.TargetAccountID,
 	)
 	if err != nil {
 		return gtserror.Newf("error accepting follow request: %w", err)

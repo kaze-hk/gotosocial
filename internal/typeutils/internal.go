@@ -34,10 +34,7 @@ import (
 
 // FollowRequestToFollow just converts a follow request
 // into a follow, that's it! No bells and whistles.
-func (c *Converter) FollowRequestToFollow(
-	ctx context.Context,
-	fr *gtsmodel.FollowRequest,
-) *gtsmodel.Follow {
+func FollowRequestToFollow(fr *gtsmodel.FollowRequest) *gtsmodel.Follow {
 	return &gtsmodel.Follow{
 		ID:              fr.ID,
 		CreatedAt:       fr.CreatedAt,

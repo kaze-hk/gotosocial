@@ -25,6 +25,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
 	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
@@ -53,7 +54,7 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 	err := suite.db.Put(ctx, fr)
 	suite.NoError(err)
 
-	asFollow, err := suite.tc.FollowToAS(ctx, suite.tc.FollowRequestToFollow(ctx, fr))
+	asFollow, err := suite.tc.FollowToAS(ctx, typeutils.FollowRequestToFollow(fr))
 	suite.NoError(err)
 
 	rejectingAccountURI := testrig.URLMustParse(followedAccount.URI)

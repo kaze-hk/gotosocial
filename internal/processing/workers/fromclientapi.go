@@ -442,7 +442,7 @@ func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg *messages.FromClie
 	}
 
 	// Convert the follow request to follow model (requests are sent as follows).
-	follow := p.converter.FollowRequestToFollow(ctx, followRequest)
+	follow := typeutils.FollowRequestToFollow(followRequest)
 
 	if err := p.federate.Follow(
 		ctx,
@@ -777,7 +777,7 @@ func (p *clientAPI) RejectFollowRequest(ctx context.Context, cMsg *messages.From
 	}
 
 	if err := p.federate.RejectFollow(ctx,
-		p.converter.FollowRequestToFollow(ctx, followReq),
+		typeutils.FollowRequestToFollow(followReq),
 	); err != nil {
 		log.Errorf(ctx, "error federating follow reject: %v", err)
 	}
