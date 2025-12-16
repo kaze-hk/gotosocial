@@ -34,6 +34,14 @@ Clicking on the username of the reported account opens that account in the 'Acco
 
 You can use this section to search for an account and perform moderation actions on it.
 
+### Domain Limits
+
+![Detail view of one domain limit](../public/admin-settings-domain-limits.png)
+
+In the domain limits section you can create, delete, and review domain limits.
+
+For more details on domain limits, please see the [domain limits documentation](./domain_limits.md).
+
 ### Domain Permissions
 
 ![List of suspended instances, with a field to filter/add new blocks. Below is a link to the bulk import/export interface](../public/admin-settings-federation.png)
@@ -159,7 +167,11 @@ You can use this section to send a test email to the given email address, with a
 
 #### Media
 
-You can use this section run a media action to clean up the remote media cache using the specified number of days. Media older than the given number of days will be removed from storage (s3 or local). Media removed in this way will be refetched again later if the media is required again. This action is functionally identical to the media cleanup that runs automatically.
+You can use this section run a media action to clean up the remote media cache using the specified number of days. Media older than the given number of days will be removed from storage (s3 or local). This action is functionally identical to the media cleanup that runs automatically.
+
+You can also use this section to **purge** all media belonging to a specific domain from your media storage. This is useful in combination with [domain limits](./domain_limits.md) to prevent your instance from storing potentially problematic media from a domain you don't fully trust.
+
+Media removed via a cleanup or purge operation will be fetched again from remote domains later if needed, unless a domain limit with a media policy of "reject" is in place to prevent this for certain domains.
 
 #### Keys
 
