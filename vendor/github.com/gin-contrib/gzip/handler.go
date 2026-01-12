@@ -84,9 +84,15 @@ func (g *gzipHandler) Handle(c *gin.Context) {
 	if originalEtag != "" && !strings.HasPrefix(originalEtag, "W/") {
 		c.Header("ETag", "W/"+originalEtag)
 	}
-	c.Writer = &gzipWriter{c.Writer, gz}
+	gw := &gzipWriter{ResponseWriter: c.Writer, writer: gz}
+	c.Writer = gw
 	defer func() {
-		if c.Writer.Size() < 0 {
+		// Only close gzip writer if it was actually used (not for error responses)
+		if gw.status >= 400 {
+			// Remove gzip headers for error responses when handler is complete
+			gw.removeGzipHeaders()
+			gz.Reset(io.Discard)
+		} else if c.Writer.Size() < 0 {
 			// do not write gzip footer when nothing is written to the response body
 			gz.Reset(io.Discard)
 		}

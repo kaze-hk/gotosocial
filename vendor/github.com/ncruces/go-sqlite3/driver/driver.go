@@ -440,22 +440,6 @@ func (c *conn) CheckNamedValue(arg *driver.NamedValue) error {
 	return nil
 }
 
-// Deprecated: for Litestream use only; may be removed at any time.
-func (c *conn) FileControlPersistWAL(schema string, mode int) (int, error) {
-	// notest
-	arg := make([]any, 1)
-	if mode >= 0 {
-		arg[0] = mode > 0
-	} else {
-		arg = arg[:0]
-	}
-	res, err := c.Conn.FileControl(schema, sqlite3.FCNTL_PERSIST_WAL, arg...)
-	if res == true {
-		return 1, err
-	}
-	return 0, err
-}
-
 type stmt struct {
 	*sqlite3.Stmt
 	tmWrite sqlite3.TimeFormat
@@ -669,14 +653,12 @@ type rows struct {
 	names []string
 	types []string
 	scans []scantype
-	dest  []driver.Value
 }
 
 var (
 	// Ensure these interfaces are implemented:
 	_ driver.RowsColumnTypeDatabaseTypeName = &rows{}
 	_ driver.RowsColumnTypeNullable         = &rows{}
-	// _ driver.RowsColumnScanner           = &rows{}
 )
 
 func (r *rows) Close() error {
@@ -796,7 +778,6 @@ func (r *rows) ColumnTypeScanType(index int) (typ reflect.Type) {
 }
 
 func (r *rows) Next(dest []driver.Value) error {
-	r.dest = nil
 	c := r.Stmt.Conn()
 	if old := c.SetInterrupt(r.ctx); old != r.ctx {
 		defer c.SetInterrupt(old)
@@ -846,33 +827,5 @@ func (r *rows) Next(dest []driver.Value) error {
 			}
 		}
 	}
-	r.dest = dest
 	return nil
-}
-
-func (r *rows) ScanColumn(dest any, index int) (err error) {
-	// notest // Go 1.26
-	var tm *time.Time
-	var ok *bool
-	switch d := dest.(type) {
-	case *time.Time:
-		tm = d
-	case *sql.NullTime:
-		tm = &d.Time
-		ok = &d.Valid
-	case *sql.Null[time.Time]:
-		tm = &d.V
-		ok = &d.Valid
-	default:
-		return driver.ErrSkip
-	}
-	value := r.dest[index]
-	*tm, err = r.tmRead.Decode(value)
-	if ok != nil {
-		*ok = err == nil
-		if value == nil {
-			return nil
-		}
-	}
-	return err
 }
