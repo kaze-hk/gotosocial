@@ -172,8 +172,9 @@ func Start(ctx context.Context) error {
 		log.Info(ctx, "done! exiting...")
 	}()
 
-	// Create maintenance router.
 	var err error
+
+	// Create maintenance router.
 	route, err = router.New(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating maintenance router: %w", err)

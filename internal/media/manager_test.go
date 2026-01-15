@@ -86,7 +86,8 @@ func (suite *ManagerTestSuite) TestEmojiProcess() {
 func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 	ctx := suite.T().Context()
 
-	// we're going to 'refresh' the remote 'yell' emoji by changing the image url to the pixellated gts logo
+	// we're going to 'refresh' the remote 'yell' emoji
+	// by changing the image url to the pixellated gts logo
 	originalEmoji := suite.testEmojis["yell"]
 
 	emojiToUpdate, err := suite.db.GetEmojiByID(ctx, originalEmoji.ID)
@@ -186,8 +187,19 @@ func (suite *ManagerTestSuite) TestEmojiProcessTooLarge() {
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
-	_, err = processing.Load(ctx)
-	suite.EqualError(err, "store: error draining data to tmp: reached read limit 630kiB")
+	emoji, err := processing.Load(ctx)
+	suite.NoError(err)
+
+	// now make sure the emoji is in the database
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emoji.ID)
+	suite.NoError(err)
+	suite.NotNil(dbEmoji)
+
+	// Emoji should have an appropriate error.
+	suite.Equal(gtsmodel.NewMediaErrorDetails(
+		gtsmodel.MediaErrorTypePolicy,
+		gtsmodel.MediaErrorTypePolicy_Size,
+	), emoji.Error)
 }
 
 func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
@@ -320,8 +332,20 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessTooLarge() {
 	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	_, err = processing.Load(ctx)
-	suite.EqualError(err, "store: error draining data to tmp: reached read limit 263kiB")
+	attachment, err := processing.Load(ctx)
+	suite.NoError(err)
+
+	// now make sure the attachment is in the database
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
+	suite.NoError(err)
+	suite.NotNil(dbAttachment)
+
+	// Attachment should have type unknown and appropriate error.
+	suite.Equal(gtsmodel.FileTypeUnknown, dbAttachment.Type)
+	suite.Equal(gtsmodel.NewMediaErrorDetails(
+		gtsmodel.MediaErrorTypePolicy,
+		gtsmodel.MediaErrorTypePolicy_Size,
+	), dbAttachment.Error)
 }
 
 func (suite *ManagerTestSuite) TestPDFProcess() {
@@ -368,16 +392,16 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// Attachment should have type unknown
+	// Attachment should have type unknown and appropriate error.
 	suite.Equal(gtsmodel.FileTypeUnknown, dbAttachment.Type)
+	suite.Equal(gtsmodel.NewMediaErrorDetails(
+		gtsmodel.MediaErrorTypeCodec,
+		gtsmodel.MediaErrorTypeCodec_Unsupported,
+	), dbAttachment.Error)
 
-	// Nothing should be in storage for this attachment.
-	stored, err := suite.storage.Has(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.False(stored)
-	stored, err = suite.storage.Has(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.False(stored)
+	// Nothing should be in storage for attachment.
+	suite.Empty(dbAttachment.Thumbnail.Path)
+	suite.Empty(dbAttachment.File.Path)
 }
 
 func (suite *ManagerTestSuite) TestSlothVineProcess() {
@@ -1075,7 +1099,10 @@ func (suite *ManagerTestSuite) TestUncacheRejectedMedia() {
 		attachment,
 		nil,
 		media.AdditionalMediaInfo{
-			RejectMedia: util.Ptr(true),
+			RejectReason: util.Ptr(gtsmodel.NewMediaErrorDetails(
+				gtsmodel.MediaErrorTypePolicy,
+				gtsmodel.MediaErrorTypePolicy_Domain,
+			)),
 		},
 	)
 
@@ -1086,11 +1113,16 @@ func (suite *ManagerTestSuite) TestUncacheRejectedMedia() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.False(*attachment.Cached)
+	suite.False(attachment.Cached())
 	suite.Equal(gtsmodel.FileTypeUnknown, attachment.Type)
-	suite.Zero(attachment.File)
-	suite.Zero(attachment.FileMeta)
-	suite.Zero(attachment.Thumbnail)
+	suite.Empty(attachment.Thumbnail.Path)
+	suite.Empty(attachment.File.Path)
+
+	// The reject reason error should be stored.
+	suite.Equal(gtsmodel.NewMediaErrorDetails(
+		gtsmodel.MediaErrorTypePolicy,
+		gtsmodel.MediaErrorTypePolicy_Domain,
+	), attachment.Error)
 
 	// Blurhash + description
 	// should be preserved.

@@ -806,13 +806,23 @@ func (d *Dereferencer) enrichAccount(
 	latestAcc.FetchedAt = now
 	latestAcc.UpdatedAt = now
 
-	// Check whether there's any limits in
-	// place for this domain / subdomain.
+	// Check if there's any limits in place for (sub)domain.
 	limit, err := d.state.DB.MatchDomainLimit(ctx, uri.Host)
 	if err != nil {
 		return nil, nil, gtserror.Newf("error matching domain limit: %w", err)
 	}
-	rejectMedia := limit.MediaReject()
+
+	// If domain media is limited, set reject reason,
+	// this gets passed to media fetching functions
+	// and prevents download of attached account media.
+	var rejectReason *gtsmodel.MediaErrorDetails
+	if limit.MediaReject() {
+		rejectReason = new(gtsmodel.MediaErrorDetails)
+		*rejectReason = gtsmodel.NewMediaErrorDetails(
+			gtsmodel.MediaErrorTypePolicy,
+			gtsmodel.MediaErrorTypePolicy_Domain,
+		)
+	}
 
 	// Ensure the account's avatar media
 	// is populated (if appropriate), passing
@@ -823,7 +833,7 @@ func (d *Dereferencer) enrichAccount(
 		account,
 		latestAcc,
 		apubAcc,
-		rejectMedia,
+		rejectReason,
 	); err != nil {
 		log.Errorf(ctx, "error fetching remote avatar for account %s: %v", uri, err)
 	}
@@ -837,7 +847,7 @@ func (d *Dereferencer) enrichAccount(
 		account,
 		latestAcc,
 		apubAcc,
-		rejectMedia,
+		rejectReason,
 	); err != nil {
 		log.Errorf(ctx, "error fetching remote header for account %s: %v", uri, err)
 	}
@@ -848,7 +858,7 @@ func (d *Dereferencer) enrichAccount(
 		ctx,
 		account,
 		latestAcc,
-		rejectMedia,
+		rejectReason,
 	); err != nil {
 		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
 	}
@@ -887,7 +897,7 @@ func (d *Dereferencer) fetchAccountAvatar(
 	existingAcc *gtsmodel.Account,
 	latestAcc *gtsmodel.Account,
 	apubAcc ap.Accountable,
-	rejectMedia bool,
+	rejectReason *gtsmodel.MediaErrorDetails, // optional reason to reject media with
 ) error {
 	latestAvatarURL := latestAcc.AvatarRemoteURL
 	if latestAvatarURL == "" {
@@ -896,18 +906,19 @@ func (d *Dereferencer) fetchAccountAvatar(
 		return nil
 	}
 
-	// Check for image description of avatar.
+	// Check for image description of account header avatar.
 	avatarDescription := ap.ExtractIconDescription(apubAcc)
 
 	// If account has a avatar set, and the avatar media
 	// has the same URL as the latest up-to-date URL,
 	// just ensure we have it cached (if appropriate).
-	if existingAcc.AvatarSet() && existingAcc.AvatarRemoteURL == latestAvatarURL {
+	if existingAcc.AvatarSet() &&
+		existingAcc.AvatarRemoteURL == latestAvatarURL {
 
 		// Avatar URL from existing account is up to date,
 		// so attachment ID will be up to date as well.
 		//
-		// Get this avatar media attachment from db.
+		// Get this avatar media attachment from database.
 		existing, err := d.state.DB.GetAttachmentByID(ctx,
 			existingAcc.AvatarMediaAttachmentID,
 		)
@@ -916,15 +927,12 @@ func (d *Dereferencer) fetchAccountAvatar(
 		}
 
 		if existing != nil {
-
 			// Prepare to update info if necessary.
 			var info media.AdditionalMediaInfo
 
-			// If set, pass rejectMedia flag to
-			// derefencer to skip downloading.
-			if rejectMedia {
-				info.RejectMedia = &rejectMedia
-			}
+			// Pass reject reason ptr, which
+			// will skip downloading if set.
+			info.RejectReason = rejectReason
 
 			// If description has changed,
 			// ensure this gets updated.
@@ -962,28 +970,22 @@ func (d *Dereferencer) fetchAccountAvatar(
 			return nil
 		}
 
-		// If existing was nil, then the avatar
-		// attachment got removed for some reason,
-		// so fall through to getting it from
-		// scratch amd setting a new ID, but log
-		// this as it's a bit strange.
-		log.Info(ctx,
-			"avatar %s was not found in db, refetching it from scratch",
+		// If existing was nil, then the attachment got removed for some reason,
+		// fall to fetching from scratch with a new ID, but log as it is strange.
+		log.Warnf(ctx, "%s not found in db, refetching from scratch",
 			existingAcc.AvatarMediaAttachmentID,
 		)
 	}
 
-	// Prepare media info.
+	// Prepare additional media info.
 	info := media.AdditionalMediaInfo{
 		Avatar:      util.Ptr(true),
 		RemoteURL:   &latestAvatarURL,
 		Description: &avatarDescription,
-	}
 
-	// If set, pass rejectMedia flag to
-	// derefencer to skip downloading.
-	if rejectMedia {
-		info.RejectMedia = &rejectMedia
+		// Pass reject reason ptr, which
+		// will skip downloading if set.
+		RejectReason: rejectReason,
 	}
 
 	// Fetch newly changed avatar.
@@ -997,16 +999,15 @@ func (d *Dereferencer) fetchAccountAvatar(
 	switch {
 	case err == nil:
 		// No problem,
-		// loaded it fine.
+		// loaded fine.
 
 	case attachment == nil:
-		// Fatal error occurred during
-		// loading, can't do anything with this.
-		return gtserror.Newf("error loading attachment %s: %w", latestAvatarURL, err)
+		// Fatal error during loading, can't do anything further.
+		return gtserror.Newf("error loading attachment %s: %w",
+			latestAvatarURL, err)
 
 	default:
-		// Non-fatal error occurred
-		// during loading, still use it.
+		// Non-fatal error during loading, can still use it.
 		log.Warnf(ctx, "partially loaded attachment: %v", err)
 	}
 
@@ -1024,7 +1025,7 @@ func (d *Dereferencer) fetchAccountHeader(
 	existingAcc *gtsmodel.Account,
 	latestAcc *gtsmodel.Account,
 	apubAcc ap.Accountable,
-	rejectMedia bool,
+	rejectReason *gtsmodel.MediaErrorDetails, // optional reason to reject media with
 ) error {
 	latestHeaderURL := latestAcc.HeaderRemoteURL
 	if latestHeaderURL == "" {
@@ -1033,18 +1034,19 @@ func (d *Dereferencer) fetchAccountHeader(
 		return nil
 	}
 
-	// Check for image description of header.
+	// Check for image description of account header image.
 	headerDescription := ap.ExtractImageDescription(apubAcc)
 
 	// If account has a header set, and the header media
 	// has the same URL as the latest up-to-date URL,
 	// just ensure we have it cached (if appropriate).
-	if existingAcc.HeaderSet() && existingAcc.HeaderRemoteURL == latestHeaderURL {
+	if existingAcc.HeaderSet() &&
+		existingAcc.HeaderRemoteURL == latestHeaderURL {
 
 		// Header URL from existing account is up to date,
 		// so attachment ID will be up to date as well.
 		//
-		// Get this header media attachment from db.
+		// Get this header media attachment from database.
 		existing, err := d.state.DB.GetAttachmentByID(ctx,
 			existingAcc.HeaderMediaAttachmentID,
 		)
@@ -1053,15 +1055,12 @@ func (d *Dereferencer) fetchAccountHeader(
 		}
 
 		if existing != nil {
-
 			// Prepare to update info if necessary.
 			var info media.AdditionalMediaInfo
 
-			// If set, pass rejectMedia flag to
-			// derefencer to skip downloading.
-			if rejectMedia {
-				info.RejectMedia = &rejectMedia
-			}
+			// Pass reject reason ptr, which
+			// will skip downloading if set.
+			info.RejectReason = rejectReason
 
 			// If description has changed,
 			// ensure this gets updated.
@@ -1099,28 +1098,22 @@ func (d *Dereferencer) fetchAccountHeader(
 			return nil
 		}
 
-		// If existing was nil, then the header
-		// attachment got removed for some reason,
-		// so fall through to getting it from
-		// scratch amd setting a new ID, but log
-		// this as it's a bit strange.
-		log.Info(ctx,
-			"header %s was not found in db, refetching it from scratch",
+		// If existing was nil, then the attachment got removed for some reason,
+		// fall to fetching from scratch with a new ID, but log as it is strange.
+		log.Warnf(ctx, "%s not found in db, refetching from scratch",
 			existingAcc.HeaderMediaAttachmentID,
 		)
 	}
 
-	// Prepare media info.
+	// Prepare additional media info.
 	info := media.AdditionalMediaInfo{
 		Header:      util.Ptr(true),
 		RemoteURL:   &latestHeaderURL,
 		Description: &headerDescription,
-	}
 
-	// If set, pass rejectMedia flag to
-	// derefencer to skip downloading.
-	if rejectMedia {
-		info.RejectMedia = &rejectMedia
+		// Pass reject reason ptr, which
+		// will skip downloading if set.
+		RejectReason: rejectReason,
 	}
 
 	// Fetch newly changed header.
@@ -1134,16 +1127,15 @@ func (d *Dereferencer) fetchAccountHeader(
 	switch {
 	case err == nil:
 		// No problem,
-		// loaded it fine.
+		// loaded fine.
 
 	case attachment == nil:
-		// Fatal error occurred during
-		// loading, can't do anything with this.
-		return gtserror.Newf("error loading attachment %s: %w", latestHeaderURL, err)
+		// Fatal error during loading, can't do anything further.
+		return gtserror.Newf("error loading attachment %s: %w",
+			latestHeaderURL, err)
 
 	default:
-		// Non-fatal error occurred
-		// during loading, still use it.
+		// Non-fatal error during loading, can still use it.
 		log.Warnf(ctx, "partially loaded attachment: %v", err)
 	}
 
@@ -1159,13 +1151,13 @@ func (d *Dereferencer) fetchAccountEmojis(
 	ctx context.Context,
 	existing *gtsmodel.Account,
 	account *gtsmodel.Account,
-	rejectMedia bool,
+	rejectReason *gtsmodel.MediaErrorDetails, // optional reason to reject media with
 ) error {
 	// Fetch the updated emojis for the account.
 	emojis, changed, err := d.fetchEmojis(ctx,
 		existing.Emojis,
 		account.Emojis,
-		rejectMedia, // rejectMedia
+		rejectReason,
 	)
 	if err != nil {
 		return gtserror.Newf("error fetching emojis: %w", err)

@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -35,16 +36,9 @@ func (suite *MediaTestSuite) TestGetAttachmentByID() {
 	suite.NotNil(attachment)
 }
 
-func (suite *MediaTestSuite) TestGetOlder() {
-	attachments, err := suite.db.GetCachedAttachmentsOlderThan(suite.T().Context(), time.Now(), 20)
-	suite.NoError(err)
-	suite.Len(attachments, 3)
-}
-
 func (suite *MediaTestSuite) TestGetCachedAttachmentsOlderThan() {
-	ctx := suite.T().Context()
-
-	attachments, err := suite.db.GetCachedAttachmentsOlderThan(ctx, time.Now(), 20)
+	olderThanID := id.ZeroULIDForTime(time.Now())
+	attachments, err := suite.db.GetCachedAttachments(suite.T().Context(), toPage(olderThanID, "", "", 20))
 	suite.NoError(err)
 	suite.Len(attachments, 3)
 }

@@ -68,9 +68,21 @@ func (suite *FileserverTestSuite) SetupSuite() {
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
+}
+
+func (suite *FileserverTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+	testrig.StartNoopWorkers(&suite.state)
+
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
+
+	testrig.StandardDBSetup(suite.db, nil)
+	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(
@@ -96,18 +108,6 @@ func (suite *FileserverTestSuite) SetupSuite() {
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 
 	suite.fileServer = fileserver.New(suite.processor)
-}
-
-func (suite *FileserverTestSuite) SetupTest() {
-	suite.state.Caches.Init()
-	testrig.StartNoopWorkers(&suite.state)
-
-	suite.db = testrig.NewTestDB(&suite.state)
-	suite.state.DB = suite.db
-	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
-
-	testrig.StandardDBSetup(suite.db, nil)
-	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testApplications = testrig.NewTestApplications()

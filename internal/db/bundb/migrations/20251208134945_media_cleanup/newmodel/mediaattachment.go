@@ -30,7 +30,7 @@ type MediaAttachment struct {
 	URL               string            `bun:",nullzero"`                                                   // Where can the attachment be retrieved on *this* server
 	RemoteURL         string            `bun:",nullzero"`                                                   // Where can the attachment be retrieved on a remote server (empty for local media)
 	Type              FileType          `bun:",notnull,default:0"`                                          // Type of file (image/gifv/audio/video/unknown)
-	Error             MediaErrorDetails `bun:",notnull,default:0"`                                          // Details about any error encountered downloading file
+	Error             MediaErrorDetails `bun:",nullzero,notnull,default:0"`                                 // Details about any error encountered downloading file
 	FileMeta          FileMeta          `bun:",embed:,notnull"`                                             // Metadata about the file
 	AccountID         string            `bun:"type:CHAR(26),nullzero,notnull"`                              // To which account does this attachment belong
 	Description       string            `bun:""`                                                            // Description of the attachment (for screenreaders)
@@ -42,46 +42,12 @@ type MediaAttachment struct {
 	Header            *bool             `bun:",nullzero,notnull,default:false"`                             // Is this attachment being used as a header?
 }
 
-// IsLocal returns whether media attachment is local.
-func (m *MediaAttachment) IsLocal() bool {
-	return m.RemoteURL == ""
-}
-
-// IsRemote returns whether media attachment is remote.
-func (m *MediaAttachment) IsRemote() bool {
-	return m.RemoteURL != ""
-}
-
-// Cached returns whether MediaAttachment is cached locally.
-func (m *MediaAttachment) Cached() bool {
-	return m.File.Cached() && m.Thumbnail.Cached()
-}
-
-// Stub will reset all non-essential attachment
-// fields, leaving it in the bare never-downloaded state.
-func (m *MediaAttachment) Stub() {
-
-	// we specifically don't stub
-	// out filemeta or URLs, as it
-	// can be useful if it's going
-	// to be later recached.
-	m.File.ContentType = ""
-	m.File.FileSize = 0
-	m.File.Path = ""
-	m.Thumbnail.FileSize = 0
-	m.Thumbnail.ContentType = ""
-	m.Thumbnail.Path = ""
-}
-
 // File refers to the metadata for the whole file.
 type File struct {
 	Path        string `bun:",notnull"` // Path of the file in storage.
 	ContentType string `bun:",notnull"` // MIME content type of the file.
 	FileSize    int    `bun:",notnull"` // File size in bytes
 }
-
-// Cached returns whether this File is cached locally.
-func (f File) Cached() bool { return f.Path != "" }
 
 // Thumbnail refers to a small image thumbnail derived from a larger image, video, or audio file.
 type Thumbnail struct {
@@ -92,39 +58,9 @@ type Thumbnail struct {
 	RemoteURL   string `bun:",nullzero"` // What is the remote URL of the thumbnail (empty for local media)
 }
 
-// Cached returns whether this Thumbnail is cached locally.
-func (t Thumbnail) Cached() bool { return t.Path != "" }
-
 // FileType refers to the file
 // type of the media attaachment.
 type FileType enumType
-
-const (
-	// MediaAttachment file types.
-	FileTypeUnknown FileType = 0 // FileTypeUnknown is for unknown file types (surprise surprise!)
-	FileTypeImage   FileType = 1 // FileTypeImage is for jpegs, pngs, and standard gifs
-	FileTypeAudio   FileType = 2 // FileTypeAudio is for audio-only files (no video)
-	FileTypeVideo   FileType = 3 // FileTypeVideo is for files with audio + visual
-	FileTypeGifv    FileType = 4 // FileTypeGifv is for short video-only files (20s or less, mp4, no audio).
-)
-
-// String returns a stringified, frontend API compatible form of FileType.
-func (t FileType) String() string {
-	switch t {
-	case FileTypeUnknown:
-		return "unknown"
-	case FileTypeImage:
-		return "image"
-	case FileTypeAudio:
-		return "audio"
-	case FileTypeVideo:
-		return "video"
-	case FileTypeGifv:
-		return "gifv"
-	default:
-		panic("invalid filetype")
-	}
-}
 
 // FileMeta describes metadata about the actual contents of the file.
 type FileMeta struct {

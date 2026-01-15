@@ -1002,7 +1002,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
   "muted": false,
   "bookmarked": false,
   "pinned": false,
-  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e\u003cdiv class=\"gts-system-message gts-placeholder-attachments\"\u003e\u003chr\u003e\u003cp\u003e\u003ci lang=\"en\"\u003eℹ️ Note from localhost:8080: 2 attachments in this status were not downloaded. Treat the following external links with care:\u003c/i\u003e\u003c/p\u003e\u003cul\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE7ZGJYTSYMXF927GF9353KR.svg\u003c/a\u003e [SVG line art of a sloth, public domain]\u003c/li\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE892Y8ZS68TQCNPX7J888P3.mp3\u003c/a\u003e [Jolly salsa song, public domain.]\u003c/li\u003e\u003c/ul\u003e\u003c/div\u003e",
+  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e\u003cdiv class=\"gts-system-message gts-placeholder-attachments\"\u003e\u003chr\u003e\u003cp\u003e\u003ci lang=\"en\"\u003eℹ️ Note from localhost:8080: 2 attachments in this status were not downloaded. Treat the following external links with care:\u003c/i\u003e\u003c/p\u003e\u003cul\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE7ZGJYTSYMXF927GF9353KR.svg\u003c/a\u003e [SVG line art of a sloth, public domain] (error: unsupported media type)\u003c/li\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE892Y8ZS68TQCNPX7J888P3.mp3\u003c/a\u003e [Jolly salsa song, public domain.] (error: unsupported media type)\u003c/li\u003e\u003c/ul\u003e\u003c/div\u003e",
   "reblog": null,
   "account": {
     "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
@@ -1270,6 +1270,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "meta": null,
       "description": "SVG line art of a sloth, public domain",
       "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of",
+      "error": "unsupported media type",
       "Sensitive": true,
       "MIMEType": "",
       "PreviewMIMEType": "",
@@ -1286,6 +1287,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "meta": null,
       "description": "Jolly salsa song, public domain.",
       "blurhash": null,
+      "error": "unsupported media type",
       "Sensitive": true,
       "MIMEType": "",
       "PreviewMIMEType": "",
@@ -3880,7 +3882,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIEdits() {
                 "preview_remote_url": null,
                 "meta": null,
                 "description": "Jolly salsa song, public domain.",
-                "blurhash": null
+                "blurhash": null,
+                "error": "unsupported media type"
             }
         ],
         "emojis": []
@@ -3987,7 +3990,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIEdits() {
                 "preview_remote_url": null,
                 "meta": null,
                 "description": "Jolly salsa song, public domain.",
-                "blurhash": null
+                "blurhash": null,
+                "error": "unsupported media type"
             }
         ],
         "emojis": []

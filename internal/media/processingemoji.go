@@ -26,7 +26,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/storage"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
+	"codeberg.org/gruf/go-errors/v2"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
 )
@@ -34,41 +34,38 @@ import (
 // ProcessingEmoji represents an emoji currently processing. It exposes
 // various functions for retrieving data from the process.
 type ProcessingEmoji struct {
-	// Processing emoji details.
+
+	// processing emoji details.
 	emoji *gtsmodel.Emoji
 
-	// Instance account ID, used to
+	// instance account ID, used to
 	// construct emoji storage path.
 	instAccID string
 
-	// New emoji path ID to
+	// new emoji path ID to
 	// use when being refreshed.
 	newPathID string
 
-	// Load-data function,
+	// load data function,
 	// returns media stream.
 	dataFn DataFunc
-
-	// done is set when process finishes
-	// with non ctx canceled type error
-	done bool
 
 	// proc helps synchronize only a
 	// singular running processing instance
 	proc runners.Processor
 
-	// error stores permanent
-	// error value when done
+	// error stores permanent value when done,
+	// or alternatively may store a preset stubError{}
+	// value with details to allow skipping processing.
 	err error
 
 	// mgr instance, for access to
 	// db / storage during processing
 	mgr *Manager
 
-	// true if this emoji should not
-	// be downloaded, ie., should be
-	// returned as placeholder only.
-	stubOnly bool
+	// done is set when process finishes
+	// with non ctx canceled type error
+	done bool
 }
 
 // Load blocks until the static and fullsize image has been processed, and then returns the completed emoji.
@@ -101,7 +98,6 @@ func (p *ProcessingEmoji) Placeholder() *gtsmodel.Emoji {
 	emoji.ID = p.emoji.ID
 	emoji.Shortcode = p.emoji.Shortcode
 	emoji.Domain = p.emoji.Domain
-	emoji.Cached = new(bool)
 	emoji.ImageRemoteURL = p.emoji.ImageRemoteURL
 	emoji.ImageStaticRemoteURL = p.emoji.ImageStaticRemoteURL
 	emoji.Disabled = p.emoji.Disabled
@@ -133,10 +129,11 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 	done bool,
 	err error,
 ) {
-	err = p.proc.Process(func() error {
+	err = p.proc.Process(func() (err error) {
 		if done = p.done; done {
 			// Already proc'd.
-			return p.err
+			err = p.err
+			return
 		}
 
 		defer func() {
@@ -153,10 +150,21 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 				// (i.e. no ctx canceled).
 				ctx = context.WithoutCancel(ctx)
 
+				// Store values.
+				p.done = done
+				p.err = err
+
 				// On error or stub, ensure
 				// no downloaded files remain.
-				if err != nil || p.stubOnly {
+				if err != nil {
 					p.cleanup(ctx)
+				}
+
+				// Check the extracted error details on emoji for
+				// stub type error. i.e. policy or media type issue.
+				if isStubError(p.emoji.Error) {
+					log.Warnf(ctx, "stubbed %s due to: %v", p.emoji.ImageRemoteURL, p.err)
+					err = nil // don't return stub errors
 				}
 
 				// Update with latest details, whatever happened.
@@ -164,22 +172,14 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 				if e != nil {
 					log.Errorf(ctx, "error updating emoji in db: %v", e)
 				}
-
-				// Store values.
-				p.done = true
-				p.err = err
 			}
 		}()
 
-		// If we're only stubbing, skip
-		// calling store() to cache the emoji.
-		//
-		// Any files that may have been stored
-		// for it previously will be cleaned up
-		// by the deferred function above.
-		if p.stubOnly {
-			err = nil
-			return err
+		// If existing error details exists, check if supports retry.
+		if withDetails := errors.AsV2[*errWithDetails](p.err); //
+		withDetails != nil && !withDetails.details.SupportsRetry() {
+			err = p.err
+			return
 		}
 
 		// Attempt to store media and calculate
@@ -187,7 +187,7 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 		//
 		// This will update p.emoji as it goes.
 		err = p.store(ctx)
-		return err
+		return
 	})
 
 	// Return a copy of emoji.
@@ -200,9 +200,17 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 // and updates the underlying attachment fields as necessary. It will then stream
 // bytes from p's reader directly into storage so that it can be retrieved later.
 func (p *ProcessingEmoji) store(ctx context.Context) error {
+
 	// Load media from data func.
 	rc, err := p.dataFn(ctx)
 	if err != nil {
+
+		// If a network error, include these details.
+		if details := extractNetworkErrorDetails(err); //
+		details != 0 {
+			err = withDetails(err, details)
+		}
+
 		return gtserror.Newf("error executing data function: %w", err)
 	}
 
@@ -230,11 +238,8 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// Pass input file through ffprobe to
 	// parse further metadata information.
 	result, err := probe(ctx, temppath)
-	if err != nil && !isUnsupportedTypeErr(err) {
+	if err != nil {
 		return gtserror.Newf("ffprobe error: %w", err)
-	} else if result == nil {
-		log.Warnf(ctx, "unsupported data type by ffprobe: %v", err)
-		return nil
 	}
 
 	var ext string
@@ -243,7 +248,10 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// Get abstract file type, mimetype and ext from ffprobe data.
 	fileType, p.emoji.ImageContentType, ext = result.GetFileType()
 	if fileType != gtsmodel.FileTypeImage {
-		return gtserror.Newf("unsupported emoji filetype: %s (%s)", fileType, ext)
+
+		// NOTE: unlike regular media, unsupported file type is an error for emoji.
+		err := gtserror.Newf("unsupported emoji filetype: %s (%s)", fileType, ext)
+		return withDetails(err, codecDetails)
 	}
 
 	// Add file extension to path.
@@ -337,14 +345,17 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		"png",
 	)
 
-	// We can now consider this cached.
-	p.emoji.Cached = util.Ptr(true)
+	// Success! Unset previous
+	// error details for emoji.
+	p.emoji.Error = 0
 
 	return nil
 }
 
 // cleanup will remove any traces of processing emoji from storage,
 // and perform any other necessary cleanup steps after failure.
+//
+// details of any error are extracted and can be accessed via p.emoji.Error.
 func (p *ProcessingEmoji) cleanup(ctx context.Context) {
 	log.Debugf(ctx, "running cleanup of emoji %s", p.emoji.ID)
 
@@ -364,16 +375,9 @@ func (p *ProcessingEmoji) cleanup(ctx context.Context) {
 		}
 	}
 
-	// Unset processor-calculated fields.
-	p.emoji.ImageStaticContentType = ""
-	p.emoji.ImageStaticFileSize = 0
-	p.emoji.ImageStaticPath = ""
-	p.emoji.ImageStaticURL = ""
-	p.emoji.ImageContentType = ""
-	p.emoji.ImageFileSize = 0
-	p.emoji.ImagePath = ""
-	p.emoji.ImageURL = ""
+	// Unset fields.
+	p.emoji.Stub()
 
-	// Ensure marked as not cached.
-	p.emoji.Cached = util.Ptr(false)
+	// Extract any error details for db.
+	p.emoji.Error = toErrorDetails(p.err)
 }

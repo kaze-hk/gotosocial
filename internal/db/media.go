@@ -19,7 +19,6 @@ package db
 
 import (
 	"context"
-	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
@@ -42,14 +41,15 @@ type Media interface {
 	// DeleteAttachment deletes the attachment with given ID from the database.
 	DeleteAttachment(ctx context.Context, id string) error
 
-	// GetAttachments fetches media attachments up to a given max ID, and at most limit.
-	// AccountID is optional and can be provided to specify only attachments from given account.
-	GetAttachments(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.MediaAttachment, error)
+	// GetAttachments fetches media attachments, with given paging parameters.
+	GetAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error)
 
-	// GetRemoteAttachments fetches media attachments with a non-empty domain, up to a given max ID, and at most limit.
+	// GetAttachmentsByAccountID fetches media attachments by account ID, with given paging parameters.
+	GetAttachmentsByAccountID(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.MediaAttachment, error)
+
+	// GetRemoteAttachments fetches media attachments with a non-empty domain, with given paging parameters.
 	GetRemoteAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error)
 
-	// GetCachedAttachmentsOlderThan gets limit n remote attachments (including avatars and headers) older than
-	// the given time. These will be returned in order of attachment.created_at descending (i.e. newest to oldest).
-	GetCachedAttachmentsOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, error)
+	// GetCachedAttachments fetches cached media attachments with a non-empty domain, with given paging parameters.
+	GetCachedAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error)
 }

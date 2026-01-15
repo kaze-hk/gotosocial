@@ -102,3 +102,13 @@ func TimeFromULID(id string) (time.Time, error) {
 	}
 	return ulid.Time(parsed.Time()), nil
 }
+
+// ZeroULIDForTime returns the zero-value ULID for given time.
+func ZeroULIDForTime(t time.Time) string {
+	ts := ulid.Timestamp(t)
+	var ulid ulid.ULID
+	if err := ulid.SetTime(ts); err != nil {
+		panic(err)
+	}
+	return ulid.String()
+}

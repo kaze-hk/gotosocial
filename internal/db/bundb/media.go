@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"slices"
-	"time"
 
 	"code.superseriousbusiness.org/gopkg/xslices"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
@@ -224,82 +223,77 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 	return err
 }
 
-func (m *mediaDB) GetAttachments(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.MediaAttachment, error) {
-	maxID := page.GetMax()
-	limit := page.GetLimit()
+func (m *mediaDB) GetAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error) {
+	return m.getAttachmentsPagedByID(ctx, nil, page)
+}
 
-	attachmentIDs := make([]string, 0, limit)
-
-	q := m.db.NewSelect().
-		Table("media_attachments").
-		Column("id").
-		Order("id DESC")
-
-	if accountID != "" {
-		q = q.Where("? = ?", bun.Ident("account_id"), accountID)
-	}
-
-	if maxID != "" {
-		q = q.Where("? < ?", bun.Ident("id"), maxID)
-	}
-
-	if limit != 0 {
-		q = q.Limit(limit)
-	}
-
-	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, err
-	}
-
-	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
+func (m *mediaDB) GetAttachmentsByAccountID(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.MediaAttachment, error) {
+	return m.getAttachmentsPagedByID(ctx, func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.Where("? = ?", bun.Ident("account_id"), accountID)
+	}, page)
 }
 
 func (m *mediaDB) GetRemoteAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error) {
-	maxID := page.GetMax()
-	limit := page.GetLimit()
-
-	attachmentIDs := make([]string, 0, limit)
-
-	q := m.db.NewSelect().
-		Table("media_attachments").
-		Column("id").
-		Where("remote_url IS NOT NULL").
-		Order("id DESC")
-
-	if maxID != "" {
-		q = q.Where("id < ?", maxID)
-	}
-
-	if limit != 0 {
-		q = q.Limit(limit)
-	}
-
-	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, err
-	}
-
-	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
+	return m.getAttachmentsPagedByID(ctx, func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.Where("remote_url IS NOT NULL")
+	}, page)
 }
 
-func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, error) {
-	attachmentIDs := make([]string, 0, limit)
+func (m *mediaDB) GetCachedAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error) {
+	return m.getAttachmentsPagedByID(ctx, func(q *bun.SelectQuery) *bun.SelectQuery {
+		q = q.Where("remote_url IS NOT NULL")
+		q = q.Where("file_path IS NOT ?", "")
+		q = q.Where("thumbnail_path IS NOT ?", "")
+		return q
+	}, page)
+}
 
-	q := m.db.
-		NewSelect().
+func (m *mediaDB) getAttachmentsPagedByID(ctx context.Context, query func(*bun.SelectQuery) *bun.SelectQuery, page *paging.Page) ([]*gtsmodel.MediaAttachment, error) {
+	maxID := page.GetMax()
+	minID := page.GetMin()
+	limit := page.GetLimit()
+	order := page.GetOrder()
+
+	// Pre-allocate slice of dest IDs.
+	ids := make([]string, 0, limit)
+
+	// Start building query.
+	q := m.db.NewSelect().
 		Table("media_attachments").
-		Column("id").
-		Where("cached = true").
-		Where("remote_url IS NOT NULL").
-		Where("created_at < ?", olderThan).
-		Order("created_at DESC")
+		Column("id")
 
-	if limit != 0 {
-		q = q.Limit(limit)
+	if query != nil {
+		// Append caller
+		// query details.
+		q = query(q)
 	}
 
-	if err := q.Scan(ctx, &attachmentIDs); err != nil {
+	if maxID != "" {
+		// Set a maximum ID boundary if was given.
+		q = q.Where("? < ?", bun.Ident("id"), maxID)
+	}
+
+	if minID != "" {
+		// Set a minimum ID boundary if was given.
+		q = q.Where("? > ?", bun.Ident("id"), minID)
+	}
+
+	// Set query ordering.
+	if order.Ascending() {
+		q = q.OrderExpr("? ASC", bun.Ident("id"))
+	} else /* i.e. descending */ {
+		q = q.OrderExpr("? DESC", bun.Ident("id"))
+	}
+
+	// A limit should always
+	// be supplied for this.
+	q = q.Limit(limit)
+
+	// Finally, perform query into IDs slice.
+	if err := q.Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 
-	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
+	// Fetch media from DB with given IDs.
+	return m.GetAttachmentsByIDs(ctx, ids)
 }

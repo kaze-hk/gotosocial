@@ -59,17 +59,6 @@ type MediaStandardTestSuite struct {
 	mediaProcessor mediaprocessing.Processor
 }
 
-func (suite *MediaStandardTestSuite) SetupSuite() {
-	suite.testTokens = testrig.NewTestTokens()
-	suite.testApplications = testrig.NewTestApplications()
-	suite.testUsers = testrig.NewTestUsers()
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testAttachments = testrig.NewTestAttachments()
-	suite.testStatuses = testrig.NewTestStatuses()
-	suite.testRemoteAttachments = testrig.NewTestFediAttachments("../../../testrig/media")
-	suite.testDomainLimits = testrig.NewTestDomainLimits()
-}
-
 func (suite *MediaStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 
@@ -94,6 +83,15 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 	suite.mediaProcessor = mediaprocessing.New(&common, &suite.state, suite.tc, federator, suite.mediaManager, suite.transportController)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
+
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testRemoteAttachments = testrig.NewTestFediAttachments("../../../testrig/media")
+	suite.testDomainLimits = testrig.NewTestDomainLimits()
 }
 
 func (suite *MediaStandardTestSuite) TearDownTest() {

@@ -348,7 +348,6 @@ func sizeofEmoji() uintptr {
 		URI:                    "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
 		VisibleInPicker:        func() *bool { ok := true; return &ok }(),
 		CategoryID:             "01GGQ8V4993XK67B2JB396YFB7",
-		Cached:                 func() *bool { ok := true; return &ok }(),
 	}))
 }
 
@@ -490,7 +489,6 @@ func sizeofMedia() uintptr {
 		},
 		Avatar: func() *bool { ok := false; return &ok }(),
 		Header: func() *bool { ok := false; return &ok }(),
-		Cached: func() *bool { ok := true; return &ok }(),
 	}))
 }
 

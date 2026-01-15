@@ -35,7 +35,7 @@ type MediaCleanupTestSuite struct {
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanup() {
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	suite.True(*testAttachment.Cached)
+	suite.True(testAttachment.Cached())
 
 	// set up the request
 	recorder := httptest.NewRecorder()
@@ -50,7 +50,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanup() {
 	// the attachment should be updated in the database
 	if !testrig.WaitFor(func() bool {
 		if prunedAttachment, _ := suite.db.GetAttachmentByID(suite.T().Context(), testAttachment.ID); prunedAttachment != nil {
-			return !*prunedAttachment.Cached
+			return !prunedAttachment.Cached()
 		}
 		return false
 	}) {
@@ -60,7 +60,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanup() {
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanupNoArg() {
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	suite.True(*testAttachment.Cached)
+	suite.True(testAttachment.Cached())
 	println("TIME: ", testAttachment.CreatedAt.String())
 
 	// set up the request
@@ -75,7 +75,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNoArg() {
 
 	if !testrig.WaitFor(func() bool {
 		if prunedAttachment, _ := suite.db.GetAttachmentByID(suite.T().Context(), testAttachment.ID); prunedAttachment != nil {
-			return !*prunedAttachment.Cached
+			return !prunedAttachment.Cached()
 		}
 		return false
 	}) {
@@ -85,7 +85,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNoArg() {
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanupNotOldEnough() {
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	suite.True(*testAttachment.Cached)
+	suite.True(testAttachment.Cached())
 
 	// set up the request
 	recorder := httptest.NewRecorder()
@@ -105,12 +105,12 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNotOldEnough() {
 	suite.NoError(err)
 
 	// the media should still be cached
-	suite.True(*prunedAttachment.Cached)
+	suite.True(prunedAttachment.Cached())
 }
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanupNegative() {
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	suite.True(*testAttachment.Cached)
+	suite.True(testAttachment.Cached())
 
 	// Set up the request
 	recorder := httptest.NewRecorder()

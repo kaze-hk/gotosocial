@@ -684,7 +684,20 @@ func AttachmentToAPIAttachment(media *gtsmodel.MediaAttachment) apimodel.Attachm
 	api.Type = media.Type.String()
 	api.ID = media.ID
 
-	if media.File.Path != "" {
+	// Set initial API model attachment fields.
+	api.Blurhash = util.PtrIf(media.Blurhash)
+	api.RemoteURL = util.PtrIf(media.RemoteURL)
+	api.PreviewRemoteURL = util.PtrIf(media.Thumbnail.RemoteURL)
+	api.Description = util.PtrIf(media.Description)
+
+	if media.Error != 0 {
+		// Set media error string.
+		api.Error = new(string)
+		*api.Error = media.Error.String()
+		return api
+	}
+
+	if media.URL != "" {
 		// Allocate media metadata object.
 		api.Meta = new(apimodel.MediaMeta)
 
@@ -699,7 +712,7 @@ func AttachmentToAPIAttachment(media *gtsmodel.MediaAttachment) apimodel.Attachm
 		// If the URL is set, either the file is currently
 		// processing, or is successfully stored locally.
 		api.TextURL = util.Ptr(media.URL)
-		api.URL = util.Ptr(media.URL)
+		api.URL = api.TextURL
 
 		// Only add file details if we have any stored.
 		if media.FileMeta.Original != zeroOriginal {
@@ -715,7 +728,7 @@ func AttachmentToAPIAttachment(media *gtsmodel.MediaAttachment) apimodel.Attachm
 		}
 	}
 
-	if media.Thumbnail.Path != "" {
+	if media.Thumbnail.URL != "" {
 		if api.Meta == nil {
 			// Allocate media metadata object.
 			api.Meta = new(apimodel.MediaMeta)
@@ -743,12 +756,6 @@ func AttachmentToAPIAttachment(media *gtsmodel.MediaAttachment) apimodel.Attachm
 			}
 		}
 	}
-
-	// Set remaining API attachment fields.
-	api.Blurhash = util.PtrIf(media.Blurhash)
-	api.RemoteURL = util.PtrIf(media.RemoteURL)
-	api.PreviewRemoteURL = util.PtrIf(media.Thumbnail.RemoteURL)
-	api.Description = util.PtrIf(media.Description)
 
 	return api
 }
@@ -905,28 +912,28 @@ func (c *Converter) statusToAPIStatus(
 		return nil, err
 	}
 
-	// Convert author to API model.
-	acct, err := c.AccountToAPIAccountPublic(ctx, status.Account)
+	// Convert status author account to frontend API model.
+	apiStatus.Account, err = c.AccountToAPIAccountPublic(ctx,
+		status.Account)
 	if err != nil {
-		return nil, gtserror.Newf("error converting status acct: %w", err)
+		return nil, gtserror.Newf("error converting status author: %w", err)
 	}
-	apiStatus.Account = acct
 
 	// Convert author of boosted
 	// status (if set) to API model.
 	if apiStatus.Reblog != nil {
-		boostAcct, err := c.AccountToAPIAccountPublic(ctx, status.BoostOfAccount)
+		apiStatus.Reblog.Account, err = c.AccountToAPIAccountPublic(ctx, status.BoostOfAccount)
 		if err != nil {
-			return nil, gtserror.Newf("error converting boost acct: %w", err)
+			return nil, gtserror.Newf("error converting boost author: %w", err)
 		}
-		apiStatus.Reblog.Account = boostAcct
 	}
 
 	if placeholdAttachments {
+		var attachNote string
+
 		// Normalize status for API by pruning attachments
 		// that were not able to be locally stored, and replacing
 		// them with a helpful message + links to remote.
-		var attachNote string
 		attachNote, apiStatus.MediaAttachments = placeholderAttachments(apiStatus.MediaAttachments)
 		apiStatus.Content += attachNote
 
@@ -949,7 +956,6 @@ func (c *Converter) statusToAPIStatus(
 			if err != nil {
 				return nil, gtserror.Newf("error deriving 'pending reply' note: %w", err)
 			}
-
 			apiStatus.Content += pendingNote
 		}
 	}
@@ -1331,7 +1337,7 @@ func (c *Converter) baseStatusToFrontend(
 
 		apiStatus.Poll, err = c.PollToAPIPoll(ctx, requester, poll)
 		if err != nil {
-			return nil, fmt.Errorf("error converting poll: %w", err)
+			return nil, gtserror.Newf("error converting poll: %w", err)
 		}
 	}
 
@@ -1347,9 +1353,6 @@ func (c *Converter) baseStatusToFrontend(
 				"error getting interactions for status %s for account %s: %v",
 				status.URI, requester.URI, err,
 			)
-
-			// Ensure non-nil object.
-			interacts = new(statusInteractions)
 		}
 		apiStatus.Favourited = interacts.Favourited
 		apiStatus.Bookmarked = interacts.Bookmarked
@@ -2942,159 +2945,6 @@ func (c *Converter) ScheduledStatusToAPIScheduledStatus(ctx context.Context, sta
 	return apiScheduledStatus, nil
 }
 
-// attachmentsToAPI converts database model media attachments (fetching
-// using IDs if necessary) to frontend API attachment models. all errors
-// are caught and logged, with the calling function name as a prefix.
-func (c *Converter) attachmentsToAPI(
-	ctx context.Context,
-	attachments []*gtsmodel.MediaAttachment,
-	attachmentIDs []string,
-) []*apimodel.Attachment {
-	caller := log.Caller(3)
-
-	// Check if media attachments are populated.
-	if len(attachments) != len(attachmentIDs) {
-		var err error
-
-		// Media attachments are not populated, fetch from the database.
-		attachments, err = c.state.DB.GetAttachmentsByIDs(ctx, attachmentIDs)
-		if err != nil {
-
-			log.Errorf(ctx, "%s: error getting media: %v", caller, err)
-			return []*apimodel.Attachment{}
-		}
-	}
-
-	// Convert all db media attachments to slice of API models.
-	apiModels := make([]*apimodel.Attachment, len(attachments))
-	if len(apiModels) != len(attachments) {
-		panic(gtserror.New("bound check elimination"))
-	}
-	for i, media := range attachments {
-		apiModel := AttachmentToAPIAttachment(media)
-		apiModels[i] = &apiModel
-	}
-
-	return apiModels
-}
-
-// emojisToAPI converts database model emojis (fetching using IDs if
-// necessary) to frontend API emoji models. all errors are caught and
-// logged, with the calling function name as a prefix.
-func (c *Converter) emojisToAPI(
-	ctx context.Context,
-	emojis []*gtsmodel.Emoji,
-	emojiIDs []string,
-) []apimodel.Emoji {
-	caller := log.Caller(3)
-
-	// Check if emojis are populated.
-	if len(emojis) != len(emojiIDs) {
-		var err error
-
-		// Emojis are not populated, fetch from the database.
-		emojis, err = c.state.DB.GetEmojisByIDs(ctx, emojiIDs)
-		if err != nil {
-
-			log.Errorf(ctx, "%s: error getting emojis: %v", caller, err)
-			return []apimodel.Emoji{}
-		}
-	}
-
-	// Preallocate a biggest-case slice of frontend emojis.
-	apiModels := make([]apimodel.Emoji, 0, len(emojis))
-	for _, emoji := range emojis {
-
-		// Convert each database emoji to API model.
-		apiModel, err := c.EmojiToAPIEmoji(ctx, emoji)
-		if err != nil {
-			log.Errorf(ctx, "%s: error converting emoji %s: %v", caller, emoji.ShortcodeDomain(), err)
-			continue
-		}
-
-		// Append API model to the return slice.
-		apiModels = append(apiModels, apiModel)
-	}
-
-	return apiModels
-}
-
-// mentionsToAPI converts database model mentions (fetching using IDs if
-// necessary) to frontend API mention models. all errors are caught and
-// logged, with the calling function name as a prefix.
-func (c *Converter) mentionsToAPI(
-	ctx context.Context,
-	mentions []*gtsmodel.Mention,
-	mentionIDs []string,
-) []apimodel.Mention {
-	caller := log.Caller(3)
-
-	// Check if mentions are populated.
-	if len(mentions) != len(mentionIDs) {
-		var err error
-
-		// Mentions are not populated, fetch from the database.
-		mentions, err = c.state.DB.GetMentions(ctx, mentionIDs)
-		if err != nil {
-
-			log.Errorf(ctx, "%s: error getting mentions: %v", caller, err)
-			return []apimodel.Mention{}
-		}
-	}
-
-	// Preallocate a biggest-case slice of frontend mentions.
-	apiModels := make([]apimodel.Mention, 0, len(mentions))
-	for _, mention := range mentions {
-
-		// Convert each database mention to frontend API model.
-		apiModel, err := c.MentionToAPIMention(ctx, mention)
-		if err != nil {
-			log.Errorf(ctx, "%s: error converting mention %s: %v", caller, mention.ID, err)
-			continue
-		}
-
-		// Append API model to the return slice.
-		apiModels = append(apiModels, apiModel)
-	}
-
-	return apiModels
-}
-
-// tagsToAPI converts database model tags (fetching using IDs if
-// necessary) to frontend API tag models. all errors are caught
-// and logged, with the calling function name as a prefix.
-func (c *Converter) tagsToAPI(
-	ctx context.Context,
-	tags []*gtsmodel.Tag,
-	tagIDs []string,
-) []apimodel.Tag {
-	caller := log.Caller(3)
-
-	// Check if mentions are populated.
-	if len(tags) != len(tagIDs) {
-		var err error
-
-		// Tags not populated, fetch from database.
-		tags, err = c.state.DB.GetTags(ctx, tagIDs)
-		if err != nil {
-
-			log.Errorf(ctx, "%s: error getting tags: %v", caller, err)
-			return []apimodel.Tag{}
-		}
-	}
-
-	// Convert all db tags to slice of API models.
-	apiModels := make([]apimodel.Tag, len(tags))
-	if len(apiModels) != len(tags) {
-		panic(gtserror.New("bound check elimination"))
-	}
-	for i, tag := range tags {
-		apiModels[i] = TagToAPITag(tag, false, nil)
-	}
-
-	return apiModels
-}
-
 func (c *Converter) DomainLimitToAPIDomainLimit(
 	ctx context.Context,
 	domainLimit *gtsmodel.DomainLimit,
@@ -3220,4 +3070,153 @@ func domainLimitStatusesPolicyToFilterAction(p gtsmodel.StatusesPolicy) apimodel
 	default:
 		return apimodel.FilterActionNone
 	}
+}
+
+// attachmentsToAPI converts database model media attachments (fetching
+// using IDs if necessary) to frontend API attachment models. all errors
+// are caught and logged, with the calling function name as a prefix.
+func (c *Converter) attachmentsToAPI(
+	ctx context.Context,
+	attachments []*gtsmodel.MediaAttachment,
+	attachmentIDs []string,
+) []*apimodel.Attachment {
+
+	// Check if media attachments are populated.
+	if len(attachments) != len(attachmentIDs) {
+		var err error
+
+		// Media attachments are not populated, fetch from the database.
+		attachments, err = c.state.DB.GetAttachmentsByIDs(ctx, attachmentIDs)
+		if err != nil {
+
+			log.Error(ctx, gtserror.NewfAt(3, "error getting media: %w", err))
+			return []*apimodel.Attachment{}
+		}
+	}
+
+	// Convert all db media attachments to slice of API models.
+	apiModels := make([]*apimodel.Attachment, len(attachments))
+	if len(apiModels) != len(attachments) {
+		panic(gtserror.New("bound check elimination"))
+	}
+	for i, media := range attachments {
+		apiModel := AttachmentToAPIAttachment(media)
+		apiModels[i] = &apiModel
+	}
+
+	return apiModels
+}
+
+// emojisToAPI converts database model emojis (fetching using IDs if
+// necessary) to frontend API emoji models. all errors are caught and
+// logged, with the calling function name as a prefix.
+func (c *Converter) emojisToAPI(
+	ctx context.Context,
+	emojis []*gtsmodel.Emoji,
+	emojiIDs []string,
+) []apimodel.Emoji {
+
+	// Check if emojis are populated.
+	if len(emojis) != len(emojiIDs) {
+		var err error
+
+		// Emojis are not populated, fetch from the database.
+		emojis, err = c.state.DB.GetEmojisByIDs(ctx, emojiIDs)
+		if err != nil {
+
+			log.Error(ctx, gtserror.NewfAt(3, "error getting emojis: %w", err))
+			return []apimodel.Emoji{}
+		}
+	}
+
+	// Preallocate a biggest-case slice of frontend emojis.
+	apiModels := make([]apimodel.Emoji, 0, len(emojis))
+	for _, emoji := range emojis {
+
+		// Convert each database emoji to API model.
+		apiModel, err := c.EmojiToAPIEmoji(ctx, emoji)
+		if err != nil {
+			log.Error(ctx, gtserror.NewfAt(3, "error converting emoji %s: %w", emoji.ShortcodeDomain(), err))
+			continue
+		}
+
+		// Append API model to the return slice.
+		apiModels = append(apiModels, apiModel)
+	}
+
+	return apiModels
+}
+
+// mentionsToAPI converts database model mentions (fetching using IDs if
+// necessary) to frontend API mention models. all errors are caught and
+// logged, with the calling function name as a prefix.
+func (c *Converter) mentionsToAPI(
+	ctx context.Context,
+	mentions []*gtsmodel.Mention,
+	mentionIDs []string,
+) []apimodel.Mention {
+
+	// Check if mentions are populated.
+	if len(mentions) != len(mentionIDs) {
+		var err error
+
+		// Mentions are not populated, fetch from the database.
+		mentions, err = c.state.DB.GetMentions(ctx, mentionIDs)
+		if err != nil {
+
+			log.Error(ctx, gtserror.NewfAt(3, "error getting mentions: %w", err))
+			return []apimodel.Mention{}
+		}
+	}
+
+	// Preallocate a biggest-case slice of frontend mentions.
+	apiModels := make([]apimodel.Mention, 0, len(mentions))
+	for _, mention := range mentions {
+
+		// Convert each database mention to frontend API model.
+		apiModel, err := c.MentionToAPIMention(ctx, mention)
+		if err != nil {
+			log.Error(ctx, gtserror.NewfAt(3, "error converting mention %s: %w", mention.ID, err))
+			continue
+		}
+
+		// Append API model to the return slice.
+		apiModels = append(apiModels, apiModel)
+	}
+
+	return apiModels
+}
+
+// tagsToAPI converts database model tags (fetching using IDs if
+// necessary) to frontend API tag models. all errors are caught
+// and logged, with the calling function name as a prefix.
+func (c *Converter) tagsToAPI(
+	ctx context.Context,
+	tags []*gtsmodel.Tag,
+	tagIDs []string,
+) []apimodel.Tag {
+
+	// Check if mentions are populated.
+	if len(tags) != len(tagIDs) {
+		var err error
+
+		// Tags not populated, fetch from database.
+		tags, err = c.state.DB.GetTags(ctx, tagIDs)
+		if err != nil {
+
+			log.Error(ctx, gtserror.NewfAt(3, "error getting tags: %w", err))
+			return []apimodel.Tag{}
+		}
+	}
+
+	// Convert all db tags to slice of API models.
+	apiModels := make([]apimodel.Tag, len(tags))
+	if len(apiModels) != len(tags) {
+		panic(gtserror.New("bound check elimination"))
+	}
+	for i, tag := range tags {
+		apiModels[i] = TagToAPITag(tag, false, nil)
+	}
+
+	return apiModels
 }

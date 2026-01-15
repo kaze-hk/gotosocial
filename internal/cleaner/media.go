@@ -28,12 +28,11 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"code.superseriousbusiness.org/gotosocial/internal/regexes"
-	"code.superseriousbusiness.org/gotosocial/internal/storage"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // Media encompasses a set of
@@ -145,17 +144,16 @@ func (m *Media) PruneOrphaned(ctx context.Context) (int, error) {
 // Media is marked as unused if not attached to any status, account or account is suspended.
 // Context will be checked for `gtscontext.DryRun()` in order to actually perform the action.
 func (m *Media) PruneUnused(ctx context.Context) (int, error) {
-	var (
-		total int
-		page  paging.Page
-	)
+	var total int
+	var page paging.Page
 
-	// Set page select limit.
+	// Setup page w/ select limit.
+	page.Max = paging.MaxID("")
 	page.Limit = selectLimit
 
 	for {
 		// Fetch the next batch of media attachments to next maxID.
-		attachments, err := m.state.DB.GetAttachments(ctx, "", &page)
+		attachments, err := m.state.DB.GetAttachments(ctx, &page)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return total, gtserror.Newf("error getting attachments: %w", err)
 		}
@@ -170,7 +168,7 @@ func (m *Media) PruneUnused(ctx context.Context) (int, error) {
 
 		// Use last ID as the next 'maxID' value.
 		maxID = attachments[len(attachments)-1].ID
-		page.Max = paging.MaxID(maxID)
+		page.Max.Value = maxID
 
 		for _, media := range attachments {
 			// Check / prune unused media attachment.
@@ -194,33 +192,42 @@ func (m *Media) PruneUnused(ctx context.Context) (int, error) {
 // Context will be checked for `gtscontext.DryRun()` in order to actually perform the action.
 func (m *Media) UncacheRemote(ctx context.Context, olderThan time.Time) (int, error) {
 	var total int
+	var page paging.Page
+
+	// Setup page w/ select limit.
+	page.Max = paging.MaxID("")
+	page.Limit = selectLimit
 
 	// Drop time by a minute to improve search,
 	// (i.e. make it olderThan inclusive search).
 	olderThan = olderThan.Add(-time.Minute)
 
-	// Store recent time.
-	mostRecent := olderThan
+	// Get ULID for 'olderThan' to use as maxID.
+	olderThanID := id.ZeroULIDForTime(olderThan)
+	page.Max.Value = olderThanID
 
 	for {
-		// Fetch the next batch of cached attachments older than last-set time.
-		attachments, err := m.state.DB.GetCachedAttachmentsOlderThan(ctx, olderThan, selectLimit)
+		// Fetch the next batch of cached attachments older than maxID.
+		attachments, err := m.state.DB.GetCachedAttachments(ctx, &page)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return total, gtserror.Newf("error getting remote attachments: %w", err)
 		}
 
-		// If no attachments / same group is returned, we reached the end.
-		if len(attachments) == 0 ||
-			olderThan.Equal(attachments[len(attachments)-1].CreatedAt) {
+		// Get current max ID.
+		maxID := page.Max.Value
+
+		// If no attachments or the same group is returned, we reached the end.
+		if len(attachments) == 0 || maxID == attachments[len(attachments)-1].ID {
 			break
 		}
 
-		// Use last created-at as the next 'olderThan' value.
-		olderThan = attachments[len(attachments)-1].CreatedAt
+		// Use last ID as the next 'maxID' value.
+		maxID = attachments[len(attachments)-1].ID
+		page.Max.Value = maxID
 
 		for _, media := range attachments {
-			// Check / uncache each remote media attachment.
-			uncached, err := m.uncacheRemote(ctx, mostRecent, media)
+			// Check and try uncache each remote media attachment.
+			uncached, err := m.uncacheRemote(ctx, olderThan, media)
 			if err != nil {
 				return total, err
 			}
@@ -239,20 +246,16 @@ func (m *Media) UncacheRemote(ctx context.Context, olderThan time.Time) (int, er
 // PurgeRemote stubs + uncaches all remote media from the given domain.
 // Context will be checked for `gtscontext.DryRun()` in order to actually perform the action.
 func (m *Media) PurgeRemote(ctx context.Context, domain string) (int, error) {
-	var (
-		total    int
-		page     paging.Page
-		accounts []*gtsmodel.Account
-		err      error
-	)
+	var total int
+	var page paging.Page
 
-	// Set page select limit.
+	// Setup page w/ select limit.
+	page.Max = paging.MaxID("")
 	page.Limit = selectLimit
 
 	for {
-		// Get (next) page of accounts
-		// from the target domain.
-		accounts, err = m.state.DB.GetAccounts(
+		// Get (next) page of accounts for domain.
+		accounts, err := m.state.DB.GetAccounts(
 			gtscontext.SetBarebones(ctx),
 			"",           // origin
 			"",           // status
@@ -278,7 +281,7 @@ func (m *Media) PurgeRemote(ctx context.Context, domain string) (int, error) {
 		// Set params for next page.
 		loAcct := accounts[count-1]
 		lo := loAcct.Domain + "/@" + loAcct.Username
-		page.Max = paging.MaxID(lo)
+		page.Max.Value = lo
 
 		// For each account, stub all
 		// that account's attachments.
@@ -296,19 +299,16 @@ func (m *Media) PurgeRemote(ctx context.Context, domain string) (int, error) {
 
 // stubAccountAttachments stubs all attachments belonging to the given accountID.
 func (m *Media) stubAccountAttachments(ctx context.Context, accountID string) (int, error) {
-	var (
-		total       int
-		page        paging.Page
-		attachments []*gtsmodel.MediaAttachment
-		err         error
-	)
+	var total int
+	var page paging.Page
 
-	// Set page select limit.
+	// Setup page w/ select limit.
+	page.Max = paging.MaxID("")
 	page.Limit = selectLimit
 
 	for {
-		// Get (next) page of attachments from the account.
-		attachments, err = m.state.DB.GetAttachments(
+		// Get (next) page of attachments from db for the account.
+		attachments, err := m.state.DB.GetAttachmentsByAccountID(
 			ctx,
 			accountID,
 			&page,
@@ -317,17 +317,19 @@ func (m *Media) stubAccountAttachments(ctx context.Context, accountID string) (i
 			return total, gtserror.Newf("db error getting attachments: %w", err)
 		}
 
-		count := len(attachments)
-		if count == 0 {
-			// We're done.
+		// Get current max ID.
+		maxID := page.Max.Value
+
+		// If no attachments or the same group is returned, we reached the end.
+		if len(attachments) == 0 || maxID == attachments[len(attachments)-1].ID {
 			break
 		}
 
-		// Set params for next page.
-		maxID := attachments[count-1].ID
-		page.Max = paging.MaxID(maxID)
+		// Use last ID as the next 'maxID' value.
+		maxID = attachments[len(attachments)-1].ID
+		page.Max.Value = maxID
 
-		total += count
+		total += len(attachments)
 		if gtscontext.DryRun(ctx) {
 			// If this is a dry run, just increment
 			// the total by the attachment count
@@ -336,9 +338,9 @@ func (m *Media) stubAccountAttachments(ctx context.Context, accountID string) (i
 		}
 
 		// Stub each attachment by removing it
-		// from storage if possible, and stubbing
-		// its fields, leaving description, blurhash,
-		// and remoteURL metadata in place.
+		// from storage, and stubbing it fields,
+		// leaving description, blurhash, and
+		// remoteURL metadata in place.
 		for _, a := range attachments {
 			if err := m.stubAttachment(ctx, a); err != nil {
 				return total, err
@@ -349,43 +351,26 @@ func (m *Media) stubAccountAttachments(ctx context.Context, accountID string) (i
 	return total, nil
 }
 
-// stubAttachment removes stored media + stubs data for one attachment.
+// stubAttachment removes stored media and stubs all available fields for given attachment.
 func (m *Media) stubAttachment(ctx context.Context, a *gtsmodel.MediaAttachment) error {
-	if a.File.Path != "" {
-		// Ensure media file at path is deleted from storage.
-		err := m.state.Storage.Delete(ctx, a.File.Path)
-		if err != nil && !storage.IsNotFound(err) {
-			log.Errorf(ctx, "error deleting %s: %v", a.File.Path, err)
-		}
+
+	// Remove any attachment files.
+	if _, err := m.removeFiles(ctx,
+		a.Thumbnail.Path,
+		a.File.Path,
+	); err != nil {
+		log.Error(ctx, err)
 	}
 
-	if a.Thumbnail.Path != "" {
-		// Ensure media thumbnail at path is deleted from storage.
-		err := m.state.Storage.Delete(ctx, a.Thumbnail.Path)
-		if err != nil && !storage.IsNotFound(err) {
-			log.Errorf(ctx, "error deleting %s: %v", a.Thumbnail.Path, err)
-		}
-	}
+	// Unset
+	// fields.
+	a.Stub()
 
-	// Unset all file fields.
-	a.FileMeta.Original = gtsmodel.Original{}
-	a.FileMeta.Small = gtsmodel.Small{}
-	a.File.ContentType = ""
-	a.File.FileSize = 0
-	a.File.Path = ""
-	a.Thumbnail.FileSize = 0
-	a.Thumbnail.ContentType = ""
-	a.Thumbnail.Path = ""
-	a.Thumbnail.URL = ""
-	a.URL = ""
-
-	// Also ensure marked as unknown and finished
-	// processing so gets inserted as placeholder URL.
-	a.Processing = gtsmodel.ProcessingStatusProcessed
+	// Also ensure marked as unknown so
+	// gets inserted as placeholder URL.
 	a.Type = gtsmodel.FileTypeUnknown
-	a.Cached = util.Ptr(false)
 
-	// Update the stubbed attachment.
+	// Update the stubbed attachment in the database.
 	if err := m.state.DB.UpdateAttachment(ctx, a); err != nil {
 		return gtserror.Newf("db error updating attachment: %w", err)
 	}
@@ -397,12 +382,11 @@ func (m *Media) stubAttachment(ctx context.Context, a *gtsmodel.MediaAttachment)
 // Media marked as cached, with any required files missing, will be automatically uncached.
 // Context will be checked for `gtscontext.DryRun()` in order to actually perform the action.
 func (m *Media) FixCacheStates(ctx context.Context) (int, error) {
-	var (
-		total int
-		page  paging.Page
-	)
+	var total int
+	var page paging.Page
 
-	// Set page select limit.
+	// Setup page w/ select limit.
+	page.Max = paging.MaxID("")
 	page.Limit = selectLimit
 
 	for {
@@ -421,7 +405,7 @@ func (m *Media) FixCacheStates(ctx context.Context) (int, error) {
 
 		// Use last ID as the next 'maxID' value.
 		maxID = attachments[len(attachments)-1].ID
-		page.Max = paging.MaxID(maxID)
+		page.Max.Value = maxID
 
 		for _, media := range attachments {
 			// Check / fix required media cache states.
@@ -607,13 +591,13 @@ func (m *Media) fixCacheState(ctx context.Context, media *gtsmodel.MediaAttachme
 		return false, err
 	}
 
-	switch {
-	case *media.Cached && !exist:
+	switch cached := media.Cached(); {
+	case cached && !exist:
 		// Mark as uncached if expected files don't exist.
 		l.Debug("cached=true exists=false => uncaching")
 		return true, m.uncache(ctx, media)
 
-	case !*media.Cached && exist:
+	case !cached && exist:
 		// Remove files if we don't expect them to exist.
 		l.Debug("cached=false exists=true => deleting")
 		_, err := m.removeFiles(ctx,
@@ -628,7 +612,7 @@ func (m *Media) fixCacheState(ctx context.Context, media *gtsmodel.MediaAttachme
 }
 
 func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmodel.MediaAttachment) (bool, error) {
-	if !*media.Cached {
+	if !media.Cached() {
 		// Already uncached.
 		return false, nil
 	}
@@ -778,8 +762,11 @@ func (m *Media) uncache(ctx context.Context, media *gtsmodel.MediaAttachment) er
 
 	// Update attachment to reflect that we no longer have it cached.
 	log.Debugf(ctx, "marking media attachment as uncached: %s", media.ID)
-	media.Cached = func() *bool { i := false; return &i }()
-	if err := m.state.DB.UpdateAttachment(ctx, media, "cached"); err != nil {
+	media.File.Path, media.Thumbnail.Path = "", ""
+	if err := m.state.DB.UpdateAttachment(ctx, media,
+		"thumbnail_path",
+		"file_path",
+	); err != nil {
 		return gtserror.Newf("error updating media: %w", err)
 	}
 

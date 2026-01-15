@@ -20,7 +20,6 @@ package typeutils
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math"
 	"net/url"
 	"path"
@@ -67,33 +66,27 @@ type statusInteractions struct {
 	Pinned     bool
 }
 
-func (c *Converter) interactionsWithStatusForAccount(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*statusInteractions, error) {
-	si := &statusInteractions{}
-
+func (c *Converter) interactionsWithStatusForAccount(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (si statusInteractions, err error) {
 	if requestingAccount != nil {
-		faved, err := c.state.DB.IsStatusFavedBy(ctx, s.ID, requestingAccount.ID)
+		si.Favourited, err = c.state.DB.IsStatusFavedBy(ctx, s.ID, requestingAccount.ID)
 		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
+			return si, gtserror.Newf("error checking if requesting account has faved status: %s", err)
 		}
-		si.Favourited = faved
 
-		reblogged, err := c.state.DB.IsStatusBoostedBy(ctx, s.ID, requestingAccount.ID)
+		si.Reblogged, err = c.state.DB.IsStatusBoostedBy(ctx, s.ID, requestingAccount.ID)
 		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has reblogged status: %s", err)
+			return si, gtserror.Newf("error checking if requesting account has reblogged status: %s", err)
 		}
-		si.Reblogged = reblogged
 
-		muted, err := c.state.DB.IsThreadMutedByAccount(ctx, s.ThreadID, requestingAccount.ID)
+		si.Muted, err = c.state.DB.IsThreadMutedByAccount(ctx, s.ThreadID, requestingAccount.ID)
 		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has muted status: %s", err)
+			return si, gtserror.Newf("error checking if requesting account has muted status: %s", err)
 		}
-		si.Muted = muted
 
-		bookmarked, err := c.state.DB.IsStatusBookmarkedBy(ctx, requestingAccount.ID, s.ID)
+		si.Bookmarked, err = c.state.DB.IsStatusBookmarkedBy(ctx, requestingAccount.ID, s.ID)
 		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
+			return si, gtserror.Newf("error checking if requesting account has bookmarked status: %s", err)
 		}
-		si.Bookmarked = bookmarked
 
 		// The only time 'pinned' should be true is if the
 		// requesting account is looking at its OWN status.
@@ -140,10 +133,10 @@ func placeholderAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Att
 
 	// Extract non-locally stored attachments into a new slice,
 	// deleting them from input slice. This checks whether any
-	// file metadata has been set, which will only happen in the
+	// download error has been set, which will only happen in the
 	// case that we successfully finish processing an attachment.
 	arr = slices.DeleteFunc(arr, func(elem *apimodel.Attachment) bool {
-		if elem.Meta == nil {
+		if elem.Error != nil {
 			nonLocal = append(nonLocal, elem)
 			return true
 		}
@@ -186,6 +179,9 @@ func placeholderAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Att
 			note.WriteString(*d)
 			note.WriteString(`]`)
 		}
+		note.WriteString(` (error: `)
+		note.WriteString(*a.Error)
+		note.WriteString(`)`)
 		note.WriteString(`</li>`)
 	}
 	note.WriteString(`</ul>`)

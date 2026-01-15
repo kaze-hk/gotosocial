@@ -175,7 +175,7 @@ func Validate() error {
 	// Get and check configured max thumb size.
 	switch max := GetMediaThumbMaxPixels(); {
 	case max < minThumb:
-		errf("%s < 32 is not a useable thumbsize", MediaThumbMaxPixelsFlag, max)
+		errf("%s < 32 is not a useable thumbsize", MediaThumbMaxPixelsFlag)
 	case max < minThumbRecc:
 		log.Warnf(nil, "%s smaller than min recommended thumbsize %d", MediaThumbMaxPixelsFlag, minThumbRecc)
 	case max > maxThumbRecc:

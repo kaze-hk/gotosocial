@@ -9,7 +9,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 func copyMap(in map[string]*gtsmodel.Emoji) map[string]*gtsmodel.Emoji {
@@ -71,7 +70,9 @@ func (suite *CleanerTestSuite) TestEmojiFixCacheStates() {
 	// rainbow emoji as uncached
 	// so there's something to fix.
 	emojis := copyMap(suite.emojis)
-	emojis["rainbow"].Cached = util.Ptr(false)
+	emoji := emojis["rainbow"]
+	emoji.ImageStaticPath = ""
+	emoji.ImagePath = ""
 
 	suite.testEmojiFixCacheStates(
 		suite.T().Context(),
@@ -84,7 +85,9 @@ func (suite *CleanerTestSuite) TestEmojiFixCacheStatesDryRun() {
 	// rainbow emoji as uncached
 	// so there's something to fix.
 	emojis := copyMap(suite.emojis)
-	emojis["rainbow"].Cached = util.Ptr(false)
+	emoji := emojis["rainbow"]
+	emoji.ImageStaticPath = ""
+	emoji.ImagePath = ""
 
 	suite.testEmojiFixCacheStates(
 		gtscontext.SetDryRun(suite.T().Context()),
@@ -141,7 +144,7 @@ func (suite *CleanerTestSuite) testEmojiUncacheRemote(ctx context.Context, emoji
 		}
 
 		// Check cache state.
-		if *emoji.Cached {
+		if emoji.Cached() {
 			t.Errorf("emoji %s@%s should have been uncached", emoji.Shortcode, emoji.Domain)
 		}
 
@@ -164,7 +167,7 @@ func (suite *CleanerTestSuite) shouldUncacheEmoji(ctx context.Context, emoji *gt
 		return false, nil
 	}
 
-	if emoji.Cached == nil || !*emoji.Cached {
+	if !emoji.Cached() {
 		// Emoji is already uncached.
 		return false, nil
 	}
@@ -408,14 +411,12 @@ func (suite *CleanerTestSuite) shouldFixEmojiCacheState(ctx context.Context, emo
 	}
 
 	switch exists := (haveImage && haveStatic); {
-	case emoji.Cached != nil &&
-		*emoji.Cached && !exists:
+	case emoji.Cached() && !exists:
 		// (cached can be nil in tests)
 		// Cached but missing files.
 		return true, nil
 
-	case emoji.Cached != nil &&
-		!*emoji.Cached && exists:
+	case !emoji.Cached() && exists:
 		// (cached can be nil in tests)
 		// Uncached but unexpected files.
 		return true, nil

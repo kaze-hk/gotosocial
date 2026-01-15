@@ -242,7 +242,8 @@ func generateNativeThumb(
 	_ = infile.Close()
 
 	if err != nil {
-		return "", gtserror.Newf("error decoding file %s: %w", inpath, err)
+		err := gtserror.Newf("error decoding file %s: %w", inpath, err)
+		return "", withDetails(err, codecDetails)
 	}
 
 	// Apply orientation BEFORE any resize,
@@ -284,7 +285,8 @@ func generateNativeThumb(
 	_ = outfile.Close()
 
 	if err != nil {
-		return "", gtserror.Newf("error encoding image: %w", err)
+		err := gtserror.Newf("error encoding image: %w", err)
+		return "", withDetails(err, codecDetails)
 	}
 
 	if needBlurhash {
@@ -301,7 +303,8 @@ func generateNativeThumb(
 		// Generate blurhash for the tiny thumbnail.
 		blurhash, err := blurhash.Encode(4, 3, tiny)
 		if err != nil {
-			return "", gtserror.Newf("error generating blurhash: %w", err)
+			err := gtserror.Newf("error generating blurhash: %w", err)
+			return "", withDetails(err, codecDetails)
 		}
 
 		return blurhash, nil
@@ -326,7 +329,8 @@ func generateWebpBlurhash(filepath string) (string, error) {
 	_ = file.Close()
 
 	if err != nil {
-		return "", gtserror.Newf("error decoding file %s: %w", filepath, err)
+		err := gtserror.Newf("error decoding file %s: %w", filepath, err)
+		return "", withDetails(err, codecDetails)
 	}
 
 	// for generating blurhashes, it's more
@@ -342,7 +346,8 @@ func generateWebpBlurhash(filepath string) (string, error) {
 	// Generate blurhash for the tiny thumbnail.
 	blurhash, err := blurhash.Encode(4, 3, tiny)
 	if err != nil {
-		return "", gtserror.Newf("error generating blurhash: %w", err)
+		err := gtserror.Newf("error generating blurhash: %w", err)
+		return "", withDetails(err, codecDetails)
 	}
 
 	return blurhash, nil

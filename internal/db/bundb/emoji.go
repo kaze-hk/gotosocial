@@ -305,78 +305,73 @@ func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisable
 }
 
 func (e *emojiDB) GetEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error) {
-	maxID := page.GetMax()
-	limit := page.GetLimit()
-
-	emojiIDs := make([]string, 0, limit)
-
-	q := e.db.NewSelect().
-		Table("emojis").
-		Column("id").
-		Order("id DESC")
-
-	if maxID != "" {
-		q = q.Where("id < ?", maxID)
-	}
-
-	if limit != 0 {
-		q = q.Limit(limit)
-	}
-
-	if err := q.Scan(ctx, &emojiIDs); err != nil {
-		return nil, err
-	}
-
-	return e.GetEmojisByIDs(ctx, emojiIDs)
+	return e.getEmojisPagedByID(ctx, nil, page)
 }
 
 func (e *emojiDB) GetRemoteEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error) {
-	maxID := page.GetMax()
-	limit := page.GetLimit()
-
-	emojiIDs := make([]string, 0, limit)
-
-	q := e.db.NewSelect().
-		Table("emojis").
-		Column("id").
-		Where("domain IS NOT NULL").
-		Order("id DESC")
-
-	if maxID != "" {
-		q = q.Where("id < ?", maxID)
-	}
-
-	if limit != 0 {
-		q = q.Limit(limit)
-	}
-
-	if err := q.Scan(ctx, &emojiIDs); err != nil {
-		return nil, err
-	}
-
-	return e.GetEmojisByIDs(ctx, emojiIDs)
+	return e.getEmojisPagedByID(ctx, func(q *bun.SelectQuery) *bun.SelectQuery {
+		q = q.Where("domain IS NOT NULL")
+		return q
+	}, page)
 }
 
-func (e *emojiDB) GetCachedEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error) {
-	var emojiIDs []string
+func (e *emojiDB) GetCachedEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error) {
+	return e.getEmojisPagedByID(ctx, func(q *bun.SelectQuery) *bun.SelectQuery {
+		q = q.Where("domain IS NOT NULL")
+		q = q.Where("image_static_path IS NOT ?", "")
+		q = q.Where("image_path IS NOT ?", "")
+		return q
+	}, page)
+}
 
+func (e *emojiDB) getEmojisPagedByID(ctx context.Context, query func(*bun.SelectQuery) *bun.SelectQuery, page *paging.Page) ([]*gtsmodel.Emoji, error) {
+	maxID := page.GetMax()
+	minID := page.GetMin()
+	limit := page.GetLimit()
+	order := page.GetOrder()
+
+	// Pre-allocate slice of dest IDs.
+	ids := make([]string, 0, limit)
+
+	// Start building query.
 	q := e.db.NewSelect().
 		Table("emojis").
-		Column("id").
-		Where("cached = true").
-		Where("domain IS NOT NULL").
-		Where("created_at < ?", olderThan).
-		Order("created_at DESC")
+		Column("id")
 
-	if limit != 0 {
-		q = q.Limit(limit)
+	if query != nil {
+		// Append caller
+		// query details.
+		q = query(q)
 	}
 
-	if err := q.Scan(ctx, &emojiIDs); err != nil {
+	if maxID != "" {
+		// Set a maximum ID boundary if was given.
+		q = q.Where("? < ?", bun.Ident("id"), maxID)
+	}
+
+	if minID != "" {
+		// Set a minimum ID boundary if was given.
+		q = q.Where("? > ?", bun.Ident("id"), minID)
+	}
+
+	// Set query ordering.
+	if order.Ascending() {
+		q = q.OrderExpr("? ASC", bun.Ident("id"))
+	} else /* i.e. descending */ {
+		q = q.OrderExpr("? DESC", bun.Ident("id"))
+	}
+
+	// A limit should always
+	// be supplied for this.
+	q = q.Limit(limit)
+
+	// Finally, perform query into IDs slice.
+	if err := q.Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 
-	return e.GetEmojisByIDs(ctx, emojiIDs)
+	// Fetch emoji from DB with IDs.
+	return e.GetEmojisByIDs(ctx, ids)
 }
 
 func (e *emojiDB) GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, error) {

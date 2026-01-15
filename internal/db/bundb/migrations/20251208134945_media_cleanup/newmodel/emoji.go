@@ -37,41 +37,9 @@ type Emoji struct {
 	ImageStaticContentType string            `bun:",notnull"`                                                    // MIME content type of the static version of the emoji image.
 	ImageFileSize          int               `bun:",notnull"`                                                    // Size of the emoji image file in bytes, for serving purposes.
 	ImageStaticFileSize    int               `bun:",notnull"`                                                    // Size of the static version of the emoji image file in bytes, for serving purposes.
-	Error                  MediaErrorDetails `bun:",notnull,default:0"`                                          // Details about any error encountered downloading file
+	Error                  MediaErrorDetails `bun:",nullzero,notnull,default:0"`                                 // Details about any error encountered downloading file
 	Disabled               *bool             `bun:",nullzero,notnull,default:false"`                             // Has a moderation action disabled this emoji from being shown?
 	URI                    string            `bun:",nullzero,notnull,unique"`                                    // ActivityPub uri of this emoji. Something like 'https://example.org/emojis/1234'
 	VisibleInPicker        *bool             `bun:",nullzero,notnull,default:true"`                              // Is this emoji visible in the admin emoji picker?
-	Category               *EmojiCategory    `bun:"rel:belongs-to"`                                              // In which emoji category is this emoji visible?
 	CategoryID             string            `bun:"type:CHAR(26),nullzero"`                                      // ID of the category this emoji belongs to.
-}
-
-// IsLocal returns true if the emoji is
-// local to this instance., ie., it did
-// not originate from a remote instance.
-func (e *Emoji) IsLocal() bool {
-	return e.Domain == ""
-}
-
-// ShortcodeDomain returns the [shortcode]@[domain] for the given emoji.
-func (e *Emoji) ShortcodeDomain() string {
-	return e.Shortcode + "@" + e.Domain
-}
-
-// Cached returns whether Emoji is cached locally.
-func (e *Emoji) Cached() bool {
-	return e.ImagePath != "" &&
-		e.ImageStaticPath != ""
-}
-
-// Stub will reset all non-essential emoji
-// fields, leaving it in the bare uncached state.
-func (e *Emoji) Stub() {
-	e.ImageStaticContentType = ""
-	e.ImageStaticFileSize = 0
-	e.ImageStaticPath = ""
-	e.ImageStaticURL = ""
-	e.ImageContentType = ""
-	e.ImageFileSize = 0
-	e.ImagePath = ""
-	e.ImageURL = ""
 }

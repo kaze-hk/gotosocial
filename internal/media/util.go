@@ -27,8 +27,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
-	"codeberg.org/gruf/go-bytesize"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-mmap"
 )
@@ -159,7 +158,6 @@ func drainToTmp(rc io.ReadCloser) (string, error) {
 
 	// Limited reader (if any).
 	var lr *io.LimitedReader
-	var limit int64
 
 	// Reader type to use
 	// for draining to tmp.
@@ -174,7 +172,7 @@ func drainToTmp(rc io.ReadCloser) (string, error) {
 		rd = rct.Reader
 
 		// Extract limited reader if wrapped.
-		lr, limit = iotools.GetReaderLimit(rd)
+		lr, _ = iotools.GetReaderLimit(rd)
 	}
 
 	// Drain reader into tmp.
@@ -186,8 +184,10 @@ func drainToTmp(rc io.ReadCloser) (string, error) {
 	// Check to see if limit was reached,
 	// (produces more useful error messages).
 	if lr != nil && lr.N <= 0 {
-		err := fmt.Errorf("reached read limit %s", bytesize.Size(limit)) // #nosec G115 -- Just logging
-		return path, gtserror.SetLimitReached(err)
+		return path, withDetails(nil, gtsmodel.NewMediaErrorDetails(
+			gtsmodel.MediaErrorTypePolicy,
+			gtsmodel.MediaErrorTypePolicy_Size,
+		))
 	}
 
 	return path, nil

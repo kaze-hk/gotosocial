@@ -112,14 +112,12 @@ func (m *Manager) CreateMedia(
 	// leaving out fields with values we don't know
 	// yet. These will be overwritten as we go.
 	attachment := &gtsmodel.MediaAttachment{
-		ID:         id.NewULID(),
-		AccountID:  accountID,
-		Type:       gtsmodel.FileTypeUnknown,
-		Processing: gtsmodel.ProcessingStatusReceived,
-		Avatar:     util.Ptr(false),
-		Header:     util.Ptr(false),
-		Cached:     util.Ptr(false),
-		CreatedAt:  now,
+		ID:        id.NewULID(),
+		AccountID: accountID,
+		Type:      gtsmodel.FileTypeUnknown,
+		Avatar:    util.Ptr(false),
+		Header:    util.Ptr(false),
+		CreatedAt: now,
 	}
 
 	// Check if we were provided additional info
@@ -172,11 +170,24 @@ func (m *Manager) CacheMedia(
 	data DataFunc,
 	info AdditionalMediaInfo,
 ) *ProcessingMedia {
+	var stubErr error
+
+	if reason := info.RejectReason; reason != nil {
+		// If a predefined reject reason was provided,
+		// don't download and return early with error.
+		stubErr = &errWithDetails{details: *reason}
+	} else if details := media.Error; !details.SupportsRetry() {
+		// If failed to download due to an existing error,
+		// don't attempt redownload, return early with error.
+		err := gtserror.New("unretryable error: " + details.String())
+		stubErr = &errWithDetails{error: err, details: details}
+	}
+
 	return &ProcessingMedia{
-		media:    media,
-		dataFn:   data,
-		mgr:      m,
-		stubOnly: util.PtrOrZero(info.RejectMedia),
+		media:  media,
+		dataFn: data,
+		mgr:    m,
+		err:    stubErr,
 	}
 }
 
@@ -344,13 +355,26 @@ func (m *Manager) CacheEmoji(
 		pathID = id
 	}
 
+	var stubErr error
+
+	if reason := info.RejectReason; reason != nil {
+		// If a predefined reject reason was provided,
+		// don't download and return early with error.
+		stubErr = &errWithDetails{details: *reason}
+	} else if details := emoji.Error; !details.SupportsRetry() {
+		// If failed to download due to an existing error,
+		// don't attempt redownload, return early with error.
+		err := gtserror.New("unretryable error: " + details.String())
+		stubErr = &errWithDetails{error: err, details: details}
+	}
+
 	return &ProcessingEmoji{
 		newPathID: pathID,
 		instAccID: instanceAcc.ID,
 		emoji:     emoji,
 		dataFn:    data,
 		mgr:       m,
-		stubOnly:  util.PtrOrZero(info.RejectMedia),
+		err:       stubErr,
 	}, nil
 }
 
@@ -373,6 +397,8 @@ func (m *Manager) createOrUpdateEmoji(
 	if err != nil {
 		return nil, gtserror.Newf("error fetching instance account: %w", err)
 	}
+
+	var stubErr error
 
 	// Check if we have additional info to add to the emoji,
 	// and overwrite some of the emoji fields if so.
@@ -397,6 +423,16 @@ func (m *Manager) createOrUpdateEmoji(
 	if info.CategoryID != nil {
 		emoji.CategoryID = *info.CategoryID
 	}
+	if reason := info.RejectReason; reason != nil {
+		// If a predefined reject reason was provided,
+		// don't download and return early with error.
+		stubErr = &errWithDetails{details: *reason}
+	} else if details := emoji.Error; !details.SupportsRetry() {
+		// If failed to download due to an existing error,
+		// don't attempt redownload, return early with error.
+		err := gtserror.New("unretryable error: " + details.String())
+		stubErr = &errWithDetails{error: err, details: details}
+	}
 
 	// Put or update emoji in database.
 	if err := storeDB(ctx, emoji); err != nil {
@@ -409,7 +445,7 @@ func (m *Manager) createOrUpdateEmoji(
 		emoji:     emoji,
 		dataFn:    data,
 		mgr:       m,
-		stubOnly:  util.PtrOrZero(info.RejectMedia),
+		err:       stubErr,
 	}
 
 	return processingEmoji, nil
@@ -417,6 +453,7 @@ func (m *Manager) createOrUpdateEmoji(
 
 // extractEmojiPathID pulls the ID used in the final path segment of an emoji path (can be URL).
 func extractEmojiPathID(path string) string {
+
 	// Look for '.' indicating file ext.
 	i := strings.LastIndexByte(path, '.')
 	if i == -1 {

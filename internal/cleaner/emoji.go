@@ -27,9 +27,8 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
-	"code.superseriousbusiness.org/gotosocial/internal/storage"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // Emoji encompasses a set of
@@ -107,37 +106,42 @@ func (e *Emoji) LogFixCacheStates(ctx context.Context) {
 // will be checked for `gtscontext.DryRun()` in order to actually perform the action.
 func (e *Emoji) UncacheRemote(ctx context.Context, olderThan time.Time) (int, error) {
 	var total int
+	var page paging.Page
+
+	// Setup page w/ select limit.
+	page.Max = paging.MaxID("")
+	page.Limit = selectLimit
 
 	// Drop time by a minute to improve search,
 	// (i.e. make it olderThan inclusive search).
 	olderThan = olderThan.Add(-time.Minute)
 
-	// Store recent time.
-	mostRecent := olderThan
+	// Get ULID for 'olderThan' to use as maxID.
+	olderThanID := id.ZeroULIDForTime(olderThan)
+	page.Max.Value = olderThanID
 
 	for {
-		// Fetch the next batch of cached emojis older than last-set time.
-		emojis, err := e.state.DB.GetCachedEmojisOlderThan(ctx, olderThan, selectLimit)
+		// Fetch next batch of cached emojis older than maxID.
+		emojis, err := e.state.DB.GetCachedEmojis(ctx, &page)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return total, gtserror.Newf("error getting remote emoji: %w", err)
 		}
 
-		// If no emojis / same group is
-		// returned, we reached the end.
-		if len(emojis) == 0 ||
-			olderThan.Equal(emojis[len(emojis)-1].CreatedAt) {
+		// Get current max ID.
+		maxID := page.Max.Value
+
+		// If none or the same group is returned, we reached the end.
+		if len(emojis) == 0 || maxID == emojis[len(emojis)-1].ID {
 			break
 		}
 
-		// Use last createdAt as next 'olderThan' value.
-		olderThan = emojis[len(emojis)-1].CreatedAt
+		// Use last ID as next 'maxID' value.
+		maxID = emojis[len(emojis)-1].ID
+		page.Max.Value = maxID
 
 		for _, emoji := range emojis {
-			// Check / uncache each remote emoji.
-			uncached, err := e.uncacheRemote(ctx,
-				mostRecent,
-				emoji,
-			)
+			// Check and try uncache each remote emoji media model.
+			uncached, err := e.uncacheRemote(ctx, olderThan, emoji)
 			if err != nil {
 				return total, err
 			}
@@ -199,34 +203,17 @@ func (e *Emoji) PurgeRemote(ctx context.Context, domain string) (int, error) {
 		}
 
 		for _, emoji := range emojis {
-			if emoji.ImagePath != "" {
-				// Ensure emoji file at path is deleted from storage.
-				err := e.state.Storage.Delete(ctx, emoji.ImagePath)
-				if err != nil && !storage.IsNotFound(err) {
-					log.Errorf(ctx, "error deleting %s: %v", emoji.ImagePath, err)
-				}
-			}
-
-			if emoji.ImageStaticPath != "" {
-				// Ensure emoji static file at path is deleted from storage.
-				err := e.state.Storage.Delete(ctx, emoji.ImageStaticPath)
-				if err != nil && !storage.IsNotFound(err) {
-					log.Errorf(ctx, "error deleting %s: %v", emoji.ImageStaticPath, err)
-				}
+			// Remove emoji and static files.
+			_, err := e.removeFiles(ctx,
+				emoji.ImageStaticPath,
+				emoji.ImagePath,
+			)
+			if err != nil {
+				log.Errorf(ctx, "error removing emoji files: %v", err)
 			}
 
 			// Unset fields.
-			emoji.ImageStaticContentType = ""
-			emoji.ImageStaticFileSize = 0
-			emoji.ImageStaticPath = ""
-			emoji.ImageStaticURL = ""
-			emoji.ImageContentType = ""
-			emoji.ImageFileSize = 0
-			emoji.ImagePath = ""
-			emoji.ImageURL = ""
-
-			// Ensure marked as not cached.
-			emoji.Cached = util.Ptr(false)
+			emoji.Stub()
 
 			// Update.
 			if err := e.state.DB.UpdateEmoji(ctx, emoji); err != nil {
@@ -433,13 +420,13 @@ func (e *Emoji) fixCacheState(ctx context.Context, emoji *gtsmodel.Emoji) (bool,
 		return false, err
 	}
 
-	switch {
-	case *emoji.Cached && !exist:
+	switch cached := emoji.Cached(); {
+	case cached && !exist:
 		// Mark as uncached if expected files don't exist.
 		l.Debug("cached=true exists=false => marking uncached")
 		return true, e.uncache(ctx, emoji)
 
-	case !*emoji.Cached && exist:
+	case !cached && exist:
 		// Remove files if we don't expect them to exist.
 		l.Debug("cached=false exists=true => removing files")
 		_, err := e.removeFiles(ctx,
@@ -454,7 +441,7 @@ func (e *Emoji) fixCacheState(ctx context.Context, emoji *gtsmodel.Emoji) (bool,
 }
 
 func (e *Emoji) uncacheRemote(ctx context.Context, after time.Time, emoji *gtsmodel.Emoji) (bool, error) {
-	if !*emoji.Cached {
+	if !emoji.Cached() {
 		// Already uncached.
 		return false, nil
 	}
@@ -588,8 +575,11 @@ func (e *Emoji) uncache(ctx context.Context, emoji *gtsmodel.Emoji) error {
 
 	// Update emoji to reflect that we no longer have it cached.
 	log.Debugf(ctx, "marking emoji as uncached: %s", emoji.ID)
-	emoji.Cached = func() *bool { i := false; return &i }()
-	if err := e.state.DB.UpdateEmoji(ctx, emoji, "cached"); err != nil {
+	emoji.ImagePath, emoji.ImageStaticPath = "", ""
+	if err := e.state.DB.UpdateEmoji(ctx, emoji,
+		"image_static_path",
+		"image_path",
+	); err != nil {
 		return gtserror.Newf("error updating emoji: %w", err)
 	}
 

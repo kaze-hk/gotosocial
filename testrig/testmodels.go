@@ -555,7 +555,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			PrivateKey:                   &rsa.PrivateKey{},
 			PublicKey:                    &rsa.PublicKey{},
 			PublicKeyURI:                 "http://thequeenisstillalive.technology/users/her_fuckin_maj#main-key",
-			HeaderMediaAttachmentID:      "01PFPMWK2FF0D9WMHEJHR07C3R",
+			HeaderMediaAttachmentID:      "01G549FP8065NKWBPTWHP6Y3PD",
 			HidesToPublicFromUnauthedWeb: util.Ptr(false),
 			HidesCcPublicFromUnauthedWeb: util.Ptr(true),
 		},
@@ -745,7 +745,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "Black and white image of some 50's style text saying: Welcome On Board",
 			ScheduledStatusID: "",
 			Blurhash:          "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg",
 				ContentType: "image/jpeg",
@@ -760,7 +759,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"local_account_1_status_4_attachment_1": {
 			ID:        "01F8MH7TDVANYKWVE8VVKFPJTJ",
@@ -791,7 +789,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "90's Trent Reznor turning to the camera",
 			ScheduledStatusID: "",
 			Blurhash:          "LCDRH758KOxsEMNxENEM9]}?aKxZ",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH7TDVANYKWVE8VVKFPJTJ.gif",
 				ContentType: "image/gif",
@@ -806,7 +803,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"local_account_1_status_4_attachment_2": {
 			ID:        "01CDR64G398ADCHXK08WWTHEZ5",
@@ -840,7 +836,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "A cow adorably licking another cow!",
 			ScheduledStatusID: "",
 			Blurhash:          "L9B|BBY8yZtS~AxZV@t6,njEjZV@",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4",
 				ContentType: "video/mp4",
@@ -855,7 +850,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"local_account_1_unattached_1": {
 			ID:        "01F8MH8RMYQ6MSNY3JM2XT1CQ5",
@@ -886,7 +880,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "the oh you meme",
 			ScheduledStatusID: "",
 			Blurhash:          "LNABP8o#Dge,S6M}axxVEQjYxWbH",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpg",
 				ContentType: "image/jpeg",
@@ -901,7 +894,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"local_account_1_avatar": {
 			ID:        "01F8MH58A357CV5K7R7TJMSH6S",
@@ -932,7 +924,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "a green goblin looking nasty",
 			ScheduledStatusID: "",
 			Blurhash:          "LHI:dk=G|rj]H[J-5roJvnr@Opag",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpeg",
 				ContentType: "image/jpeg",
@@ -947,7 +938,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(true),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"local_account_1_header": {
 			ID:        "01PFPMWK2FF0D9WMHEJHR07C3Q",
@@ -978,7 +968,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "A very old-school screenshot of the original team fortress mod for quake",
 			ScheduledStatusID: "",
 			Blurhash:          "L17KPDs:$ykDJroJ-RoJ0fR+xVjY",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg",
 				ContentType: "image/jpeg",
@@ -993,7 +982,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(true),
-			Cached: util.Ptr(true),
 		},
 		"local_account_1_status_8_attachment_1": {
 			ID:        "01J2M20K6K9XQC4WSB961YJHV6",
@@ -1027,7 +1015,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "This is a track from Nine Inch Nails' \"Ghosts I-V\" album.\n\nThis is the third track from \"Ghosts II\".",
 			ScheduledStatusID: "",
 			Blurhash:          "LZDJO?ayIUof01j[xuayxuayayj[",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01J2M20K6K9XQC4WSB961YJHV6.mp3",
 				ContentType: "audio/mpeg",
@@ -1042,7 +1029,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"local_account_2_status_9_attachment_1": {
 			ID:          "01JDQ164HM08SGJ7ZEK9003Z4B",
@@ -1051,16 +1037,15 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			RemoteURL:   "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3",
 			CreatedAt:   TimeMustParse("2024-11-01T10:01:00+02:00"),
 			Type:        gtsmodel.FileTypeUnknown,
+			Error:       gtsmodel.NewMediaErrorDetails(gtsmodel.MediaErrorTypeCodec, gtsmodel.MediaErrorTypeCodec_Unsupported),
 			FileMeta:    gtsmodel.FileMeta{},
 			AccountID:   "01F8MH5NBDF2MV7CTC4Q5128HF",
 			Description: "Jolly salsa song, public domain.",
 			Blurhash:    "",
-			Processing:  gtsmodel.ProcessingStatusProcessed,
 			File:        gtsmodel.File{},
 			Thumbnail:   gtsmodel.Thumbnail{RemoteURL: ""},
 			Avatar:      util.Ptr(false),
 			Header:      util.Ptr(false),
-			Cached:      util.Ptr(false),
 		},
 		"local_account_3_avatar": {
 			ID:        "01JPHQZ0ZHC2AXJK1JQNXRXQZN",
@@ -1091,7 +1076,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "LRF~2LIU0esp-qRjR*aeJ$s;iwW.",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/avatar/original/01JPHQZ0ZHC2AXJK1JQNXRXQZN.jpeg",
 				ContentType: "image/jpeg",
@@ -1106,7 +1090,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(true),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"local_account_3_header": {
 			ID:        "01JPHRB7F2RXPTEQFRYC85EPD9",
@@ -1137,7 +1120,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "L9I5h:%M%M?a~os:D*bFMybFM{jI",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/header/original/01JPHRB7F2RXPTEQFRYC85EPD9.png",
 				ContentType: "image/png",
@@ -1152,7 +1134,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(true),
-			Cached: util.Ptr(true),
 		},
 		// sickos
 		"local_account_3_status_1_attachment_1": {
@@ -1184,7 +1165,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "L~EqXWX5t6og%jW=owa~N1WFjYWC",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPCPRMPPGWKBCAE7X81XA0PK.jpeg",
 				ContentType: "image/jpeg",
@@ -1199,7 +1179,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// marge
 		"local_account_3_status_1_attachment_2": {
@@ -1231,7 +1210,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "LGH1i6RpD;-,0DoZaIogA2N3xZI]",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPCPTSFNQDAGTHP49DXSD0BM.png",
 				ContentType: "image/png",
@@ -1246,7 +1224,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// sloth-gear
 		"local_account_3_status_1_attachment_3": {
@@ -1278,7 +1255,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "LOE.|bxZx]j[~pt7WWWW%Lj@%Mj[",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPCPYJ6N2E2R7GAJ1XECXNV5.webp",
 				ContentType: "image/webp",
@@ -1293,7 +1269,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// you-posted
 		"local_account_3_status_1_attachment_4": {
@@ -1325,7 +1300,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "L00+zhoLNubHj[fQa|fQ9tWVw{jZ",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPCQ4WXEA52VVR9V1HN7E0RS.png",
 				ContentType: "image/png",
@@ -1340,7 +1314,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// buscemi
 		"local_account_3_status_1_attachment_5": {
@@ -1372,7 +1345,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "L5A9A=}?J*5m56Rk={$%O?Nb$M$i",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPCQ9VBZBMSTVN56QN3R5188.jpeg",
 				ContentType: "image/jpeg",
@@ -1387,7 +1359,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// butt
 		"local_account_3_status_1_attachment_6": {
@@ -1419,7 +1390,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "LWLN.4~q00ofxuxu-;%M9F-;-;xu",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPG1RZPRH3Y00VSA3RQ2SJWP.gif",
 				ContentType: "image/gif",
@@ -1434,7 +1404,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// bunny
 		"local_account_3_status_2_attachment_1": {
@@ -1468,7 +1437,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "LEQcn{?bfQ?b~qoffQoffQfQfQfQ",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPHFKQ86GT9W76SWPHE9P8JB.webm",
 				ContentType: "video/webm",
@@ -1483,7 +1451,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// computerbye
 		"local_account_3_status_2_attachment_2": {
@@ -1518,7 +1485,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "LLHUzr-;o#_2~q-:IV%Mxu%MM{M{",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPHFSCVGGH02FX9VJMXGXN45.gif",
 				ContentType: "image/gif",
@@ -1533,7 +1499,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// diarrhea
 		"local_account_3_status_2_attachment_3": {
@@ -1568,7 +1533,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "L78qTmNG00xZkWxsIURQ01s;?aR*",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPHFW5HKFWQNQ954P5KNXWSR.gif",
 				ContentType: "image/gif",
@@ -1583,7 +1547,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// ffmpreg
 		"local_account_3_status_2_attachment_4": {
@@ -1615,7 +1578,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "LOCX.y}rIpE3,?w{S4W;9vENX8t6",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPHFZP2VNS1M2RQ646BXBZQG.jpeg",
 				ContentType: "image/jpeg",
@@ -1630,7 +1592,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		// notabug
 		"local_account_3_status_2_attachment_5": {
@@ -1662,7 +1623,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "DESCRIPTION_GOES_HERE",
 			ScheduledStatusID: "",
 			Blurhash:          "LTGbrRxAE1og0OR:xve-OFs6kCWY",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01JPCMD83Y4WR901094YES3QC5/attachment/original/01JPHG32F7M6F084WKEGAYJ40X.jpeg",
 				ContentType: "image/jpeg",
@@ -1677,7 +1637,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"remote_account_1_status_1_attachment_1": {
 			ID:        "01FVW7RXPQ8YJHTEXYPE7Q8ZY0",
@@ -1708,7 +1667,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
 			ScheduledStatusID: "",
 			Blurhash:          "L3Q9_@4n9E?axW4mD$Mx~q00Di%L",
-			Processing:        2,
 			File: gtsmodel.File{
 				Path:        "01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 				ContentType: "image/jpeg",
@@ -1722,12 +1680,11 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"remote_account_3_header": {
-			ID:        "01PFPMWK2FF0D9WMHEJHR07C3R",
+			ID:        "01G549FP8065NKWBPTWHP6Y3PD",
 			StatusID:  "",
-			URL:       "http://localhost:8080/fileserver/062G5WYKY35KKD12EMSM3F8PJ8/header/original/01PFPMWK2FF0D9WMHEJHR07C3R.jpg",
+			URL:       "http://localhost:8080/fileserver/062G5WYKY35KKD12EMSM3F8PJ8/header/original/01G549FP8065NKWBPTWHP6Y3PD.jpg",
 			RemoteURL: "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
 			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
 			Type:      gtsmodel.FileTypeImage,
@@ -1753,21 +1710,19 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Description:       "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
 			ScheduledStatusID: "",
 			Blurhash:          "L3Q9_@4n9E?axW4mD$Mx~q00Di%L",
-			Processing:        2,
 			File: gtsmodel.File{
-				Path:        "062G5WYKY35KKD12EMSM3F8PJ8/attachment/original/01PFPMWK2FF0D9WMHEJHR07C3R.jpeg",
+				Path:        "062G5WYKY35KKD12EMSM3F8PJ8/attachment/original/01G549FP8065NKWBPTWHP6Y3PD.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    19310,
 			},
 			Thumbnail: gtsmodel.Thumbnail{
-				Path:        "062G5WYKY35KKD12EMSM3F8PJ8/attachment/small/01PFPMWK2FF0D9WMHEJHR07C3R.jpeg",
+				Path:        "062G5WYKY35KKD12EMSM3F8PJ8/attachment/small/01G549FP8065NKWBPTWHP6Y3PD.jpeg",
 				ContentType: "image/webp",
 				FileSize:    20395,
-				URL:         "http://localhost:8080/fileserver/062G5WYKY35KKD12EMSM3F8PJ8/header/small/01PFPMWK2FF0D9WMHEJHR07C3R.webp",
+				URL:         "http://localhost:8080/fileserver/062G5WYKY35KKD12EMSM3F8PJ8/header/small/01G549FP8065NKWBPTWHP6Y3PD.webp",
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(true),
-			Cached: util.Ptr(true),
 		},
 		"remote_account_2_status_1_attachment_1": {
 			ID:        "01HE7Y3C432WRSNS10EZM86SA5",
@@ -1797,7 +1752,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			AccountID:   "01FHMQX3GAABWSM0S2VZEC2SWC",
 			Description: "Photograph of a sloth, Public Domain.",
 			Blurhash:    "LKE3VIw}0KD%a2o{M|t7NFWps:t7",
-			Processing:  2,
 			File: gtsmodel.File{
 				Path:        "01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
 				ContentType: "image/jpg",
@@ -1811,7 +1765,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: util.Ptr(false),
 			Header: util.Ptr(false),
-			Cached: util.Ptr(true),
 		},
 		"remote_account_2_status_1_attachment_2": {
 			ID:          "01HE7ZFX9GKA5ZZVD4FACABSS9",
@@ -1820,16 +1773,15 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			RemoteURL:   "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg",
 			CreatedAt:   TimeMustParse("2023-11-02T12:44:25+02:00"),
 			Type:        gtsmodel.FileTypeUnknown,
+			Error:       gtsmodel.NewMediaErrorDetails(gtsmodel.MediaErrorTypeCodec, gtsmodel.MediaErrorTypeCodec_Unsupported),
 			FileMeta:    gtsmodel.FileMeta{},
 			AccountID:   "01FHMQX3GAABWSM0S2VZEC2SWC",
 			Description: "SVG line art of a sloth, public domain",
 			Blurhash:    "L26*j+~qE1RP?wxut7ofRlM{R*of",
-			Processing:  2,
 			File:        gtsmodel.File{},
 			Thumbnail:   gtsmodel.Thumbnail{RemoteURL: ""},
 			Avatar:      util.Ptr(false),
 			Header:      util.Ptr(false),
-			Cached:      util.Ptr(false),
 		},
 		"remote_account_2_status_1_attachment_3": {
 			ID:          "01HE88YG74PVAB81PX2XA9F3FG",
@@ -1838,16 +1790,15 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			RemoteURL:   "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3",
 			CreatedAt:   TimeMustParse("2023-11-02T12:44:25+02:00"),
 			Type:        gtsmodel.FileTypeUnknown,
+			Error:       gtsmodel.NewMediaErrorDetails(gtsmodel.MediaErrorTypeCodec, gtsmodel.MediaErrorTypeCodec_Unsupported),
 			FileMeta:    gtsmodel.FileMeta{},
 			AccountID:   "01FHMQX3GAABWSM0S2VZEC2SWC",
 			Description: "Jolly salsa song, public domain.",
 			Blurhash:    "",
-			Processing:  2,
 			File:        gtsmodel.File{},
 			Thumbnail:   gtsmodel.Thumbnail{RemoteURL: ""},
 			Avatar:      util.Ptr(false),
 			Header:      util.Ptr(false),
-			Cached:      util.Ptr(false),
 		},
 	}
 }
@@ -1875,7 +1826,6 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			URI:                    "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
 			VisibleInPicker:        util.Ptr(true),
 			CategoryID:             "01GGQ8V4993XK67B2JB396YFB7",
-			Cached:                 util.Ptr(true),
 		},
 		"yell": {
 			ID:                     "01GD5KP5CQEE1R3X43Y1EHS2CW",
@@ -1897,7 +1847,6 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			URI:                    "http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW",
 			VisibleInPicker:        util.Ptr(false),
 			CategoryID:             "",
-			Cached:                 util.Ptr(false),
 		},
 	}
 }

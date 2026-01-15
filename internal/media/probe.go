@@ -87,7 +87,8 @@ func probeJPEG(file fileReader) (*result, error) {
 		file,
 	))
 	if err != nil {
-		return nil, gtserror.Newf("error decoding file %s: %w", file.Name(), err)
+		err := gtserror.Newf("error decoding file %s: %w", file.Name(), err)
+		return nil, withDetails(err, codecDetails)
 	}
 
 	// Jump back to file start.

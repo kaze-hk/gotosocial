@@ -15,8 +15,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package gtsmodel
 
-import "code.superseriousbusiness.org/gotosocial/internal/id"
+// smallint is the largest size supported
+// by a PostgreSQL SMALLINT, since an SQLite
+// SMALLINT is actually variable in size.
+type smallint int16
 
-func main() { println(id.NewULID()) }
+// enumType is the type we (at least, should) use
+// for database enum types, as smallest int size.
+type enumType smallint

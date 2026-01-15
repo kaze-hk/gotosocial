@@ -28,7 +28,7 @@ import (
 // plus1hULID returns a ULID for now+1h.
 func plus1hULID() string {
 	t := time.Now().Add(time.Hour)
-	return id.NewULIDFromTime(t)
+	return id.ZeroULIDForTime(t)
 }
 
 // nextPageParams gets the next set of paging

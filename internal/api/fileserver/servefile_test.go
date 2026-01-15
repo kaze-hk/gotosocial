@@ -75,16 +75,20 @@ func (suite *ServeFileTestSuite) GetFile(
 func (suite *ServeFileTestSuite) UncacheAttachment(targetAttachment *gtsmodel.MediaAttachment) {
 	ctx := suite.T().Context()
 
-	cached := false
-	targetAttachment.Cached = &cached
-
-	if err := suite.db.UpdateByID(ctx, targetAttachment, targetAttachment.ID, "cached"); err != nil {
-		suite.FailNow(err.Error())
-	}
 	if err := suite.storage.Delete(ctx, targetAttachment.File.Path); err != nil {
 		suite.FailNow(err.Error())
 	}
 	if err := suite.storage.Delete(ctx, targetAttachment.Thumbnail.Path); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	targetAttachment.File.Path = ""
+	targetAttachment.Thumbnail.Path = ""
+
+	if err := suite.db.UpdateAttachment(ctx, targetAttachment,
+		"thumbnail_path",
+		"file_path",
+	); err != nil {
 		suite.FailNow(err.Error())
 	}
 }
@@ -177,7 +181,8 @@ func (suite *ServeFileTestSuite) TestServeOriginalRemoteFileRecache() {
 		suite.FailNow(err.Error())
 	}
 
-	// uncache the attachment so we'll have to refetch it from the 'remote' instance
+	// uncache the attachment so we'll have to
+	// refetch it from the 'remote' instance
 	suite.UncacheAttachment(targetAttachment)
 
 	code, headers, body := suite.GetFile(
@@ -200,7 +205,8 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileRecache() {
 		suite.FailNow(err.Error())
 	}
 
-	// uncache the attachment so we'll have to refetch it from the 'remote' instance
+	// uncache the attachment so we'll have to
+	// refetch it from the 'remote' instance
 	suite.UncacheAttachment(targetAttachment)
 
 	code, headers, body := suite.GetFile(
@@ -219,10 +225,11 @@ func (suite *ServeFileTestSuite) TestServeOriginalRemoteFileRecacheNotFound() {
 	targetAttachment := &gtsmodel.MediaAttachment{}
 	*targetAttachment = *suite.testAttachments["remote_account_1_status_1_attachment_1"]
 
-	// uncache the attachment *and* set the remote URL to something that will return a 404
+	// uncache the attachment *and* set the remote
+	// URL to something that will return a 404
 	suite.UncacheAttachment(targetAttachment)
 	targetAttachment.RemoteURL = "http://nothing.at.this.url/weeeeeeeee"
-	if err := suite.db.UpdateByID(suite.T().Context(), targetAttachment, targetAttachment.ID, "remote_url"); err != nil {
+	if err := suite.db.UpdateAttachment(suite.T().Context(), targetAttachment); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -240,10 +247,11 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileRecacheNotFound() {
 	targetAttachment := &gtsmodel.MediaAttachment{}
 	*targetAttachment = *suite.testAttachments["remote_account_1_status_1_attachment_1"]
 
-	// uncache the attachment *and* set the remote URL to something that will return a 404
+	// uncache the attachment *and* set the remote
+	// URL to something that will return a 404
 	suite.UncacheAttachment(targetAttachment)
 	targetAttachment.RemoteURL = "http://nothing.at.this.url/weeeeeeeee"
-	if err := suite.db.UpdateByID(suite.T().Context(), targetAttachment, targetAttachment.ID, "remote_url"); err != nil {
+	if err := suite.db.UpdateAttachment(suite.T().Context(), targetAttachment); err != nil {
 		suite.FailNow(err.Error())
 	}
 

@@ -90,10 +90,10 @@ func (suite *MediaTestSuite) TestUncacheRemote() {
 	ctx := suite.T().Context()
 
 	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	suite.True(*testStatusAttachment.Cached)
+	suite.True(testStatusAttachment.Cached())
 
 	testHeader := suite.testAttachments["remote_account_3_header"]
-	suite.True(*testHeader.Cached)
+	suite.True(testHeader.Cached())
 
 	after := time.Now().Add(-24 * time.Hour)
 	totalUncached, err := suite.cleaner.Media().UncacheRemote(ctx, after)
@@ -102,11 +102,11 @@ func (suite *MediaTestSuite) TestUncacheRemote() {
 
 	uncachedAttachment, err := suite.db.GetAttachmentByID(ctx, testStatusAttachment.ID)
 	suite.NoError(err)
-	suite.False(*uncachedAttachment.Cached)
+	suite.False(uncachedAttachment.Cached())
 
 	uncachedAttachment, err = suite.db.GetAttachmentByID(ctx, testHeader.ID)
 	suite.NoError(err)
-	suite.False(*uncachedAttachment.Cached)
+	suite.False(uncachedAttachment.Cached())
 }
 
 func (suite *MediaTestSuite) TestPurgeRemote() {
@@ -148,10 +148,10 @@ func (suite *MediaTestSuite) TestUncacheRemoteDry() {
 	ctx := suite.T().Context()
 
 	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	suite.True(*testStatusAttachment.Cached)
+	suite.True(testStatusAttachment.Cached())
 
 	testHeader := suite.testAttachments["remote_account_3_header"]
-	suite.True(*testHeader.Cached)
+	suite.True(testHeader.Cached())
 
 	after := time.Now().Add(-24 * time.Hour)
 	totalUncached, err := suite.cleaner.Media().UncacheRemote(gtscontext.SetDryRun(ctx), after)
@@ -160,11 +160,11 @@ func (suite *MediaTestSuite) TestUncacheRemoteDry() {
 
 	uncachedAttachment, err := suite.db.GetAttachmentByID(ctx, testStatusAttachment.ID)
 	suite.NoError(err)
-	suite.True(*uncachedAttachment.Cached)
+	suite.True(uncachedAttachment.Cached())
 
 	uncachedAttachment, err = suite.db.GetAttachmentByID(ctx, testHeader.ID)
 	suite.NoError(err)
-	suite.True(*uncachedAttachment.Cached)
+	suite.True(uncachedAttachment.Cached())
 }
 
 func (suite *MediaTestSuite) TestUncacheRemoteTwice() {
@@ -223,7 +223,7 @@ func (suite *MediaTestSuite) TestUncacheAndRecache() {
 		suite.NotNil(recachedAttachment)
 
 		// recachedAttachment should be basically the same as the old attachment
-		suite.True(*recachedAttachment.Cached)
+		suite.True(recachedAttachment.Cached())
 		suite.Equal(original.ID, recachedAttachment.ID)
 		suite.Equal(original.File.Path, recachedAttachment.File.Path)           // file should be stored in the same place
 		suite.Equal(original.Thumbnail.Path, recachedAttachment.Thumbnail.Path) // as should the thumbnail
@@ -244,7 +244,7 @@ func (suite *MediaTestSuite) TestUncacheOneNonExistent() {
 	// Delete this attachment cached on disk
 	media, err := suite.db.GetAttachmentByID(ctx, testStatusAttachment.ID)
 	suite.NoError(err)
-	suite.True(*media.Cached)
+	suite.True(media.Cached())
 	err = suite.storage.Delete(ctx, media.File.Path)
 	suite.NoError(err)
 

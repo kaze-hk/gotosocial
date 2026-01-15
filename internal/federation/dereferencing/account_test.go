@@ -511,10 +511,15 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithAvatarDescription
 		remotePerson,
 		nil,
 	)
-
 	suite.NoError(err)
 	suite.NotNil(apAcc)
-	suite.Equal(updatedAcc.AvatarMediaAttachment.Description, description)
+
+	// our account media fetches are
+	// async, so wait until updated.
+	testrig.WaitFor(func() bool {
+		media, _ := suite.state.DB.GetAttachmentByID(ctx, updatedAcc.AvatarMediaAttachmentID)
+		return media != nil && media.Description == description
+	})
 }
 
 func TestAccountTestSuite(t *testing.T) {

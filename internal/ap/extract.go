@@ -38,6 +38,7 @@ import (
 
 // ExtractObjects will extract object TypeOrIRIs from given implementing interface.
 func ExtractObjects(with WithObject) []TypeOrIRI {
+
 	// Extract the attached object (if any).
 	objProp := with.GetActivityStreamsObject()
 	if objProp == nil {
@@ -60,6 +61,7 @@ func ExtractObjects(with WithObject) []TypeOrIRI {
 
 // ExtractInstrument will extract instrument TypeOrIRIs from given implementing interface.
 func ExtractInstruments(with WithInstrument) []TypeOrIRI {
+
 	// Extract the attached instrument (if any).
 	instrProp := with.GetActivityStreamsInstrument()
 	if instrProp == nil {
@@ -800,7 +802,6 @@ func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 		FileMeta: gtsmodel.FileMeta{
 			Focus: ExtractFocus(i),
 		},
-		Processing: gtsmodel.ProcessingStatusReceived,
 	}, nil
 }
 

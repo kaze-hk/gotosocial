@@ -31,8 +31,8 @@ func init() {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
 			// Generate new Account.Indexable column definition from bun.
-			statusType := reflect.TypeOf((*gtsmodel.Account)(nil))
-			colDef, err := getBunColumnDef(tx, statusType, "Indexable")
+			accountType := reflect.TypeOf((*gtsmodel.Account)(nil))
+			colDef, err := getBunColumnDef(tx, accountType, "Indexable")
 			if err != nil {
 				return err
 			}

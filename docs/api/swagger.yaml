@@ -992,6 +992,11 @@ definitions:
                 example: This is a picture of a kitten.
                 type: string
                 x-go-name: Description
+            error:
+                description: Error encountered while fetching remote media, if any.
+                example: network timeout
+                type: string
+                x-go-name: Error
             id:
                 description: The ID of the attachment.
                 example: 01FC31DZT1AYWDZ8XTCRWRBYRK

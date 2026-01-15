@@ -69,7 +69,6 @@ func ffmpegClearMetadata(ctx context.Context, outpath, inpath string) error {
 
 // ffmpegGenerateWebpThumb generates a thumbnail webp from input media of any type, useful for any media.
 func ffmpegGenerateWebpThumb(ctx context.Context, inpath, outpath string, width, height int, pixfmt string) error {
-	// Generate thumb with ffmpeg.
 	return ffmpeg(ctx, inpath, outpath,
 
 		// Only log errors.
@@ -181,7 +180,8 @@ func ffmpeg(ctx context.Context, inpath string, outpath string, args ...string) 
 	if err != nil {
 		return gtserror.Newf("error running: %w", err)
 	} else if rc != 0 {
-		return gtserror.Newf("non-zero return code %d (%s)", rc, stderr.B)
+		err := gtserror.Newf("non-zero return code %d (%s)", rc, stderr.B)
+		return withDetails(err, codecDetails)
 	}
 	return nil
 }
@@ -256,7 +256,7 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 	// Convert raw result data.
 	res, err := result.Process()
 	if err != nil {
-		return nil, err
+		return nil, withDetails(err, codecDetails)
 	}
 
 	return res, nil
@@ -497,8 +497,17 @@ func (res *result) PixFmt() string {
 
 // Process converts raw ffprobe result data into our more usable result{} type.
 func (res *ffprobeResult) Process() (*result, error) {
+
 	if res.Error != nil {
-		return nil, res.Error
+		// Only return ffprobe error if it's NOT
+		// unsupported, otherwise we want other
+		// code paths to handle this file case.
+		if !res.Error.IsUnsupported() {
+			return nil, res.Error
+		}
+
+		// Return loggable format string indicating the issue.
+		return &result{format: "unsupported by ffprobe"}, nil
 	}
 
 	if res.Format == nil {
@@ -698,14 +707,17 @@ type ffprobeFormat struct {
 	BitRate    string `json:"bit_rate"`
 }
 
+// ffprobeError is a representation of the JSON
+// error details that ffprobe may return on attempted
+// probing of media file for details. it has helper
+// methods to allow it to implement error{}
 type ffprobeError struct {
 	Code   int    `json:"code"`
 	String string `json:"string"`
 }
 
-func isUnsupportedTypeErr(err error) bool {
-	ffprobeErr, ok := err.(*ffprobeError)
-	return ok && ffprobeErr.Code == -1094995529
+func (err *ffprobeError) IsUnsupported() bool {
+	return err.Code == -1094995529
 }
 
 func (err *ffprobeError) Error() string {

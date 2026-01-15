@@ -19,7 +19,6 @@ package db
 
 import (
 	"context"
-	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
@@ -50,11 +49,11 @@ type Emoji interface {
 	// GetEmojis fetches all emojis with IDs less than 'maxID', up to a maximum of 'limit' emojis.
 	GetEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error)
 
-	// GetRemoteEmojis fetches all remote emojis with IDs less than 'maxID', up to a maximum of 'limit' emojis.
+	// GetRemoteEmojis fetches emojis with a non-empty domain, with given paging parameters.
 	GetRemoteEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error)
 
-	// GetCachedEmojisOlderThan fetches all cached remote emojis with 'updated_at' greater than 'olderThan', up to a maximum of 'limit' emojis.
-	GetCachedEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error)
+	// GetCachedEmojis fetches cached emojis with a non-empty domain, with given paging parameters.
+	GetCachedEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error)
 
 	// GetEmojisBy gets emojis based on given parameters. Useful for admin actions.
 	GetEmojisBy(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, error)

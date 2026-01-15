@@ -26,7 +26,6 @@ import (
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
 )
@@ -68,18 +67,21 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	testAttachment.Cached = util.Ptr(false)
-	err := suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
-	suite.NoError(err)
-	err = suite.storage.Delete(ctx, testAttachment.File.Path)
+
+	err := suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.Thumbnail.Path)
 	suite.NoError(err)
 
-	// now fetch it
 	fileName := path.Base(testAttachment.File.Path)
-	requestingAccount := suite.testAccounts["local_account_1"]
+	testAttachment.File.Path = ""
+	testAttachment.Thumbnail.Path = ""
 
+	err = suite.db.UpdateAttachment(ctx, testAttachment, "thumbnail_path", "file_path")
+	suite.NoError(err)
+
+	// now fetch it
+	requestingAccount := suite.testAccounts["local_account_1"]
 	content, errWithCode := suite.mediaProcessor.GetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
 		AccountID: testAttachment.AccountID,
 		MediaType: string(media.TypeAttachment),
@@ -107,7 +109,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	}
 
 	suite.NoError(err)
-	suite.True(*dbAttachment.Cached)
+	suite.True(dbAttachment.Cached())
 
 	// the file should be back in storage at the same path as before
 	refreshedBytes, err := suite.storage.Get(ctx, dbAttachment.File.Path)
@@ -120,18 +122,21 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	testAttachment.Cached = util.Ptr(false)
-	err := suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
-	suite.NoError(err)
-	err = suite.storage.Delete(ctx, testAttachment.File.Path)
+
+	err := suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.Thumbnail.Path)
 	suite.NoError(err)
 
-	// now fetch it
 	fileName := path.Base(testAttachment.File.Path)
-	requestingAccount := suite.testAccounts["local_account_1"]
+	testAttachment.File.Path = ""
+	testAttachment.Thumbnail.Path = ""
 
+	err = suite.db.UpdateAttachment(ctx, testAttachment, "thumbnail_path", "file_path")
+	suite.NoError(err)
+
+	// now fetch it
+	requestingAccount := suite.testAccounts["local_account_1"]
 	content, errWithCode := suite.mediaProcessor.GetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
 		AccountID: testAttachment.AccountID,
 		MediaType: string(media.TypeAttachment),
@@ -151,7 +156,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	var dbAttachment *gtsmodel.MediaAttachment
 	if !testrig.WaitFor(func() bool {
 		dbAttachment, _ = suite.db.GetAttachmentByID(ctx, testAttachment.ID)
-		return *dbAttachment.Cached
+		return dbAttachment.Cached()
 	}) {
 		suite.FailNow("timed out waiting for attachment to be updated")
 	}
@@ -171,18 +176,20 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	suite.NoError(err)
 
 	// uncache the file from local
-	testAttachment.Cached = util.Ptr(false)
-	err = suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
-	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.Thumbnail.Path)
 	suite.NoError(err)
 
-	// now fetch the thumbnail
 	fileName := path.Base(testAttachment.File.Path)
-	requestingAccount := suite.testAccounts["local_account_1"]
+	testAttachment.File.Path = ""
+	testAttachment.Thumbnail.Path = ""
 
+	err = suite.db.UpdateAttachment(ctx, testAttachment, "thumbnail_path", "file_path")
+	suite.NoError(err)
+
+	// now fetch the thumbnail
+	requestingAccount := suite.testAccounts["local_account_1"]
 	content, errWithCode := suite.mediaProcessor.GetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
 		AccountID: testAttachment.AccountID,
 		MediaType: string(media.TypeAttachment),

@@ -142,8 +142,15 @@ func (d *Dereferencer) RefreshMedia(
 		force = true
 	}
 
-	// Check if needs updating.
-	if *attach.Cached && !force {
+	switch {
+	case force:
+		// Unset any previous error
+		// to force a dereference.
+		attach.Error = 0
+
+	case attach.Cached():
+		// Return early, is already
+		// cached and no force flag.
 		return attach, nil
 	}
 

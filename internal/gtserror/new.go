@@ -33,18 +33,30 @@ func Newf(msgf string, args ...any) error {
 	return newfAt(3, msgf, args...)
 }
 
+// NewfAt returns a new error with message with given
+// calldepth+1. Provide calldepth 2 to prepend only the
+// name of the current containing function, 3 to prepend
+// the name of the function containing *that* function,
+// and so on...
+//
+// This function is just exposed for if you want to
+// create an error wrapping function that maintains
+// the function prefix of *your wrapper's caller*.
+// In all other cases simply use New().
+func NewAt(calldepth int, msg string) error {
+	return newAt(calldepth+1, msg)
+}
+
 // NewfAt returns a new formatted error with the given
-// calldepth+1, useful when you want to wrap an error
-// from within an anonymous function or utility function,
-// but preserve the name in the error of the wrapping
-// function that did the calling.
+// calldepth+1. Provide calldepth 2 to prepend only the
+// name of the current containing function, 3 to prepend
+// the name of the function containing *that* function,
+// and so on...
 //
-// Provide calldepth 2 to prepend only the name of the
-// current containing function, 3 to prepend the name
-// of the function containing *that* function, and so on.
-//
-// This function is just exposed for dry-dick optimization
-// purposes. Most callers should just call Newf instead.
+// This function is just exposed for if you want to
+// create an error wrapping function that maintains
+// the function prefix of *your wrapper's caller*.
+// In all other cases simply use Newf().
 func NewfAt(calldepth int, msgf string, args ...any) error {
 	return newfAt(calldepth+1, msgf, args...)
 }
@@ -54,6 +66,7 @@ func NewfAt(calldepth int, msgf string, args ...any) error {
 // will also wrap the returned error using WithStatusCode() and
 // will include the caller function name as a prefix.
 func NewFromResponse(rsp *http.Response) error {
+
 	// Build error with message without
 	// using "fmt", as chances are this will
 	// be used in a hot code path and we

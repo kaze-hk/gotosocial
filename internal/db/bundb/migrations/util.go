@@ -237,6 +237,88 @@ func convertEnums[OldType ~string, NewType ~int16](
 	return nil
 }
 
+func addColumn(ctx context.Context, db bun.IDB, model any, fieldName string) error {
+	rtype := reflect.TypeOf(model)
+
+	// Get bun field information for this field on model.
+	field, table, err := getModelField(db, rtype, fieldName)
+	if err != nil {
+		return gtserror.Newf("error getting bun field %s.%s: %w", rtype, field, err)
+	}
+
+	// Generate bun column definition for model field.
+	colDef, err := getBunColumnDef(db, rtype, fieldName)
+	if err != nil {
+		return gtserror.Newf("error getting bun column definition for %T.%s: %w", rtype, fieldName, err)
+	}
+
+	log.Infof(ctx, "adding column '%s.%s'", table.Name, field.Name)
+
+	// Add column to database.
+	_, err = db.NewAddColumn().
+		Table(table.Name).
+		ColumnExpr(colDef).
+		Exec(ctx)
+	if err != nil {
+		return gtserror.Newf("error adding column '%s.%s': %w", table.Name, field.Name, err)
+	}
+
+	return nil
+}
+
+func dropColumn(ctx context.Context, db bun.IDB, model any, fieldName string) error {
+	rtype := reflect.TypeOf(model)
+
+	// Get bun field information for this field on model.
+	field, table, err := getModelField(db, rtype, fieldName)
+	if err != nil {
+		return gtserror.Newf("error getting bun field %s.%s: %w", rtype, field, err)
+	}
+
+	log.Infof(ctx, "dropping column '%s.%s'", table.Name, field.Name)
+
+	// Attempt to drop this column.
+	_, err = db.NewDropColumn().
+		Table(table.Name).
+		Column(field.Name).
+		Exec(ctx)
+	if err != nil {
+		return gtserror.Newf("error dropping column '%s.%s': %w", table.Name, field.Name, err)
+	}
+
+	return nil
+}
+
+func createIndex(ctx context.Context, db bun.IDB, indexName, tableName, colExpr string, colArgs ...any) error {
+	log.Infof(ctx, "creating index '%s' on '%s'", indexName, tableName)
+
+	// Attempt to create this index.
+	_, err := db.NewCreateIndex().
+		Table(tableName).
+		Index(indexName).
+		ColumnExpr(colExpr, colArgs...).
+		Exec(ctx)
+	if err != nil {
+		return gtserror.Newf("error creating index '%s': %w", indexName, err)
+	}
+
+	return nil
+}
+
+func dropIndex(ctx context.Context, db bun.IDB, indexName string) error {
+	log.Infof(ctx, "dropping index '%s'", indexName)
+
+	// Attempt to drop this index.
+	_, err := db.NewDropIndex().
+		Index(indexName).
+		Exec(ctx)
+	if err != nil {
+		return gtserror.Newf("error dropping index '%s': %w", indexName, err)
+	}
+
+	return nil
+}
+
 // getBunColumnDef generates a column definition string for the SQL table represented by
 // Go type, with the SQL column represented by the given Go field name. This ensures when
 // adding a new column for table by migration that it will end up as bun would create it.

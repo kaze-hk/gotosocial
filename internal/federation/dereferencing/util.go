@@ -164,8 +164,15 @@ func (l *keyedList[T]) put(key string, value T) {
 func (l *keyedList[T]) delete(key string) {
 	for i, kv := range *l {
 		if kv.k == key {
-			copy((*l)[:i], (*l)[i+1:])
-			(*l) = (*l)[:len(*l)-1]
+			if len := len(*l); len > 1 {
+				// Reslice and clear elem.
+				copy((*l)[:i], (*l)[i+1:])
+				clear((*l)[len-1:])
+				(*l) = (*l)[:len-1]
+			} else if cap(*l) > 64 {
+				// Drop slice.
+				(*l) = nil
+			}
 			return
 		}
 	}

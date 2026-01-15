@@ -21,8 +21,8 @@ import (
 	"context"
 	"os"
 
+	"codeberg.org/gruf/go-errors/v2"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
-	"codeberg.org/gruf/go-kv/v2"
 	"codeberg.org/gruf/go-runners"
 
 	"code.superseriousbusiness.org/gopkg/log"
@@ -38,34 +38,30 @@ import (
 // currently being processed. It exposes functions
 // for retrieving data from the process.
 type ProcessingMedia struct {
-	// Processing media
-	// attachment details.
+
+	// processing media attach details.
 	media *gtsmodel.MediaAttachment
 
-	// Load-data function,
+	// load data function,
 	// returns media stream.
 	dataFn DataFunc
-
-	// done is set when process finishes
-	// with non ctx canceled type error
-	done bool
 
 	// proc helps synchronize only a
 	// singular running processing instance
 	proc runners.Processor
 
-	// error stores permanent
-	// error value when done
+	// error stores permanent value when done,
+	// or alternatively may store a preset stubError{}
+	// value with details to allow skipping processing.
 	err error
 
 	// mgr instance, for access to
 	// db / storage during processing
 	mgr *Manager
 
-	// true if this piece of media should
-	// not be downloaded, ie., should be
-	// stubbed as an Unknown type only
-	stubOnly bool
+	// done is set when process finishes
+	// with non ctx canceled type error
+	done bool
 }
 
 // MustLoad blocks until the thumbnail and fullsize image has been processed, and then returns the completed media.
@@ -100,10 +96,8 @@ func (p *ProcessingMedia) Placeholder() *gtsmodel.MediaAttachment {
 	media.StatusID = p.media.StatusID
 	media.ScheduledStatusID = p.media.ScheduledStatusID
 	media.Description = p.media.Description
-	media.Processing = p.media.Processing
 	media.Avatar = p.media.Avatar
 	media.Header = p.media.Header
-	media.Cached = new(bool)
 	media.RemoteURL = p.media.RemoteURL
 	media.Thumbnail.RemoteURL = p.media.Thumbnail.RemoteURL
 	media.Blurhash = p.media.Blurhash
@@ -127,10 +121,11 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 	done bool,
 	err error,
 ) {
-	err = p.proc.Process(func() error {
+	err = p.proc.Process(func() (err error) {
 		if done = p.done; done {
 			// Already proc'd.
-			return p.err
+			err = p.err
+			return
 		}
 
 		defer func() {
@@ -147,10 +142,21 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 				// (i.e. no ctx canceled).
 				ctx = context.WithoutCancel(ctx)
 
-				// On error, stub, or unknown media
-				// types, perform error cleanup.
-				if err != nil || p.stubOnly || p.media.Type == gtsmodel.FileTypeUnknown {
+				// Store values.
+				p.done = done
+				p.err = err
+
+				// If any error value is stored, including
+				// stubError (e.g. unknown type), do cleanup().
+				if p.err != nil {
 					p.cleanup(ctx)
+				}
+
+				// Check the extracted error details on media for
+				// stub type error. i.e. policy or media type issue.
+				if isStubError(p.media.Error) {
+					log.Warnf(ctx, "stubbed %s due to: %v", p.media.RemoteURL, p.err)
+					err = nil // don't return stub errors
 				}
 
 				// Update with latest details, whatever happened.
@@ -158,22 +164,14 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 				if e != nil {
 					log.Errorf(ctx, "error updating media in db: %v", e)
 				}
-
-				// Store values.
-				p.done = true
-				p.err = err
 			}
 		}()
 
-		// If we're only stubbing, skip
-		// calling store() to cache the media.
-		//
-		// Any files that may have been stored
-		// for it previously will be cleaned up
-		// by the deferred function above.
-		if p.stubOnly {
-			err = nil
-			return err
+		// If existing error details exists, check if supports retry.
+		if withDetails := errors.AsV2[*errWithDetails](p.err); //
+		withDetails != nil && !withDetails.details.SupportsRetry() {
+			err = p.err
+			return
 		}
 
 		// Attempt to store media and calculate
@@ -181,7 +179,7 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 		//
 		// This will update p.media as it goes.
 		err = p.store(ctx)
-		return err
+		return
 	})
 
 	// Return a copy of media attachment.
@@ -194,9 +192,17 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 // and updates the underlying attachment fields as necessary. It will then stream
 // bytes from p's reader directly into storage so that it can be retrieved later.
 func (p *ProcessingMedia) store(ctx context.Context) error {
+
 	// Load media from data func.
 	rc, err := p.dataFn(ctx)
 	if err != nil {
+
+		// If a network error, include these details.
+		if details := extractNetworkErrorDetails(err); //
+		details != 0 {
+			err = withDetails(err, details)
+		}
+
 		return gtserror.Newf("error executing data function: %w", err)
 	}
 
@@ -224,11 +230,8 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	// Pass input file through ffprobe to
 	// parse further metadata information.
 	result, err := probe(ctx, temppath)
-	if err != nil && !isUnsupportedTypeErr(err) {
+	if err != nil {
 		return gtserror.Newf("ffprobe error: %w", err)
-	} else if result == nil {
-		log.Warnf(ctx, "unsupported data type by ffprobe: %v", err)
-		return nil
 	}
 
 	var ext string
@@ -248,6 +251,15 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	// Set generic media type and mimetype from ffprobe format data.
 	p.media.Type, p.media.File.ContentType, ext = result.GetFileType()
+	if p.media.Type == gtsmodel.FileTypeUnknown {
+
+		// On unsupported return a stub error that doesn't
+		// get returned to the caller, but indicates details.
+		return withDetails(nil, gtsmodel.NewMediaErrorDetails(
+			gtsmodel.MediaErrorTypeCodec,
+			gtsmodel.MediaErrorTypeCodec_Unsupported,
+		))
+	}
 
 	// Add file extension to path.
 	newpath := temppath + "." + ext
@@ -273,13 +285,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	case gtsmodel.FileTypeAudio:
 		// NOTE: we do not clean audio file
 		// metadata, in order to keep tags.
-
-	default:
-		log.WarnKVs(ctx, kv.Fields{
-			{K: "format", V: result.format},
-			{K: "msg", V: "unsupported data type"},
-		}...)
-		return nil
 	}
 
 	if width > 0 && height > 0 {
@@ -387,11 +392,9 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		ext,
 	)
 
-	// We can now consider this cached.
-	p.media.Cached = util.Ptr(true)
-
-	// Finally set the attachment as finished processing.
-	p.media.Processing = gtsmodel.ProcessingStatusProcessed
+	// Success! Unset previous
+	// error details for media.
+	p.media.Error = 0
 
 	return nil
 }
@@ -415,21 +418,13 @@ func (p *ProcessingMedia) cleanup(ctx context.Context) {
 		}
 	}
 
-	// Unset all processor-calculated media fields.
-	p.media.FileMeta.Original = gtsmodel.Original{}
-	p.media.FileMeta.Small = gtsmodel.Small{}
-	p.media.File.ContentType = ""
-	p.media.File.FileSize = 0
-	p.media.File.Path = ""
-	p.media.Thumbnail.FileSize = 0
-	p.media.Thumbnail.ContentType = ""
-	p.media.Thumbnail.Path = ""
-	p.media.Thumbnail.URL = ""
-	p.media.URL = ""
+	// Unset fields.
+	p.media.Stub()
 
-	// Also ensure marked as unknown and finished
-	// processing so gets inserted as placeholder URL.
-	p.media.Processing = gtsmodel.ProcessingStatusProcessed
+	// Extract any error details for db.
+	p.media.Error = toErrorDetails(p.err)
+
+	// Also ensure marked as unknown
+	// so gets inserted as placeholder URL.
 	p.media.Type = gtsmodel.FileTypeUnknown
-	p.media.Cached = util.Ptr(false)
 }

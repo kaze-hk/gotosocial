@@ -252,7 +252,7 @@ func (d *Dereferencer) RecacheEmoji(
 		return emoji, nil
 	}
 
-	if *emoji.Cached {
+	if emoji.Cached() {
 		// Already cached.
 		return emoji, nil
 	}
@@ -279,7 +279,7 @@ func (d *Dereferencer) RecacheEmoji(
 				return nil, nil, gtserror.Newf("error fetching emoji from db: %w", err)
 			}
 
-			if emoji != nil && *emoji.Cached {
+			if emoji != nil && emoji.Cached() {
 				// This was *just* cached.
 				return nil, emoji, nil
 			}
@@ -414,7 +414,7 @@ func (d *Dereferencer) fetchEmojis(
 	ctx context.Context,
 	existing []*gtsmodel.Emoji,
 	emojis []*gtsmodel.Emoji, // newly dereferenced
-	rejectMedia bool,
+	rejectReason *gtsmodel.MediaErrorDetails, // optional reason to reject media with
 ) (
 	[]*gtsmodel.Emoji,
 	bool, // any changes?
@@ -422,13 +422,6 @@ func (d *Dereferencer) fetchEmojis(
 ) {
 	// Track any changes.
 	changed := false
-
-	// If we're rejecting media from this
-	// domain, set this once outside the loop.
-	var rejectMediaPtr *bool
-	if rejectMedia {
-		rejectMediaPtr = &rejectMedia
-	}
 
 	for i, placeholder := range emojis {
 		// Look for an existing emoji with shortcode + domain.
@@ -447,12 +440,14 @@ func (d *Dereferencer) fetchEmojis(
 				URI:                  &placeholder.URI,
 				ImageRemoteURL:       &placeholder.ImageRemoteURL,
 				ImageStaticRemoteURL: &placeholder.ImageStaticRemoteURL,
-				// Pass rejectMedia ptr to derefencer
-				// to skip downloading if necessary.
-				RejectMedia: rejectMediaPtr,
+
+				// Pass reject reason ptr, which
+				// will skip downloading if set.
+				RejectReason: rejectReason,
 			}
 
-			// Ensure that the existing emoji model is up-to-date and cached.
+			// Ensure that the existing emoji
+			// model is up-to-date and cached.
 			existing, err := d.RefreshEmoji(
 				ctx,
 				existing,
@@ -483,12 +478,10 @@ func (d *Dereferencer) fetchEmojis(
 			URI:                  &placeholder.URI,
 			ImageRemoteURL:       &placeholder.ImageRemoteURL,
 			ImageStaticRemoteURL: &placeholder.ImageStaticRemoteURL,
-		}
 
-		// If set, pass rejectMedia flag to
-		// derefencer to skip downloading.
-		if rejectMedia {
-			info.RejectMedia = &rejectMedia
+			// Pass reject reason ptr, which
+			// will skip downloading if set.
+			RejectReason: rejectReason,
 		}
 
 		// Fetch this newly added emoji,

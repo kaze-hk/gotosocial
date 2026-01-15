@@ -585,13 +585,23 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error populating tags for status %s: %w", uri, err)
 	}
 
-	// Check whether there's any limits in
-	// place for this domain / subdomain.
+	// Check if there's any limits in place for (sub)domain.
 	limit, err := d.state.DB.MatchDomainLimit(ctx, uri.Host)
 	if err != nil {
 		return nil, nil, gtserror.Newf("error matching domain limit: %w", err)
 	}
-	rejectMedia := limit.MediaReject()
+
+	// If domain media is limited, set reject reason,
+	// this gets passed to media fetching functions
+	// and prevents download of attached status media.
+	var rejectReason *gtsmodel.MediaErrorDetails
+	if limit.MediaReject() {
+		rejectReason = new(gtsmodel.MediaErrorDetails)
+		*rejectReason = gtsmodel.NewMediaErrorDetails(
+			gtsmodel.MediaErrorTypePolicy,
+			gtsmodel.MediaErrorTypePolicy_Domain,
+		)
+	}
 
 	// Populate media attachments associated with status,
 	// passing in existing status to reuse old where possible
@@ -600,7 +610,7 @@ func (d *Dereferencer) enrichStatus(
 		requestUser,
 		status,
 		latestStatus,
-		rejectMedia,
+		rejectReason,
 	)
 	if err != nil {
 		return nil, nil, gtserror.Newf("error populating attachments for status %s: %w", uri, err)
@@ -612,7 +622,7 @@ func (d *Dereferencer) enrichStatus(
 	emojiChanged, err := d.fetchStatusEmojis(ctx,
 		status,
 		latestStatus,
-		rejectMedia,
+		rejectReason,
 	)
 	if err != nil {
 		return nil, nil, gtserror.Newf("error populating emojis for status %s: %w", uri, err)
@@ -821,32 +831,24 @@ func (d *Dereferencer) fetchStatusAttachments(
 	requestUser string,
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
-	rejectMedia bool,
+	rejectReason *gtsmodel.MediaErrorDetails, // optional reason to reject media with
 ) (
 	changed bool,
 	err error,
 ) {
-
 	// Allocate new slice to take the yet-to-be fetched attachment IDs.
 	status.AttachmentIDs = make([]string, len(status.Attachments))
-
-	// If we're rejecting media from this
-	// domain, set this once outside the loop.
-	var rejectMediaPtr *bool
-	if rejectMedia {
-		rejectMediaPtr = &rejectMedia
-	}
-
 	for i := range status.Attachments {
+
 		placeholder := status.Attachments[i]
 
 		// Look for existing media attachment with remote URL first.
 		existing, ok := existing.GetAttachmentByRemoteURL(placeholder.RemoteURL)
 		if ok && existing.ID != "" {
 			info := media.AdditionalMediaInfo{
-				// Pass rejectMedia ptr to derefencer
-				// to skip downloading if necessary.
-				RejectMedia: rejectMediaPtr,
+				// Pass reject reason ptr, which
+				// will skip downloading if set.
+				RejectReason: rejectReason,
 			}
 
 			// Look for any difference in stored media description.
@@ -900,7 +902,10 @@ func (d *Dereferencer) fetchStatusAttachments(
 				Blurhash:    &placeholder.Blurhash,
 				FocusX:      &placeholder.FileMeta.Focus.X,
 				FocusY:      &placeholder.FileMeta.Focus.Y,
-				RejectMedia: &rejectMedia,
+
+				// Pass reject reason ptr, which
+				// will skip downloading if set.
+				RejectReason: rejectReason,
 			},
 			false, // async
 		)
@@ -940,7 +945,7 @@ func (d *Dereferencer) fetchStatusEmojis(
 	ctx context.Context,
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
-	rejectMedia bool,
+	rejectReason *gtsmodel.MediaErrorDetails, // optional reason to reject media with
 ) (
 	changed bool,
 	err error,
@@ -950,7 +955,7 @@ func (d *Dereferencer) fetchStatusEmojis(
 	emojis, changed, err := d.fetchEmojis(ctx,
 		existing.Emojis,
 		status.Emojis,
-		rejectMedia,
+		rejectReason,
 	)
 	if err != nil {
 		return changed, gtserror.Newf("error fetching emojis: %w", err)

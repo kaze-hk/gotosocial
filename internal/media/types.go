@@ -20,6 +20,8 @@ package media
 import (
 	"context"
 	"io"
+
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 type Size string
@@ -79,11 +81,9 @@ type AdditionalMediaInfo struct {
 	// this media; defaults to 0.
 	FocusY *float32
 
-	// Set this to "true" if media originates
-	// from a domain that has a domain limit
-	// in place with a media policy of "reject".
-	// In this case, the media will not downloaded.
-	RejectMedia *bool
+	// Set this if media should be rejected due to
+	// some predetermined reason, e.g. domain policy.
+	RejectReason *gtsmodel.MediaErrorDetails
 }
 
 // AdditionalEmojiInfo represents additional information
@@ -118,11 +118,9 @@ type AdditionalEmojiInfo struct {
 	// should be placed in; defaults to "".
 	CategoryID *string
 
-	// Set this to "true" if emoji originates
-	// from a domain that has a domain limit
-	// in place with a media policy of "reject".
-	// In this case, the emoji will not downloaded.
-	RejectMedia *bool
+	// Set this if media should be rejected due to
+	// some predetermined reason, e.g. domain policy.
+	RejectReason *gtsmodel.MediaErrorDetails
 }
 
 // DataFunc represents a function used to retrieve the raw bytes of a piece of media.
