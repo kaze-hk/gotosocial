@@ -582,34 +582,19 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
   "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
   "interactionPolicy": {
     "canAnnounce": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canLike": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canReply": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     }
   },
   "published": "2021-10-20T12:40:37+02:00",
@@ -684,34 +669,19 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
   "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
   "interactionPolicy": {
     "canAnnounce": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canLike": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canReply": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     }
   },
   "published": "2021-10-20T11:36:45Z",
@@ -804,34 +774,19 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
   "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
   "interactionPolicy": {
     "canAnnounce": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canLike": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canReply": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     }
   },
   "published": "2021-10-20T11:36:45Z",
@@ -909,34 +864,19 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
   "inReplyTo": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
   "interactionPolicy": {
     "canAnnounce": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canLike": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canReply": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     }
   },
   "published": "2021-11-20T13:32:16Z",
@@ -1039,34 +979,19 @@ func (suite *InternalToASTestSuite) TestStatusToASPoliteApproved() {
   "inReplyTo": "http://localhost:8080/users/1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
   "interactionPolicy": {
     "canAnnounce": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canLike": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canReply": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     }
   },
   "published": "2024-02-20T12:41:37+02:00",
@@ -1166,34 +1091,19 @@ func (suite *InternalToASTestSuite) TestStatusToASPImpoliteApproved() {
   "inReplyTo": "http://localhost:8080/users/1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
   "interactionPolicy": {
     "canAnnounce": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canLike": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canReply": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     }
   },
   "published": "2024-02-20T12:41:37+02:00",

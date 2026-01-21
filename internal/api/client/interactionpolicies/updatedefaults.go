@@ -37,15 +37,15 @@ import (
 //
 // `VISIBILITY[INTERACTION_TYPE][CONDITION][INDEX]=Value`
 //
-// For example: `public[can_reply][always][0]=author`
+// For example: `public[can_reply][automatic_approval][0]=author`
 //
 // Using `curl` this might look something like:
 //
-// `curl -F 'public[can_reply][always][0]=author' -F 'public[can_reply][always][1]=followers'`
+// `curl -F 'public[can_reply][automatic_approval][0]=author' -F 'public[can_reply][automatic_approval][1]=followers'`
 //
 // The JSON equivalent would be:
 //
-// `curl -H 'Content-Type: application/json' -d '{"public":{"can_reply":{"always":["author","followers"]}}}'`
+// `curl -H 'Content-Type: application/json' -d '{"public":{"can_reply":{"automatic_approval":["author","followers"]}}}'`
 //
 // Any visibility level left unspecified in the request body will be returned to the default.
 //
@@ -67,127 +67,127 @@ import (
 //
 //	parameters:
 //	-
-//		name: public[can_favourite][always][0]
+//		name: public[can_favourite][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for public.can_favourite.always.
+//		description: Nth entry for public.can_favourite.automatic_approval.
 //		type: string
 //	-
-//		name: public[can_favourite][with_approval][0]
+//		name: public[can_favourite][manual_approval][0]
 //		in: formData
-//		description: Nth entry for public.can_favourite.with_approval.
+//		description: Nth entry for public.can_favourite.manual_approval.
 //		type: string
 //	-
-//		name: public[can_reply][always][0]
+//		name: public[can_reply][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for public.can_reply.always.
+//		description: Nth entry for public.can_reply.automatic_approval.
 //		type: string
 //	-
-//		name: public[can_reply][with_approval][0]
+//		name: public[can_reply][manual_approval][0]
 //		in: formData
-//		description: Nth entry for public.can_reply.with_approval.
+//		description: Nth entry for public.can_reply.manual_approval.
 //		type: string
 //	-
-//		name: public[can_reblog][always][0]
+//		name: public[can_reblog][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for public.can_reblog.always.
+//		description: Nth entry for public.can_reblog.automatic_approval.
 //		type: string
 //	-
-//		name: public[can_reblog][with_approval][0]
+//		name: public[can_reblog][manual_approval][0]
 //		in: formData
-//		description: Nth entry for public.can_reblog.with_approval.
-//		type: string
-//
-//	-
-//		name: unlisted[can_favourite][always][0]
-//		in: formData
-//		description: Nth entry for unlisted.can_favourite.always.
-//		type: string
-//	-
-//		name: unlisted[can_favourite][with_approval][0]
-//		in: formData
-//		description: Nth entry for unlisted.can_favourite.with_approval.
-//		type: string
-//	-
-//		name: unlisted[can_reply][always][0]
-//		in: formData
-//		description: Nth entry for unlisted.can_reply.always.
-//		type: string
-//	-
-//		name: unlisted[can_reply][with_approval][0]
-//		in: formData
-//		description: Nth entry for unlisted.can_reply.with_approval.
-//		type: string
-//	-
-//		name: unlisted[can_reblog][always][0]
-//		in: formData
-//		description: Nth entry for unlisted.can_reblog.always.
-//		type: string
-//	-
-//		name: unlisted[can_reblog][with_approval][0]
-//		in: formData
-//		description: Nth entry for unlisted.can_reblog.with_approval.
+//		description: Nth entry for public.can_reblog.manual_approval.
 //		type: string
 //
 //	-
-//		name: private[can_favourite][always][0]
+//		name: unlisted[can_favourite][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for private.can_favourite.always.
+//		description: Nth entry for unlisted.can_favourite.automatic_approval.
 //		type: string
 //	-
-//		name: private[can_favourite][with_approval][0]
+//		name: unlisted[can_favourite][manual_approval][0]
 //		in: formData
-//		description: Nth entry for private.can_favourite.with_approval.
+//		description: Nth entry for unlisted.can_favourite.manual_approval.
 //		type: string
 //	-
-//		name: private[can_reply][always][0]
+//		name: unlisted[can_reply][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for private.can_reply.always.
+//		description: Nth entry for unlisted.can_reply.automatic_approval.
 //		type: string
 //	-
-//		name: private[can_reply][with_approval][0]
+//		name: unlisted[can_reply][manual_approval][0]
 //		in: formData
-//		description: Nth entry for private.can_reply.with_approval.
+//		description: Nth entry for unlisted.can_reply.manual_approval.
 //		type: string
 //	-
-//		name: private[can_reblog][always][0]
+//		name: unlisted[can_reblog][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for private.can_reblog.always.
+//		description: Nth entry for unlisted.can_reblog.automatic_approval.
 //		type: string
 //	-
-//		name: private[can_reblog][with_approval][0]
+//		name: unlisted[can_reblog][manual_approval][0]
 //		in: formData
-//		description: Nth entry for private.can_reblog.with_approval.
+//		description: Nth entry for unlisted.can_reblog.manual_approval.
 //		type: string
 //
 //	-
-//		name: direct[can_favourite][always][0]
+//		name: private[can_favourite][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for direct.can_favourite.always.
+//		description: Nth entry for private.can_favourite.automatic_approval.
 //		type: string
 //	-
-//		name: direct[can_favourite][with_approval][0]
+//		name: private[can_favourite][manual_approval][0]
 //		in: formData
-//		description: Nth entry for direct.can_favourite.with_approval.
+//		description: Nth entry for private.can_favourite.manual_approval.
 //		type: string
 //	-
-//		name: direct[can_reply][always][0]
+//		name: private[can_reply][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for direct.can_reply.always.
+//		description: Nth entry for private.can_reply.automatic_approval.
 //		type: string
 //	-
-//		name: direct[can_reply][with_approval][0]
+//		name: private[can_reply][manual_approval][0]
 //		in: formData
-//		description: Nth entry for direct.can_reply.with_approval.
+//		description: Nth entry for private.can_reply.manual_approval.
 //		type: string
 //	-
-//		name: direct[can_reblog][always][0]
+//		name: private[can_reblog][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for direct.can_reblog.always.
+//		description: Nth entry for private.can_reblog.automatic_approval.
 //		type: string
 //	-
-//		name: direct[can_reblog][with_approval][0]
+//		name: private[can_reblog][manual_approval][0]
 //		in: formData
-//		description: Nth entry for direct.can_reblog.with_approval.
+//		description: Nth entry for private.can_reblog.manual_approval.
+//		type: string
+//
+//	-
+//		name: direct[can_favourite][automatic_approval][0]
+//		in: formData
+//		description: Nth entry for direct.can_favourite.automatic_approval.
+//		type: string
+//	-
+//		name: direct[can_favourite][manual_approval][0]
+//		in: formData
+//		description: Nth entry for direct.can_favourite.manual_approval.
+//		type: string
+//	-
+//		name: direct[can_reply][automatic_approval][0]
+//		in: formData
+//		description: Nth entry for direct.can_reply.automatic_approval.
+//		type: string
+//	-
+//		name: direct[can_reply][manual_approval][0]
+//		in: formData
+//		description: Nth entry for direct.can_reply.manual_approval.
+//		type: string
+//	-
+//		name: direct[can_reblog][automatic_approval][0]
+//		in: formData
+//		description: Nth entry for direct.can_reblog.automatic_approval.
+//		type: string
+//	-
+//		name: direct[can_reblog][manual_approval][0]
+//		in: formData
+//		description: Nth entry for direct.can_reblog.manual_approval.
 //		type: string
 //
 //	security:

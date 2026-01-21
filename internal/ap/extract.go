@@ -1367,10 +1367,9 @@ func extractPolicyRules(
 		}
 	}
 
-	// Fall back to deprecated `always`
-	// and `withApproval` properties.
+	// Fall back to deprecated properties.
 	//
-	// TODO: Remove this in GtS v0.21.0.
+	// TODO: Remove this in GtS v0.22.0.
 	return &gtsmodel.PolicyRules{
 		AutomaticApproval: extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
 		ManualApproval:    extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),

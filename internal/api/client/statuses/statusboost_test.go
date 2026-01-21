@@ -108,40 +108,25 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": null,
@@ -178,40 +163,25 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
     "in_reply_to_id": null,
     "interaction_policy": {
       "can_favourite": {
-        "always": [
-          "public",
-          "me"
-        ],
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reblog": {
-        "always": [
-          "public",
-          "me"
-        ],
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reply": {
-        "always": [
-          "public",
-          "me"
-        ],
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "with_approval": []
+        "manual_approval": []
       }
     },
     "language": "en",
@@ -321,48 +291,29 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "author",
-        "followers",
-        "mentioned",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "followers",
         "mentioned",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "author",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "author",
-        "followers",
-        "mentioned",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "followers",
         "mentioned",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": null,
@@ -391,48 +342,29 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
     "in_reply_to_id": null,
     "interaction_policy": {
       "can_favourite": {
-        "always": [
-          "author",
-          "followers",
-          "mentioned",
-          "me"
-        ],
         "automatic_approval": [
           "author",
           "followers",
           "mentioned",
           "me"
         ],
-        "manual_approval": [],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reblog": {
-        "always": [
-          "author",
-          "me"
-        ],
         "automatic_approval": [
           "author",
           "me"
         ],
-        "manual_approval": [],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reply": {
-        "always": [
-          "author",
-          "followers",
-          "mentioned",
-          "me"
-        ],
         "automatic_approval": [
           "author",
           "followers",
           "mentioned",
           "me"
         ],
-        "manual_approval": [],
-        "with_approval": []
+        "manual_approval": []
       }
     },
     "language": "en",
@@ -576,40 +508,25 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": null,
@@ -638,40 +555,25 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
     "in_reply_to_id": "01F8MHC8VWDRBQR0N1BATDDEM5",
     "interaction_policy": {
       "can_favourite": {
-        "always": [
-          "public",
-          "me"
-        ],
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reblog": {
-        "always": [
-          "public",
-          "me"
-        ],
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reply": {
-        "always": [
-          "public",
-          "me"
-        ],
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "with_approval": []
+        "manual_approval": []
       }
     },
     "language": null,

@@ -815,12 +815,12 @@ type WithInteractionPolicy interface {
 	SetGoToSocialInteractionPolicy(vocab.GoToSocialInteractionPolicyProperty)
 }
 
-// WithPolicyRules represents an activity with always and approvalRequired properties.
+// WithPolicyRules represents interaction policy properties.
 type WithPolicyRules interface {
 	GetGoToSocialAutomaticApproval() vocab.GoToSocialAutomaticApprovalProperty
 	GetGoToSocialManualApproval() vocab.GoToSocialManualApprovalProperty
-	GetGoToSocialAlways() vocab.GoToSocialAlwaysProperty                     // Deprecated
-	GetGoToSocialApprovalRequired() vocab.GoToSocialApprovalRequiredProperty // Deprecated
+	GetGoToSocialAlways() vocab.GoToSocialAlwaysProperty                     // Deprecated - remove in v0.22.0
+	GetGoToSocialApprovalRequired() vocab.GoToSocialApprovalRequiredProperty // Deprecated - remove in v0.22.0
 }
 
 // WithApprovedBy represents an object with the approvedBy property.

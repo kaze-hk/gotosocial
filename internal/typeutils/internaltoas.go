@@ -1859,9 +1859,6 @@ func populateValuesForProp[T ap.WithIRI](
 
 // InteractionPolicyToASInteractionPolicy returns a
 // GoToSocial interaction policy suitable for federation.
-//
-// Note: This currently includes deprecated properties `always`
-// and `approvalRequired`. These will be removed in v0.21.0.
 func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	ctx context.Context,
 	interactionPolicy *gtsmodel.InteractionPolicy,
@@ -1902,44 +1899,23 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	// Set canLike.manualApproval
 	canLike.SetGoToSocialAutomaticApproval(canLikeAutomaticApprovalProp)
 
-	// Build canLike.manualApproval
-	canLikeManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
-	if err := populateValuesForProp(
-		canLikeManualApprovalProp,
-		status,
-		interactionPolicy.CanLike.ManualApproval,
-	); err != nil {
-		return nil, gtserror.Newf("error setting canLike.manualApproval: %w", err)
+	// Only bother building manualApproval if automaticApproval is
+	// empty, and there are entries in manualApproval. This avoids
+	// serializing empty manualApproval array for no good reason.
+	if canLikeAutomaticApprovalProp.Len() == 0 &&
+		len(interactionPolicy.CanLike.ManualApproval) != 0 {
+		canLikeManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
+		if err := populateValuesForProp(
+			canLikeManualApprovalProp,
+			status,
+			interactionPolicy.CanLike.ManualApproval,
+		); err != nil {
+			return nil, gtserror.Newf("error setting canLike.manualApproval: %w", err)
+		}
+
+		// Set canLike.manualApproval.
+		canLike.SetGoToSocialManualApproval(canLikeManualApprovalProp)
 	}
-
-	// Set canLike.manualApproval.
-	canLike.SetGoToSocialManualApproval(canLikeManualApprovalProp)
-
-	// deprecated: Build canLike.always
-	canLikeAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	if err := populateValuesForProp(
-		canLikeAlwaysProp,
-		status,
-		interactionPolicy.CanLike.AutomaticApproval,
-	); err != nil {
-		return nil, gtserror.Newf("error setting canLike.always: %w", err)
-	}
-
-	// deprecated: Set canLike.always
-	canLike.SetGoToSocialAlways(canLikeAlwaysProp)
-
-	// deprecated: Build canLike.approvalRequired
-	canLikeApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
-	if err := populateValuesForProp(
-		canLikeApprovalRequiredProp,
-		status,
-		interactionPolicy.CanLike.ManualApproval,
-	); err != nil {
-		return nil, gtserror.Newf("error setting canLike.approvalRequired: %w", err)
-	}
-
-	// deprecated: Set canLike.approvalRequired.
-	canLike.SetGoToSocialApprovalRequired(canLikeApprovalRequiredProp)
 
 	// Set canLike on the policy.
 	canLikeProp := streams.NewGoToSocialCanLikeProperty()
@@ -1966,44 +1942,23 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	// Set canReply.manualApproval
 	canReply.SetGoToSocialAutomaticApproval(canReplyAutomaticApprovalProp)
 
-	// Build canReply.manualApproval
-	canReplyManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
-	if err := populateValuesForProp(
-		canReplyManualApprovalProp,
-		status,
-		interactionPolicy.CanReply.ManualApproval,
-	); err != nil {
-		return nil, gtserror.Newf("error setting canReply.manualApproval: %w", err)
+	// Only bother building manualApproval if automaticApproval is
+	// empty, and there are entries in manualApproval. This avoids
+	// serializing empty manualApproval array for no good reason.
+	if canReplyAutomaticApprovalProp.Len() == 0 &&
+		len(interactionPolicy.CanReply.ManualApproval) != 0 {
+		canReplyManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
+		if err := populateValuesForProp(
+			canReplyManualApprovalProp,
+			status,
+			interactionPolicy.CanReply.ManualApproval,
+		); err != nil {
+			return nil, gtserror.Newf("error setting canReply.manualApproval: %w", err)
+		}
+
+		// Set canReply.manualApproval.
+		canReply.SetGoToSocialManualApproval(canReplyManualApprovalProp)
 	}
-
-	// Set canReply.manualApproval.
-	canReply.SetGoToSocialManualApproval(canReplyManualApprovalProp)
-
-	// deprecated: Build canReply.always
-	canReplyAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	if err := populateValuesForProp(
-		canReplyAlwaysProp,
-		status,
-		interactionPolicy.CanReply.AutomaticApproval,
-	); err != nil {
-		return nil, gtserror.Newf("error setting canReply.always: %w", err)
-	}
-
-	// deprecated: Set canReply.always
-	canReply.SetGoToSocialAlways(canReplyAlwaysProp)
-
-	// deprecated: Build canReply.approvalRequired
-	canReplyApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
-	if err := populateValuesForProp(
-		canReplyApprovalRequiredProp,
-		status,
-		interactionPolicy.CanReply.ManualApproval,
-	); err != nil {
-		return nil, gtserror.Newf("error setting canReply.approvalRequired: %w", err)
-	}
-
-	// deprecated: Set canReply.approvalRequired.
-	canReply.SetGoToSocialApprovalRequired(canReplyApprovalRequiredProp)
 
 	// Set canReply on the policy.
 	canReplyProp := streams.NewGoToSocialCanReplyProperty()
@@ -2030,44 +1985,23 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	// Set canAnnounce.manualApproval
 	canAnnounce.SetGoToSocialAutomaticApproval(canAnnounceAutomaticApprovalProp)
 
-	// Build canAnnounce.manualApproval
-	canAnnounceManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
-	if err := populateValuesForProp(
-		canAnnounceManualApprovalProp,
-		status,
-		interactionPolicy.CanAnnounce.ManualApproval,
-	); err != nil {
-		return nil, gtserror.Newf("error setting canAnnounce.manualApproval: %w", err)
+	// Only bother building manualApproval if automaticApproval is
+	// empty, and there are entries in manualApproval. This avoids
+	// serializing empty manualApproval array for no good reason.
+	if canAnnounceAutomaticApprovalProp.Len() == 0 &&
+		len(interactionPolicy.CanAnnounce.ManualApproval) != 0 {
+		canAnnounceManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
+		if err := populateValuesForProp(
+			canAnnounceManualApprovalProp,
+			status,
+			interactionPolicy.CanAnnounce.ManualApproval,
+		); err != nil {
+			return nil, gtserror.Newf("error setting canAnnounce.manualApproval: %w", err)
+		}
+
+		// Set canAnnounce.manualApproval.
+		canAnnounce.SetGoToSocialManualApproval(canAnnounceManualApprovalProp)
 	}
-
-	// Set canAnnounce.manualApproval.
-	canAnnounce.SetGoToSocialManualApproval(canAnnounceManualApprovalProp)
-
-	// deprecated: Build canAnnounce.always
-	canAnnounceAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	if err := populateValuesForProp(
-		canAnnounceAlwaysProp,
-		status,
-		interactionPolicy.CanAnnounce.AutomaticApproval,
-	); err != nil {
-		return nil, gtserror.Newf("error setting canAnnounce.always: %w", err)
-	}
-
-	// deprecated: Set canAnnounce.always
-	canAnnounce.SetGoToSocialAlways(canAnnounceAlwaysProp)
-
-	// deprecated: Build canAnnounce.approvalRequired
-	canAnnounceApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
-	if err := populateValuesForProp(
-		canAnnounceApprovalRequiredProp,
-		status,
-		interactionPolicy.CanAnnounce.ManualApproval,
-	); err != nil {
-		return nil, gtserror.Newf("error setting canAnnounce.approvalRequired: %w", err)
-	}
-
-	// deprecated: Set canAnnounce.approvalRequired.
-	canAnnounce.SetGoToSocialApprovalRequired(canAnnounceApprovalRequiredProp)
 
 	// Set canAnnounce on the policy.
 	canAnnounceProp := streams.NewGoToSocialCanAnnounceProperty()

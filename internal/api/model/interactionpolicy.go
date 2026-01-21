@@ -52,13 +52,6 @@ type PolicyRules struct {
 	AutomaticApproval []PolicyValue `form:"automatic_approval" json:"automatic_approval"`
 	// Policy entries for accounts that require manual approval for this type of interaction.
 	ManualApproval []PolicyValue `form:"manual_approval" json:"manual_approval"`
-
-	// Policy entries for accounts that can always do this type of interaction.
-	// Deprecated: Use "automatic_approval" instead.
-	Always []PolicyValue `form:"always" json:"always"`
-	// Policy entries for accounts that require approval to do this type of interaction.
-	// Deprecated: Use "manual_approval" instead.
-	WithApproval []PolicyValue `form:"with_approval" json:"with_approval"`
 }
 
 // Interaction policy of a status.

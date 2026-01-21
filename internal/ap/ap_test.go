@@ -109,13 +109,13 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 	canLike := streams.NewGoToSocialCanLike()
 
 	// Anyone can like.
-	canLikeAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	canLikeAlwaysProp.AppendIRI(ap.PublicIRI())
-	canLike.SetGoToSocialAlways(canLikeAlwaysProp)
+	canLikeAutomaticApprovalProp := streams.NewGoToSocialAutomaticApprovalProperty()
+	canLikeAutomaticApprovalProp.AppendIRI(ap.PublicIRI())
+	canLike.SetGoToSocialAutomaticApproval(canLikeAutomaticApprovalProp)
 
-	// Empty approvalRequired.
-	canLikeApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
-	canLike.SetGoToSocialApprovalRequired(canLikeApprovalRequiredProp)
+	// Empty manualApproval.
+	canLikeManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
+	canLike.SetGoToSocialManualApproval(canLikeManualApprovalProp)
 
 	// Set canLike on the policy.
 	canLikeProp := streams.NewGoToSocialCanLikeProperty()
@@ -126,13 +126,13 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 	canReply := streams.NewGoToSocialCanReply()
 
 	// Anyone can reply.
-	canReplyAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	canReplyAlwaysProp.AppendIRI(ap.PublicIRI())
-	canReply.SetGoToSocialAlways(canReplyAlwaysProp)
+	canReplyAutomaticApprovalProp := streams.NewGoToSocialAutomaticApprovalProperty()
+	canReplyAutomaticApprovalProp.AppendIRI(ap.PublicIRI())
+	canReply.SetGoToSocialAutomaticApproval(canReplyAutomaticApprovalProp)
 
-	// Set empty approvalRequired.
-	canReplyApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
-	canReply.SetGoToSocialApprovalRequired(canReplyApprovalRequiredProp)
+	// Set empty manualApproval.
+	canReplyManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
+	canReply.SetGoToSocialManualApproval(canReplyManualApprovalProp)
 
 	// Set canReply on the policy.
 	canReplyProp := streams.NewGoToSocialCanReplyProperty()
@@ -143,15 +143,15 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 	canAnnounce := streams.NewGoToSocialCanAnnounce()
 
 	// Only f0x and dumpsterqueer can announce.
-	canAnnounceAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	canAnnounceAlwaysProp.AppendIRI(testrig.URLMustParse("https://gts.superseriousbusiness.org/users/dumpsterqueer"))
-	canAnnounceAlwaysProp.AppendIRI(testrig.URLMustParse("https://gts.superseriousbusiness.org/users/f0x"))
-	canAnnounce.SetGoToSocialAlways(canAnnounceAlwaysProp)
+	canAnnounceAutomaticApprovalProp := streams.NewGoToSocialAutomaticApprovalProperty()
+	canAnnounceAutomaticApprovalProp.AppendIRI(testrig.URLMustParse("https://gts.superseriousbusiness.org/users/dumpsterqueer"))
+	canAnnounceAutomaticApprovalProp.AppendIRI(testrig.URLMustParse("https://gts.superseriousbusiness.org/users/f0x"))
+	canAnnounce.SetGoToSocialAutomaticApproval(canAnnounceAutomaticApprovalProp)
 
 	// Public requires approval to announce.
-	canAnnounceApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
-	canAnnounceApprovalRequiredProp.AppendIRI(ap.PublicIRI())
-	canAnnounce.SetGoToSocialApprovalRequired(canAnnounceApprovalRequiredProp)
+	canAnnounceManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
+	canAnnounceManualApprovalProp.AppendIRI(ap.PublicIRI())
+	canAnnounce.SetGoToSocialManualApproval(canAnnounceManualApprovalProp)
 
 	// Set canAnnounce on the policy.
 	canAnnounceProp := streams.NewGoToSocialCanAnnounceProperty()

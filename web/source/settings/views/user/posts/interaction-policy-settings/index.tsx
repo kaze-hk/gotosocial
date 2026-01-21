@@ -453,42 +453,42 @@ function useFormForVis(
 			basic: useBasicFor(
 				forVis,
 				"favourite",
-				currentPolicy.can_favourite.always,
-				currentPolicy.can_favourite.with_approval,
+				currentPolicy.can_favourite.automatic_approval,
+				currentPolicy.can_favourite.manual_approval,
 			),
 			somethingElse: useSomethingElseFor(
 				forVis,
 				"favourite",
-				currentPolicy.can_favourite.always,
-				currentPolicy.can_favourite.with_approval,
+				currentPolicy.can_favourite.automatic_approval,
+				currentPolicy.can_favourite.manual_approval,
 			),
 		},
 		reply: {
 			basic: useBasicFor(
 				forVis,
 				"reply",
-				currentPolicy.can_reply.always,
-				currentPolicy.can_reply.with_approval,
+				currentPolicy.can_reply.automatic_approval,
+				currentPolicy.can_reply.manual_approval,
 			),
 			somethingElse: useSomethingElseFor(
 				forVis,
 				"reply",
-				currentPolicy.can_reply.always,
-				currentPolicy.can_reply.with_approval,
+				currentPolicy.can_reply.automatic_approval,
+				currentPolicy.can_reply.manual_approval,
 			),
 		},
 		reblog: {
 			basic: useBasicFor(
 				forVis,
 				"reblog",
-				currentPolicy.can_reblog.always,
-				currentPolicy.can_reblog.with_approval,
+				currentPolicy.can_reblog.automatic_approval,
+				currentPolicy.can_reblog.manual_approval,
 			),
 			somethingElse: useSomethingElseFor(
 				forVis,
 				"reblog",
-				currentPolicy.can_reblog.always,
-				currentPolicy.can_reblog.with_approval,
+				currentPolicy.can_reblog.automatic_approval,
+				currentPolicy.can_reblog.manual_approval,
 			),
 		},
 	};
@@ -520,49 +520,49 @@ function assemblePolicyEntry(
 		case "anyone":
 			return {
 				// Anyone can do this.
-				always: [anyone],
-				with_approval: [],
+				automatic_approval: [anyone],
+				manual_approval: [],
 			};
 		case "anyone_with_approval":
 			return {
 				// Author and maybe mentioned can do
 				// this, everyone else needs approval.
-				always: justMe,
-				with_approval: [anyone],
+				automatic_approval: justMe,
+				manual_approval: [anyone],
 			};
 		case "just_me":
 			return {
 				// Only author and maybe
 				// mentioned can do this.
-				always: justMe,
-				with_approval: [],
+				automatic_approval: justMe,
+				manual_approval: [],
 			};
 	}
 
 	// Something else!
 	const somethingElse = policyForm[forAction].somethingElse;
 	
-	// Start with basic "always"
-	// and "with_approval" values.
+	// Start with basic "automatic_approval"
+	// and "manual_approval" values.
 	let always: InteractionPolicyValue[] = justMe;
 	let withApproval: InteractionPolicyValue[] = [];
 	
 	// Add PolicyValueFollowers depending on choices made.
 	switch (somethingElse.followers.field.value as SomethingElseValue) {
-		case "always":
+		case "automatic_approval":
 			always.push(PolicyValueFollowers);
 			break;
-		case "with_approval":
+		case "manual_approval":
 			withApproval.push(PolicyValueFollowers);
 			break;
 	}
 
 	// Add PolicyValueFollowing depending on choices made.
 	switch (somethingElse.following.field.value as SomethingElseValue) {
-		case "always":
+		case "automatic_approval":
 			always.push(PolicyValueFollowing);
 			break;
-		case "with_approval":
+		case "manual_approval":
 			withApproval.push(PolicyValueFollowing);
 			break;
 	}
@@ -572,10 +572,10 @@ function assemblePolicyEntry(
 	// included above, so only do this if action is not reply.
 	if (forAction !== "reply") {
 		switch (somethingElse.mentioned.field.value as SomethingElseValue) {
-			case "always":
+			case "automatic_approval":
 				always.push(PolicyValueMentioned);
 				break;
-			case "with_approval":
+			case "manual_approval":
 				withApproval.push(PolicyValueMentioned);
 				break;
 		}
@@ -583,7 +583,7 @@ function assemblePolicyEntry(
 
 	// Add anyone depending on choices made.
 	switch (somethingElse.everyoneElse.field.value as SomethingElseValue) {
-		case "with_approval":
+		case "manual_approval":
 			withApproval.push(anyone);
 			break;
 	}
@@ -599,7 +599,7 @@ function assemblePolicyEntry(
 	}
 
 	return {
-		always: always,
-		with_approval: withApproval,
+		automatic_approval: always,
+		manual_approval: withApproval,
 	};
 }

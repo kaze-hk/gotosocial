@@ -149,48 +149,29 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "author",
-        "followers",
-        "mentioned",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "followers",
         "mentioned",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "author",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "author",
-        "followers",
-        "mentioned",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "followers",
         "mentioned",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",
@@ -222,11 +203,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicy() {
 	out, recorder := suite.postStatus(map[string][]string{
 		"status": {"this is a brand new status! #helloworld"},
-		"interaction_policy[can_reply][always][0]":        {"author"},
-		"interaction_policy[can_reply][always][1]":        {"followers"},
-		"interaction_policy[can_reply][always][2]":        {"following"},
-		"interaction_policy[can_reply][with_approval][0]": {"public"},
-		"interaction_policy[can_announce][always][0]":     {""},
+		"interaction_policy[can_reply][automatic_approval][0]":    {"author"},
+		"interaction_policy[can_reply][automatic_approval][1]":    {"followers"},
+		"interaction_policy[can_reply][automatic_approval][2]":    {"following"},
+		"interaction_policy[can_reply][manual_approval][0]":       {"public"},
+		"interaction_policy[can_announce][automatic_approval][0]": {""},
 	}, "")
 
 	// We should have OK from
@@ -255,37 +236,20 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicy() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "author",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "author",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "author",
-        "followers",
-        "following",
-        "mentioned",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "followers",
@@ -294,9 +258,6 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicy() {
         "me"
       ],
       "manual_approval": [
-        "public"
-      ],
-      "with_approval": [
         "public"
       ]
     }
@@ -331,17 +292,17 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicyJSON() {
   "status": "this is a brand new status! #helloworld",
   "interaction_policy": {
     "can_reply": {
-      "always": [
+      "automatic_approval": [
         "author",
         "followers",
         "following"
       ],
-      "with_approval": [
+      "manual_approval": [
         "public"
       ]
     },
     "can_announce": {
-      "always": []
+      "automatic_approval": []
     }
   }
 }`)
@@ -372,37 +333,20 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicyJSON() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "author",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "author",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "author",
-        "followers",
-        "following",
-        "mentioned",
-        "me"
-      ],
       "automatic_approval": [
         "author",
         "followers",
@@ -411,9 +355,6 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicyJSON() {
         "me"
       ],
       "manual_approval": [
-        "public"
-      ],
-      "with_approval": [
         "public"
       ]
     }
@@ -449,7 +390,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
   "visibility": "private",
   "interaction_policy": {
     "can_reply": {
-      "always": [
+      "automatic_approval": [
         "public"
       ]
     }
@@ -463,7 +404,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
 	// We should have a helpful error
 	// message telling us how we screwed up.
 	suite.Equal(`{
-  "error": "Bad Request: error converting private.can_reply.always: policyURI public is not feasible for visibility private"
+  "error": "Bad Request: error converting private.can_reply.automatic_approval: policyURI public is not feasible for visibility private"
 }`, out)
 }
 
@@ -668,40 +609,25 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",
@@ -768,40 +694,25 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",
@@ -862,40 +773,25 @@ func (suite *StatusCreateTestSuite) TestPostStatusWithLinksAndTags() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",
@@ -970,40 +866,25 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",
@@ -1076,40 +957,25 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
   "in_reply_to_id": "01F8MHBQCBTDKN6X5VHGMMN4MA",
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",
@@ -1175,40 +1041,25 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",
@@ -1296,40 +1147,25 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithNoncanonicalLanguageTag
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en-US",
@@ -1387,40 +1223,25 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollForm() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",
@@ -1500,40 +1321,25 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollJSON() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",

@@ -139,36 +139,21 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     }
   }
 }`, dst.String())

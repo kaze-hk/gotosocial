@@ -142,39 +142,39 @@ func APIInteractionPolicyToInteractionPolicy(
 		return policyURIs, nil
 	}
 
-	canLikeAlways, err := convertURIs(p.CanFavourite.Always)
+	canLikeAutomaticApproval, err := convertURIs(p.CanFavourite.AutomaticApproval)
 	if err != nil {
-		err := fmt.Errorf("error converting %s.can_favourite.always: %w", v, err)
+		err := fmt.Errorf("error converting %s.can_favourite.automatic_approval: %w", v, err)
 		return nil, err
 	}
 
-	canLikeWithApproval, err := convertURIs(p.CanFavourite.WithApproval)
+	canLikeManualApproval, err := convertURIs(p.CanFavourite.ManualApproval)
 	if err != nil {
-		err := fmt.Errorf("error converting %s.can_favourite.with_approval: %w", v, err)
+		err := fmt.Errorf("error converting %s.can_favourite.manual_approval: %w", v, err)
 		return nil, err
 	}
 
-	canReplyAlways, err := convertURIs(p.CanReply.Always)
+	canReplyAutomaticApproval, err := convertURIs(p.CanReply.AutomaticApproval)
 	if err != nil {
-		err := fmt.Errorf("error converting %s.can_reply.always: %w", v, err)
+		err := fmt.Errorf("error converting %s.can_reply.automatic_approval: %w", v, err)
 		return nil, err
 	}
 
-	canReplyWithApproval, err := convertURIs(p.CanReply.WithApproval)
+	canReplyManualApproval, err := convertURIs(p.CanReply.ManualApproval)
 	if err != nil {
-		err := fmt.Errorf("error converting %s.can_reply.with_approval: %w", v, err)
+		err := fmt.Errorf("error converting %s.can_reply.manual_approval: %w", v, err)
 		return nil, err
 	}
 
-	canAnnounceAlways, err := convertURIs(p.CanReblog.Always)
+	canAnnounceAutomaticApproval, err := convertURIs(p.CanReblog.AutomaticApproval)
 	if err != nil {
-		err := fmt.Errorf("error converting %s.can_reblog.always: %w", v, err)
+		err := fmt.Errorf("error converting %s.can_reblog.automatic_approval: %w", v, err)
 		return nil, err
 	}
 
-	canAnnounceWithApproval, err := convertURIs(p.CanReblog.WithApproval)
+	canAnnounceManualApproval, err := convertURIs(p.CanReblog.ManualApproval)
 	if err != nil {
-		err := fmt.Errorf("error converting %s.can_reblog.with_approval: %w", v, err)
+		err := fmt.Errorf("error converting %s.can_reblog.manual_approval: %w", v, err)
 		return nil, err
 	}
 
@@ -209,37 +209,37 @@ func APIInteractionPolicyToInteractionPolicy(
 		return vals
 	}
 
-	canLikeAlways = ensureIncludesSelf(canLikeAlways)
-	canReplyAlways = ensureIncludesSelf(canReplyAlways)
-	canAnnounceAlways = ensureIncludesSelf(canAnnounceAlways)
+	canLikeAutomaticApproval = ensureIncludesSelf(canLikeAutomaticApproval)
+	canReplyAutomaticApproval = ensureIncludesSelf(canReplyAutomaticApproval)
+	canAnnounceAutomaticApproval = ensureIncludesSelf(canAnnounceAutomaticApproval)
 
 	// 2. Ensure canReplyAlways includes mentioned
 	//    accounts (either explicitly or within public).
 	if !slices.ContainsFunc(
-		canReplyAlways,
+		canReplyAutomaticApproval,
 		func(uri gtsmodel.PolicyValue) bool {
 			return uri == gtsmodel.PolicyValuePublic ||
 				uri == gtsmodel.PolicyValueMentioned
 		},
 	) {
-		canReplyAlways = append(
-			canReplyAlways,
+		canReplyAutomaticApproval = append(
+			canReplyAutomaticApproval,
 			gtsmodel.PolicyValueMentioned,
 		)
 	}
 
 	return &gtsmodel.InteractionPolicy{
 		CanLike: &gtsmodel.PolicyRules{
-			AutomaticApproval: canLikeAlways,
-			ManualApproval:    canLikeWithApproval,
+			AutomaticApproval: canLikeAutomaticApproval,
+			ManualApproval:    canLikeManualApproval,
 		},
 		CanReply: &gtsmodel.PolicyRules{
-			AutomaticApproval: canReplyAlways,
-			ManualApproval:    canReplyWithApproval,
+			AutomaticApproval: canReplyAutomaticApproval,
+			ManualApproval:    canReplyManualApproval,
 		},
 		CanAnnounce: &gtsmodel.PolicyRules{
-			AutomaticApproval: canAnnounceAlways,
-			ManualApproval:    canAnnounceWithApproval,
+			AutomaticApproval: canAnnounceAutomaticApproval,
+			ManualApproval:    canAnnounceManualApproval,
 		},
 	}, nil
 }

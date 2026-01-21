@@ -610,16 +610,13 @@ func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface
 //
 //	"interactionPolicy": {
 //		"canAnnounce": {
-//			"automaticApproval": "https://www.w3.org/ns/activitystreams#Public",
-//			"manualApproval": []
+//			"automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
 //		},
 //		"canLike": {
-//			"automaticApproval": "https://www.w3.org/ns/activitystreams#Public",
-//			"manualApproval": []
+//			"automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
 //		},
 //		"canReply": {
-//			"automaticApproval": "https://www.w3.org/ns/activitystreams#Public",
-//			"manualApproval": []
+//			"automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
 //		}
 //	}
 //
@@ -629,20 +626,17 @@ func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface
 //		"canAnnounce": {
 //			"automaticApproval": [
 //				"https://www.w3.org/ns/activitystreams#Public"
-//			],
-//			"manualApproval": []
+//			]
 //		},
 //		"canLike": {
 //			"automaticApproval": [
 //				"https://www.w3.org/ns/activitystreams#Public"
-//			],
-//			"manualApproval": []
+//			]
 //		},
 //		"canReply": {
 //			"automaticApproval": [
 //				"https://www.w3.org/ns/activitystreams#Public"
-//			],
-//			"manualApproval": []
+//			]
 //		}
 //	}
 //
@@ -679,8 +673,6 @@ func NormalizeOutgoingInteractionPolicyProp(item WithInteractionPolicy, rawJSON 
 		// Coerce single objects to arrays.
 		coercePropertyToArray(rulesValMap, "automaticApproval")
 		coercePropertyToArray(rulesValMap, "manualApproval")
-		coercePropertyToArray(rulesValMap, "always")           // deprecated
-		coercePropertyToArray(rulesValMap, "approvalRequired") // deprecated
 	}
 }
 

@@ -96,34 +96,19 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
     "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
     "interactionPolicy": {
       "canAnnounce": {
-        "always": [
-          "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "approvalRequired": [],
         "automaticApproval": [
           "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "manualApproval": []
+        ]
       },
       "canLike": {
-        "always": [
-          "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "approvalRequired": [],
         "automaticApproval": [
           "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "manualApproval": []
+        ]
       },
       "canReply": {
-        "always": [
-          "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "approvalRequired": [],
         "automaticApproval": [
           "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "manualApproval": []
+        ]
       }
     },
     "published": "2021-10-20T12:40:37+02:00",

@@ -114,40 +114,25 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
   "in_reply_to_id": null,
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": "en",
@@ -254,40 +239,25 @@ func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
   "in_reply_to_id": "01F8MHC8VWDRBQR0N1BATDDEM5",
   "interaction_policy": {
     "can_favourite": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
-      "always": [
-        "public",
-        "me"
-      ],
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "language": null,

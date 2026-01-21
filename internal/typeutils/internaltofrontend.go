@@ -2594,16 +2594,6 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 		}
 	}
 
-	defer func() {
-		// Include deprecated fields for back-compat. TODO: Remove these in 0.21.0.
-		apiPolicy.CanFavourite.Always = apiPolicy.CanFavourite.AutomaticApproval
-		apiPolicy.CanFavourite.WithApproval = apiPolicy.CanFavourite.ManualApproval
-		apiPolicy.CanReply.Always = apiPolicy.CanReply.AutomaticApproval
-		apiPolicy.CanReply.WithApproval = apiPolicy.CanReply.ManualApproval
-		apiPolicy.CanReblog.Always = apiPolicy.CanReblog.AutomaticApproval
-		apiPolicy.CanReblog.WithApproval = apiPolicy.CanReblog.ManualApproval
-	}()
-
 	if status == nil || requester == nil {
 		// We're done here!
 		return apiPolicy, nil

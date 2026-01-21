@@ -37,9 +37,9 @@ function useSomethingElseOptions(
 	return (
 		<>
 			{ forAudience !== "everyone_else" &&
-				<option value="always">Always</option>
+				<option value="automatic_approval">Always</option>
 			}
-			<option value="with_approval">With my approval</option>
+			<option value="manual_approval">With my approval</option>
 			<option value="no">No</option>
 		</>
 	);
@@ -53,11 +53,11 @@ export function useSomethingElseFor(
 ): PolicyFormSomethingElse {	
 	const followersDefaultValue: SomethingElseValue = useMemo(() => {
 		if (currentAlways.includes(PolicyValueFollowers)) {
-			return "always";
+			return "automatic_approval";
 		}
 
 		if (currentWithApproval.includes(PolicyValueFollowers)) {
-			return "with_approval";
+			return "manual_approval";
 		}
 		
 		return "no";
@@ -65,11 +65,11 @@ export function useSomethingElseFor(
 	
 	const followingDefaultValue: SomethingElseValue = useMemo(() => {
 		if (currentAlways.includes(PolicyValueFollowing)) {
-			return "always";
+			return "automatic_approval";
 		}
 
 		if (currentWithApproval.includes(PolicyValueFollowing)) {
-			return "with_approval";
+			return "manual_approval";
 		}
 		
 		return "no";
@@ -77,11 +77,11 @@ export function useSomethingElseFor(
 	
 	const mentionedDefaultValue: SomethingElseValue = useMemo(() => {
 		if (currentAlways.includes(PolicyValueFollowing)) {
-			return "always";
+			return "automatic_approval";
 		}
 
 		if (currentWithApproval.includes(PolicyValueFollowing)) {
-			return "with_approval";
+			return "manual_approval";
 		}
 		
 		return "no";
@@ -89,11 +89,11 @@ export function useSomethingElseFor(
 	
 	const everyoneElseDefaultValue: SomethingElseValue = useMemo(() => {
 		if (currentAlways.includes(PolicyValuePublic)) {
-			return "always";
+			return "automatic_approval";
 		}
 
 		if (currentWithApproval.includes(PolicyValuePublic)) {
-			return "with_approval";
+			return "manual_approval";
 		}
 		
 		return "no";

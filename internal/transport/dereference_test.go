@@ -121,8 +121,8 @@ func (suite *DereferenceTestSuite) TestDerefLocalStatus() {
 	defer resp.Body.Close()
 
 	suite.Equal(http.StatusOK, resp.StatusCode)
-	suite.EqualValues(1769, resp.ContentLength)
-	suite.Equal("1769", resp.Header.Get("Content-Length"))
+	suite.EqualValues(1469, resp.ContentLength)
+	suite.Equal("1469", resp.Header.Get("Content-Length"))
 	suite.Equal(apiutil.AppActivityLDJSON, resp.Header.Get("Content-Type"))
 
 	b, err := io.ReadAll(resp.Body)
@@ -153,34 +153,19 @@ func (suite *DereferenceTestSuite) TestDerefLocalStatus() {
   "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
   "interactionPolicy": {
     "canAnnounce": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canLike": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     },
     "canReply": {
-      "always": [
-        "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "approvalRequired": [],
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
-      ],
-      "manualApproval": []
+      ]
     }
   },
   "published": "2021-10-20T10:40:37Z",

@@ -605,36 +605,21 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     }
   }
 }`, string(b))
@@ -770,36 +755,21 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendHTMLContentWarning
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     }
   }
 }`, string(b))
@@ -937,36 +907,21 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendApplicationDeleted
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     }
   }
 }`, string(b))
@@ -1079,36 +1034,21 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     }
   }
 }`, string(b))
@@ -1172,31 +1112,19 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "automatic_approval": [
         "public"
       ],
-      "manual_approval": [],
-      "always": [
-        "public"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
       "automatic_approval": [
         "public"
       ],
-      "manual_approval": [],
-      "always": [
-        "public"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
       "automatic_approval": [
         "public"
       ],
-      "manual_approval": [],
-      "always": [
-        "public"
-      ],
-      "with_approval": []
+      "manual_approval": []
     }
   },
   "account": {
@@ -1432,36 +1360,21 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     }
   }
 }`, string(b))
@@ -1547,31 +1460,19 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
       "automatic_approval": [
         "author"
       ],
-      "manual_approval": [],
-      "always": [
-        "author"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
       "automatic_approval": [
         "author"
       ],
-      "manual_approval": [],
-      "always": [
-        "author"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
       "automatic_approval": [
         "author"
       ],
-      "manual_approval": [],
-      "always": [
-        "author"
-      ],
-      "with_approval": []
+      "manual_approval": []
     }
   }
 }`, string(b))
@@ -1697,36 +1598,21 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reply": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     },
     "can_reblog": {
       "automatic_approval": [
         "public",
         "me"
       ],
-      "manual_approval": [],
-      "always": [
-        "public",
-        "me"
-      ],
-      "with_approval": []
+      "manual_approval": []
     }
   }
 }
@@ -2718,36 +2604,21 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
             "public",
             "me"
           ],
-          "manual_approval": [],
-          "always": [
-            "public",
-            "me"
-          ],
-          "with_approval": []
+          "manual_approval": []
         },
         "can_reply": {
           "automatic_approval": [
             "public",
             "me"
           ],
-          "manual_approval": [],
-          "always": [
-            "public",
-            "me"
-          ],
-          "with_approval": []
+          "manual_approval": []
         },
         "can_reblog": {
           "automatic_approval": [
             "public",
             "me"
           ],
-          "manual_approval": [],
-          "always": [
-            "public",
-            "me"
-          ],
-          "with_approval": []
+          "manual_approval": []
         }
       }
     }
@@ -3247,12 +3118,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reply": {
         "automatic_approval": [
@@ -3261,13 +3127,6 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
         ],
         "manual_approval": [
           "public"
-        ],
-        "always": [
-          "author",
-          "me"
-        ],
-        "with_approval": [
-          "public"
         ]
       },
       "can_reblog": {
@@ -3275,12 +3134,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       }
     }
   },
@@ -3365,36 +3219,21 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reply": {
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reblog": {
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       }
     }
   }
@@ -3540,36 +3379,21 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reply": {
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reblog": {
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       }
     }
   }
@@ -3725,36 +3549,21 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reply": {
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       },
       "can_reblog": {
         "automatic_approval": [
           "public",
           "me"
         ],
-        "manual_approval": [],
-        "always": [
-          "public",
-          "me"
-        ],
-        "with_approval": []
+        "manual_approval": []
       }
     }
   }

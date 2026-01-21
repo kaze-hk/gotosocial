@@ -42,8 +42,8 @@ export interface InteractionPolicy {
 }
 
 export interface InteractionPolicyEntry {
-	always: InteractionPolicyValue[];
-	with_approval: InteractionPolicyValue[];
+	automatic_approval: InteractionPolicyValue[];
+	manual_approval: InteractionPolicyValue[];
 }
 
 export type InteractionPolicyValue = string;

@@ -2433,14 +2433,6 @@ definitions:
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     interactionPolicyRules:
         properties:
-            always:
-                description: |-
-                    Policy entries for accounts that can always do this type of interaction.
-                    Deprecated: Use "automatic_approval" instead.
-                items:
-                    $ref: '#/definitions/interactionPolicyValue'
-                type: array
-                x-go-name: Always
             automatic_approval:
                 description: Policy entries for accounts that will receive automatic approval for this type of interaction.
                 items:
@@ -2453,14 +2445,6 @@ definitions:
                     $ref: '#/definitions/interactionPolicyValue'
                 type: array
                 x-go-name: ManualApproval
-            with_approval:
-                description: |-
-                    Policy entries for accounts that require approval to do this type of interaction.
-                    Deprecated: Use "manual_approval" instead.
-                items:
-                    $ref: '#/definitions/interactionPolicyValue'
-                type: array
-                x-go-name: WithApproval
         title: Rules for one interaction type.
         type: object
         x-go-name: PolicyRules
@@ -11069,15 +11053,15 @@ paths:
 
                 `VISIBILITY[INTERACTION_TYPE][CONDITION][INDEX]=Value`
 
-                For example: `public[can_reply][always][0]=author`
+                For example: `public[can_reply][automatic_approval][0]=author`
 
                 Using `curl` this might look something like:
 
-                `curl -F 'public[can_reply][always][0]=author' -F 'public[can_reply][always][1]=followers'`
+                `curl -F 'public[can_reply][automatic_approval][0]=author' -F 'public[can_reply][automatic_approval][1]=followers'`
 
                 The JSON equivalent would be:
 
-                `curl -H 'Content-Type: application/json' -d '{"public":{"can_reply":{"always":["author","followers"]}}}'`
+                `curl -H 'Content-Type: application/json' -d '{"public":{"can_reply":{"automatic_approval":["author","followers"]}}}'`
 
                 Any visibility level left unspecified in the request body will be returned to the default.
 
@@ -11086,101 +11070,101 @@ paths:
                 The server will perform some normalization on submitted policies so that you can't submit totally invalid policies.
             operationId: policiesDefaultsUpdate
             parameters:
-                - description: Nth entry for public.can_favourite.always.
+                - description: Nth entry for public.can_favourite.automatic_approval.
                   in: formData
-                  name: public[can_favourite][always][0]
+                  name: public[can_favourite][automatic_approval][0]
                   type: string
-                - description: Nth entry for public.can_favourite.with_approval.
+                - description: Nth entry for public.can_favourite.manual_approval.
                   in: formData
-                  name: public[can_favourite][with_approval][0]
+                  name: public[can_favourite][manual_approval][0]
                   type: string
-                - description: Nth entry for public.can_reply.always.
+                - description: Nth entry for public.can_reply.automatic_approval.
                   in: formData
-                  name: public[can_reply][always][0]
+                  name: public[can_reply][automatic_approval][0]
                   type: string
-                - description: Nth entry for public.can_reply.with_approval.
+                - description: Nth entry for public.can_reply.manual_approval.
                   in: formData
-                  name: public[can_reply][with_approval][0]
+                  name: public[can_reply][manual_approval][0]
                   type: string
-                - description: Nth entry for public.can_reblog.always.
+                - description: Nth entry for public.can_reblog.automatic_approval.
                   in: formData
-                  name: public[can_reblog][always][0]
+                  name: public[can_reblog][automatic_approval][0]
                   type: string
-                - description: Nth entry for public.can_reblog.with_approval.
+                - description: Nth entry for public.can_reblog.manual_approval.
                   in: formData
-                  name: public[can_reblog][with_approval][0]
+                  name: public[can_reblog][manual_approval][0]
                   type: string
-                - description: Nth entry for unlisted.can_favourite.always.
+                - description: Nth entry for unlisted.can_favourite.automatic_approval.
                   in: formData
-                  name: unlisted[can_favourite][always][0]
+                  name: unlisted[can_favourite][automatic_approval][0]
                   type: string
-                - description: Nth entry for unlisted.can_favourite.with_approval.
+                - description: Nth entry for unlisted.can_favourite.manual_approval.
                   in: formData
-                  name: unlisted[can_favourite][with_approval][0]
+                  name: unlisted[can_favourite][manual_approval][0]
                   type: string
-                - description: Nth entry for unlisted.can_reply.always.
+                - description: Nth entry for unlisted.can_reply.automatic_approval.
                   in: formData
-                  name: unlisted[can_reply][always][0]
+                  name: unlisted[can_reply][automatic_approval][0]
                   type: string
-                - description: Nth entry for unlisted.can_reply.with_approval.
+                - description: Nth entry for unlisted.can_reply.manual_approval.
                   in: formData
-                  name: unlisted[can_reply][with_approval][0]
+                  name: unlisted[can_reply][manual_approval][0]
                   type: string
-                - description: Nth entry for unlisted.can_reblog.always.
+                - description: Nth entry for unlisted.can_reblog.automatic_approval.
                   in: formData
-                  name: unlisted[can_reblog][always][0]
+                  name: unlisted[can_reblog][automatic_approval][0]
                   type: string
-                - description: Nth entry for unlisted.can_reblog.with_approval.
+                - description: Nth entry for unlisted.can_reblog.manual_approval.
                   in: formData
-                  name: unlisted[can_reblog][with_approval][0]
+                  name: unlisted[can_reblog][manual_approval][0]
                   type: string
-                - description: Nth entry for private.can_favourite.always.
+                - description: Nth entry for private.can_favourite.automatic_approval.
                   in: formData
-                  name: private[can_favourite][always][0]
+                  name: private[can_favourite][automatic_approval][0]
                   type: string
-                - description: Nth entry for private.can_favourite.with_approval.
+                - description: Nth entry for private.can_favourite.manual_approval.
                   in: formData
-                  name: private[can_favourite][with_approval][0]
+                  name: private[can_favourite][manual_approval][0]
                   type: string
-                - description: Nth entry for private.can_reply.always.
+                - description: Nth entry for private.can_reply.automatic_approval.
                   in: formData
-                  name: private[can_reply][always][0]
+                  name: private[can_reply][automatic_approval][0]
                   type: string
-                - description: Nth entry for private.can_reply.with_approval.
+                - description: Nth entry for private.can_reply.manual_approval.
                   in: formData
-                  name: private[can_reply][with_approval][0]
+                  name: private[can_reply][manual_approval][0]
                   type: string
-                - description: Nth entry for private.can_reblog.always.
+                - description: Nth entry for private.can_reblog.automatic_approval.
                   in: formData
-                  name: private[can_reblog][always][0]
+                  name: private[can_reblog][automatic_approval][0]
                   type: string
-                - description: Nth entry for private.can_reblog.with_approval.
+                - description: Nth entry for private.can_reblog.manual_approval.
                   in: formData
-                  name: private[can_reblog][with_approval][0]
+                  name: private[can_reblog][manual_approval][0]
                   type: string
-                - description: Nth entry for direct.can_favourite.always.
+                - description: Nth entry for direct.can_favourite.automatic_approval.
                   in: formData
-                  name: direct[can_favourite][always][0]
+                  name: direct[can_favourite][automatic_approval][0]
                   type: string
-                - description: Nth entry for direct.can_favourite.with_approval.
+                - description: Nth entry for direct.can_favourite.manual_approval.
                   in: formData
-                  name: direct[can_favourite][with_approval][0]
+                  name: direct[can_favourite][manual_approval][0]
                   type: string
-                - description: Nth entry for direct.can_reply.always.
+                - description: Nth entry for direct.can_reply.automatic_approval.
                   in: formData
-                  name: direct[can_reply][always][0]
+                  name: direct[can_reply][automatic_approval][0]
                   type: string
-                - description: Nth entry for direct.can_reply.with_approval.
+                - description: Nth entry for direct.can_reply.manual_approval.
                   in: formData
-                  name: direct[can_reply][with_approval][0]
+                  name: direct[can_reply][manual_approval][0]
                   type: string
-                - description: Nth entry for direct.can_reblog.always.
+                - description: Nth entry for direct.can_reblog.automatic_approval.
                   in: formData
-                  name: direct[can_reblog][always][0]
+                  name: direct[can_reblog][automatic_approval][0]
                   type: string
-                - description: Nth entry for direct.can_reblog.with_approval.
+                - description: Nth entry for direct.can_reblog.manual_approval.
                   in: formData
-                  name: direct[can_reblog][with_approval][0]
+                  name: direct[can_reblog][manual_approval][0]
                   type: string
             produces:
                 - application/json
@@ -13257,15 +13241,15 @@ paths:
 
                 `interaction_policy[INTERACTION_TYPE][CONDITION][INDEX]=Value`
 
-                For example: `interaction_policy[can_reply][always][0]=author`
+                For example: `interaction_policy[can_reply][automatic_approval][0]=author`
 
                 Using `curl` this might look something like:
 
-                `curl -F 'interaction_policy[can_reply][always][0]=author' -F 'interaction_policy[can_reply][always][1]=followers' [... other form fields ...]`
+                `curl -F 'interaction_policy[can_reply][automatic_approval][0]=author' -F 'interaction_policy[can_reply][automatic_approval][1]=followers' [... other form fields ...]`
 
                 The JSON equivalent would be:
 
-                `curl -H 'Content-Type: application/json' -d '{"interaction_policy":{"can_reply":{"always":["author","followers"]}} [... other json fields ...]}'`
+                `curl -H 'Content-Type: application/json' -d '{"interaction_policy":{"can_reply":{"automatic_approval":["author","followers"]}} [... other json fields ...]}'`
 
                 The server will perform some normalization on the submitted policy so that you can't submit something totally invalid.
             operationId: statusCreate
@@ -13388,29 +13372,29 @@ paths:
                   name: content_type
                   type: string
                   x-go-name: ContentType
-                - description: Nth entry for interaction_policy.can_favourite.always.
+                - description: Nth entry for interaction_policy.can_favourite.automatic_approval.
                   in: formData
-                  name: interaction_policy[can_favourite][always][0]
+                  name: interaction_policy[can_favourite][automatic_approval][0]
                   type: string
-                - description: Nth entry for interaction_policy.can_favourite.with_approval.
+                - description: Nth entry for interaction_policy.can_favourite.manual_approval.
                   in: formData
-                  name: interaction_policy[can_favourite][with_approval][0]
+                  name: interaction_policy[can_favourite][manual_approval][0]
                   type: string
-                - description: Nth entry for interaction_policy.can_reply.always.
+                - description: Nth entry for interaction_policy.can_reply.automatic_approval.
                   in: formData
-                  name: interaction_policy[can_reply][always][0]
+                  name: interaction_policy[can_reply][automatic_approval][0]
                   type: string
-                - description: Nth entry for interaction_policy.can_reply.with_approval.
+                - description: Nth entry for interaction_policy.can_reply.manual_approval.
                   in: formData
-                  name: interaction_policy[can_reply][with_approval][0]
+                  name: interaction_policy[can_reply][manual_approval][0]
                   type: string
-                - description: Nth entry for interaction_policy.can_reblog.always.
+                - description: Nth entry for interaction_policy.can_reblog.automatic_approval.
                   in: formData
-                  name: interaction_policy[can_reblog][always][0]
+                  name: interaction_policy[can_reblog][automatic_approval][0]
                   type: string
-                - description: Nth entry for interaction_policy.can_reblog.with_approval.
+                - description: Nth entry for interaction_policy.can_reblog.manual_approval.
                   in: formData
-                  name: interaction_policy[can_reblog][with_approval][0]
+                  name: interaction_policy[can_reblog][manual_approval][0]
                   type: string
             produces:
                 - application/json

@@ -44,15 +44,15 @@ import (
 //
 // `interaction_policy[INTERACTION_TYPE][CONDITION][INDEX]=Value`
 //
-// For example: `interaction_policy[can_reply][always][0]=author`
+// For example: `interaction_policy[can_reply][automatic_approval][0]=author`
 //
 // Using `curl` this might look something like:
 //
-// `curl -F 'interaction_policy[can_reply][always][0]=author' -F 'interaction_policy[can_reply][always][1]=followers' [... other form fields ...]`
+// `curl -F 'interaction_policy[can_reply][automatic_approval][0]=author' -F 'interaction_policy[can_reply][automatic_approval][1]=followers' [... other form fields ...]`
 //
 // The JSON equivalent would be:
 //
-// `curl -H 'Content-Type: application/json' -d '{"interaction_policy":{"can_reply":{"always":["author","followers"]}} [... other json fields ...]}'`
+// `curl -H 'Content-Type: application/json' -d '{"interaction_policy":{"can_reply":{"automatic_approval":["author","followers"]}} [... other json fields ...]}'`
 //
 // The server will perform some normalization on the submitted policy so that you can't submit something totally invalid.
 //
@@ -204,34 +204,34 @@ import (
 //			- text/markdown
 //		in: formData
 //	-
-//		name: interaction_policy[can_favourite][always][0]
+//		name: interaction_policy[can_favourite][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for interaction_policy.can_favourite.always.
+//		description: Nth entry for interaction_policy.can_favourite.automatic_approval.
 //		type: string
 //	-
-//		name: interaction_policy[can_favourite][with_approval][0]
+//		name: interaction_policy[can_favourite][manual_approval][0]
 //		in: formData
-//		description: Nth entry for interaction_policy.can_favourite.with_approval.
+//		description: Nth entry for interaction_policy.can_favourite.manual_approval.
 //		type: string
 //	-
-//		name: interaction_policy[can_reply][always][0]
+//		name: interaction_policy[can_reply][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for interaction_policy.can_reply.always.
+//		description: Nth entry for interaction_policy.can_reply.automatic_approval.
 //		type: string
 //	-
-//		name: interaction_policy[can_reply][with_approval][0]
+//		name: interaction_policy[can_reply][manual_approval][0]
 //		in: formData
-//		description: Nth entry for interaction_policy.can_reply.with_approval.
+//		description: Nth entry for interaction_policy.can_reply.manual_approval.
 //		type: string
 //	-
-//		name: interaction_policy[can_reblog][always][0]
+//		name: interaction_policy[can_reblog][automatic_approval][0]
 //		in: formData
-//		description: Nth entry for interaction_policy.can_reblog.always.
+//		description: Nth entry for interaction_policy.can_reblog.automatic_approval.
 //		type: string
 //	-
-//		name: interaction_policy[can_reblog][with_approval][0]
+//		name: interaction_policy[can_reblog][manual_approval][0]
 //		in: formData
-//		description: Nth entry for interaction_policy.can_reblog.with_approval.
+//		description: Nth entry for interaction_policy.can_reblog.manual_approval.
 //		type: string
 //
 //	produces:
