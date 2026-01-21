@@ -3,7 +3,7 @@ module code.superseriousbusiness.org/gotosocial
 go 1.24.6
 
 // Replace modernc/sqlite with our version that fixes the concurrency INTERRUPT issue
-replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.44.0-concurrency-workaround
+replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.44.3-concurrency-workaround
 
 // Replace gin with our own fork of v1.11.0 with yet-to-be-released array binding fix
 replace github.com/gin-gonic/gin => codeberg.org/superseriousbusiness/gin v1.11.0-array-binding-fix-2
@@ -91,7 +91,7 @@ require (
 	golang.org/x/text v0.33.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.44.1
+	modernc.org/sqlite v1.44.3
 	mvdan.cc/xurls/v2 v2.6.0
 )
 
@@ -244,7 +244,7 @@ require (
 	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	modernc.org/libc v1.67.4 // indirect
+	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )

@@ -1467,7 +1467,7 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# modernc.org/libc v1.67.4
+# modernc.org/libc v1.67.6
 ## explicit; go 1.24.0
 modernc.org/libc
 modernc.org/libc/errno
@@ -1501,7 +1501,7 @@ modernc.org/mathutil
 # modernc.org/memory v1.11.0
 ## explicit; go 1.23.0
 modernc.org/memory
-# modernc.org/sqlite v1.44.1 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.44.0-concurrency-workaround
+# modernc.org/sqlite v1.44.3 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.44.3-concurrency-workaround
 ## explicit; go 1.24.0
 modernc.org/sqlite
 modernc.org/sqlite/lib
@@ -1509,5 +1509,5 @@ modernc.org/sqlite/vtab
 # mvdan.cc/xurls/v2 v2.6.0
 ## explicit; go 1.22.0
 mvdan.cc/xurls/v2
-# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.44.0-concurrency-workaround
+# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.44.3-concurrency-workaround
 # github.com/gin-gonic/gin => codeberg.org/superseriousbusiness/gin v1.11.0-array-binding-fix-2
