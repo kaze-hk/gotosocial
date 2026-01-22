@@ -1786,34 +1786,19 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASInteractionRequestable
     "id": "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M",
     "interactionPolicy": {
       "canAnnounce": {
-        "always": [
-          "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "approvalRequired": [],
         "automaticApproval": [
           "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "manualApproval": []
+        ]
       },
       "canLike": {
-        "always": [
-          "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "approvalRequired": [],
         "automaticApproval": [
           "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "manualApproval": []
+        ]
       },
       "canReply": {
-        "always": [
-          "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "approvalRequired": [],
         "automaticApproval": [
           "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "manualApproval": []
+        ]
       }
     },
     "published": "2021-09-20T12:40:37+02:00",
