@@ -177,15 +177,29 @@ func (p *Processor) FaveCreate(
 		status.PendingApproval = util.Ptr(false)
 	}
 
-	// Queue remaining fave side effects
-	// (send out fave, update timeline, etc).
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ActivityLike,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       gtsFave,
-		Origin:         requester,
-		Target:         status.Account,
-	})
+	if pendingApproval {
+		// Fave is pending approval, which means it
+		// must target a status with an interaction
+		// policy that requires approval for faves.
+		// Queue up Create LikeRequest side effects.
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+			APObjectType:   ap.ActivityLikeRequest,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       gtsFave,
+			Origin:         requester,
+			Target:         status.Account,
+		})
+	} else {
+		// "Normal" fave with no explicit approval
+		// required, queue Create Like side effects.
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+			APObjectType:   ap.ActivityLike,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       gtsFave,
+			Origin:         requester,
+			Target:         status.Account,
+		})
+	}
 
 	return p.c.GetAPIStatus(ctx, requester, status)
 }

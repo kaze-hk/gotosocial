@@ -18,9 +18,7 @@
 package emoji
 
 import (
-	"errors"
 	"net/http"
-	"strings"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
@@ -28,10 +26,9 @@ import (
 )
 
 func (m *Module) EmojiGetHandler(c *gin.Context) {
-	emojiID := strings.ToUpper(c.Param(apiutil.IDKey))
-	if emojiID == "" {
-		err := errors.New("no emoji id specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	emojiID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

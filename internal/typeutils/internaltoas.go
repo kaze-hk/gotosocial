@@ -2462,3 +2462,108 @@ func (c *Converter) appendASInteractionAuthorization(
 
 	return nil
 }
+
+// InteractionReqToASInteractionRequestable converts the given
+// interaction request to either a LikeRequest, ReplyRequest,
+// or AnnounceRequest, with appropriate instrument and addressing.
+//
+// Result will look something like:
+//
+//	{
+//	  "@context": [... blah blah blah ...],
+//	  "actor": "http://fossbros-anonymous.io/users/foss_satan",
+//	  "id": "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+//	  "instrument": { [... the note that foss_satan is replying with ...] },
+//	  "object": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
+//	  "to": "http://localhost:8080/users/the_mighty_zork",
+//	  "type": "ReplyRequest"
+//	}
+func (c *Converter) InteractionReqToASInteractionRequestable(
+	ctx context.Context,
+	req *gtsmodel.InteractionRequest,
+) (ap.InteractionRequestable, error) {
+
+	// Actor of the interaction aka the interacting account.
+	actorIRI, err := url.Parse(req.InteractingAccount.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid account uri: %w", err)
+	}
+
+	// Object of the interaction aka the target status.
+	objectIRI, err := url.Parse(req.TargetStatus.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid object uri: %w", err)
+	}
+
+	// Account targeted by the interaction.
+	toIRI, err := url.Parse(req.TargetAccount.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid to uri: %w", err)
+	}
+
+	// Exact type of InteractionRequestable varies
+	// depending on whether this is a LikeRequest,
+	// ReplyRequest, or AnnounceRequest.
+	var (
+		v              ap.InteractionRequestable
+		instrumentProp = streams.NewActivityStreamsInstrumentProperty()
+	)
+	switch req.InteractionType {
+
+	// LikeRequest
+	case gtsmodel.InteractionLike:
+		v = streams.NewGoToSocialLikeRequest()
+		like, err := c.FaveToAS(ctx, req.Like)
+		if err != nil {
+			return nil, gtserror.Newf("error converting like: %w", err)
+		}
+		instrumentProp.AppendActivityStreamsLike(like)
+
+	// ReplyRequest
+	case gtsmodel.InteractionReply:
+		v = streams.NewGoToSocialReplyRequest()
+		statusable, err := c.StatusToAS(ctx, req.Reply)
+		if err != nil {
+			return nil, gtserror.Newf("error converting reply: %w", err)
+		}
+
+		// If normal status, append as note.
+		// If a poll, append as question.
+		switch t := statusable.(type) {
+		case vocab.ActivityStreamsNote:
+			instrumentProp.AppendActivityStreamsNote(t)
+		case vocab.ActivityStreamsQuestion:
+			instrumentProp.AppendActivityStreamsQuestion(t)
+		default:
+			return nil, gtserror.Newf("type %T not supported as instrument of ReplyRequest", t)
+		}
+
+	// AnnounceRequest
+	case gtsmodel.InteractionAnnounce:
+		v = streams.NewGoToSocialAnnounceRequest()
+		announce, err := c.BoostToAS(ctx, req.Announce)
+		if err != nil {
+			return nil, gtserror.Newf("error converting announce: %w", err)
+		}
+		instrumentProp.AppendActivityStreamsAnnounce(announce)
+	}
+
+	// Set ID.
+	if err := ap.SetJSONLDIdStr(v, req.InteractionRequestURI); err != nil {
+		return nil, gtserror.Newf("error setting id: %w", err)
+	}
+
+	// Set actor IRI.
+	ap.AppendActorIRIs(v, actorIRI)
+
+	// Set object IRI.
+	ap.AppendObjectIRIs(v, objectIRI)
+
+	// Set to IRI.
+	ap.AppendTo(v, toIRI)
+
+	// Set instrument.
+	v.SetActivityStreamsInstrument(instrumentProp)
+
+	return v, nil
+}

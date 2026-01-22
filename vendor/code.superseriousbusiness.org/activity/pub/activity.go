@@ -8,42 +8,61 @@ import (
 //
 // The Activity types provided in the streams package implement this.
 type Activity interface {
-	// Activity is also a vocab.Type
+	// Activity is also
+	// a vocab.Type.
 	vocab.Type
-	// GetActivityStreamsActor returns the "actor" property if it exists, and
-	// nil otherwise.
+
+	// GetActivityStreamsActor returns "actor"
+	// if it exists, or nil if it doesn't.
 	GetActivityStreamsActor() vocab.ActivityStreamsActorProperty
-	// GetActivityStreamsAudience returns the "audience" property if it
-	// exists, and nil otherwise.
-	GetActivityStreamsAudience() vocab.ActivityStreamsAudienceProperty
-	// GetActivityStreamsBcc returns the "bcc" property if it exists, and nil
-	// otherwise.
-	GetActivityStreamsBcc() vocab.ActivityStreamsBccProperty
-	// GetActivityStreamsBto returns the "bto" property if it exists, and nil
-	// otherwise.
-	GetActivityStreamsBto() vocab.ActivityStreamsBtoProperty
-	// GetActivityStreamsCc returns the "cc" property if it exists, and nil
-	// otherwise.
-	GetActivityStreamsCc() vocab.ActivityStreamsCcProperty
-	// GetActivityStreamsTo returns the "to" property if it exists, and nil
-	// otherwise.
-	GetActivityStreamsTo() vocab.ActivityStreamsToProperty
-	// GetActivityStreamsAttributedTo returns the "attributedTo" property if
-	// it exists, and nil otherwise.
-	GetActivityStreamsAttributedTo() vocab.ActivityStreamsAttributedToProperty
-	// GetActivityStreamsObject returns the "object" property if it exists,
-	// and nil otherwise.
-	GetActivityStreamsObject() vocab.ActivityStreamsObjectProperty
-	// SetActivityStreamsActor sets the "actor" property.
+	// SetActivityStreamsActor sets "actor".
 	SetActivityStreamsActor(i vocab.ActivityStreamsActorProperty)
-	// SetActivityStreamsObject sets the "object" property.
-	SetActivityStreamsObject(i vocab.ActivityStreamsObjectProperty)
-	// SetActivityStreamsTo sets the "to" property.
-	SetActivityStreamsTo(i vocab.ActivityStreamsToProperty)
-	// SetActivityStreamsBto sets the "bto" property.
-	SetActivityStreamsBto(i vocab.ActivityStreamsBtoProperty)
-	// SetActivityStreamsBcc sets the "bcc" property.
-	SetActivityStreamsBcc(i vocab.ActivityStreamsBccProperty)
-	// SetActivityStreamsAttributedTo sets the "attributedTo" property.
+
+	// GetActivityStreamsAttributedTo returns "attributedTo"
+	// if it exists, or nil if it doesn't.
+	GetActivityStreamsAttributedTo() vocab.ActivityStreamsAttributedToProperty
+	// SetActivityStreamsAttributedTo sets "attributedTo".
 	SetActivityStreamsAttributedTo(i vocab.ActivityStreamsAttributedToProperty)
+
+	// GetActivityStreamsAudience returns "audience"
+	// property if it exists, or nil if it doesn't.
+	GetActivityStreamsAudience() vocab.ActivityStreamsAudienceProperty
+	// SetActivityStreamsAudience sets "audience".
+	SetActivityStreamsAudience(t vocab.ActivityStreamsAudienceProperty)
+
+	// GetActivityStreamsObject returns the "object"
+	// property if it exists, or nil if it doesn't.
+	GetActivityStreamsObject() vocab.ActivityStreamsObjectProperty
+	// SetActivityStreamsObject sets "object".
+	SetActivityStreamsObject(i vocab.ActivityStreamsObjectProperty)
+
+	// GetActivityStreamsInstrument returns the "instrument"
+	// property if it exists, or nil if it doesn't.
+	GetActivityStreamsInstrument() vocab.ActivityStreamsInstrumentProperty
+	// SetActivityStreamsInstrument sets "instrument".
+	SetActivityStreamsInstrument(i vocab.ActivityStreamsInstrumentProperty)
+
+	// GetActivityStreamsCc returns "cc"
+	// if it exists, or nil if it doesn't.
+	GetActivityStreamsCc() vocab.ActivityStreamsCcProperty
+	// SetActivityStreamsCc sets "cc".
+	SetActivityStreamsCc(i vocab.ActivityStreamsCcProperty)
+
+	// GetActivityStreamsTo returns "to"
+	// if it exists, or nil if it doesn't.
+	GetActivityStreamsTo() vocab.ActivityStreamsToProperty
+	// SetActivityStreamsTo sets "to".
+	SetActivityStreamsTo(i vocab.ActivityStreamsToProperty)
+
+	// GetActivityStreamsBto returns "bto"
+	// if it exists, or nil if it doesn't.
+	GetActivityStreamsBto() vocab.ActivityStreamsBtoProperty
+	// SetActivityStreamsBto sets "bto".
+	SetActivityStreamsBto(i vocab.ActivityStreamsBtoProperty)
+
+	// GetActivityStreamsBcc returns "bcc"
+	// if it exists, or nil if it doesn't.
+	GetActivityStreamsBcc() vocab.ActivityStreamsBccProperty
+	// SetActivityStreamsBcc sets "bcc".
+	SetActivityStreamsBcc(i vocab.ActivityStreamsBccProperty)
 }

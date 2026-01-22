@@ -232,6 +232,7 @@ type Activityable interface {
 	WithActor
 	WithObject
 	WithPublished
+	WithInstrument
 }
 
 // Accountable represents the minimum activitypub interface for representing an 'account'.
@@ -424,6 +425,7 @@ type InteractionRequestable interface {
 	vocab.Type
 
 	WithActor
+	WithTo
 	WithObject
 	WithInstrument
 }

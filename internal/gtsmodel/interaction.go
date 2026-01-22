@@ -17,7 +17,11 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"time"
+
+	"code.superseriousbusiness.org/gotosocial/internal/uris"
+)
 
 // Like / Reply / Announce
 type InteractionType enumType
@@ -37,25 +41,16 @@ const (
 const (
 	// Suffix to append to the URI of
 	// impolite Likes to mock a LikeRequest.
-	LikeRequestSuffix = "#LikeRequest"
+	ImpoliteLikeRequestSuffix = "#LikeRequest"
 
 	// Suffix to append to the URI of
 	// impolite replies to mock a ReplyRequest.
-	ReplyRequestSuffix = "#ReplyRequest"
+	ImpoliteReplyRequestSuffix = "#ReplyRequest"
 
 	// Suffix to append to the URI of impolite
 	// Announces to mock an AnnounceRequest.
-	AnnounceRequestSuffix = "#AnnounceRequest"
+	ImpoliteAnnounceRequestSuffix = "#AnnounceRequest"
 )
-
-// A useless function that appends two strings, this exists largely
-// to indicate where a request URI is being generated as forward compatible
-// with our planned polite request flow fully introduced in v0.21.0.
-//
-// TODO: remove this in v0.21.0. everything the linter complains about after removing this, needs updating.
-func ForwardCompatibleInteractionRequestURI(interactionURI string, suffix string) string {
-	return interactionURI + suffix
-}
 
 // Stringifies this InteractionType in a
 // manner suitable for serving via the API.
@@ -86,7 +81,7 @@ type InteractionRequest struct {
 	// ID of the status targeted by the interaction.
 	TargetStatusID string `bun:"type:CHAR(26),nullzero,notnull"`
 
-	// Local status corresponding to TargetStatusID.
+	// Status corresponding to TargetStatusID.
 	// Column not stored in DB.
 	TargetStatus *Status `bun:"-"`
 
@@ -163,10 +158,37 @@ func (ir *InteractionRequest) IsAccepted() bool {
 	return !ir.AcceptedAt.IsZero()
 }
 
+// MarkAccepted marks the interaction request as
+// accepted by the target account, by updating the
+// AcceptedAt, ResponseURI, and AuthorizationURI fields.
+//
+// TargetAccount must be set or this will panic!
+func (ir *InteractionRequest) MarkAccepted() {
+	ir.AcceptedAt = time.Now()
+	ir.ResponseURI = uris.GenerateURIForAccept(
+		ir.TargetAccount.Username, ir.ID,
+	)
+	ir.AuthorizationURI = uris.GenerateURIForAuthorization(
+		ir.TargetAccount.Username, ir.ID,
+	)
+}
+
 // IsRejected returns true if this
 // interaction request has been rejected.
 func (ir *InteractionRequest) IsRejected() bool {
 	return !ir.RejectedAt.IsZero()
+}
+
+// MarkRejected marks the interaction request
+// as rejected by the target account, by updating
+// the RejectedAt and ResponseURI fields.
+//
+// TargetAccount must be set or this will panic!
+func (ir *InteractionRequest) MarkRejected() {
+	ir.RejectedAt = time.Now()
+	ir.ResponseURI = uris.GenerateURIForReject(
+		ir.TargetAccount.Username, ir.ID,
+	)
 }
 
 // IsPolite returns true if this interaction request was done

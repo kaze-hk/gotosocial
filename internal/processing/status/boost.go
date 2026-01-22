@@ -147,15 +147,29 @@ func (p *Processor) BoostCreate(
 		target.PendingApproval = util.Ptr(false)
 	}
 
-	// Queue remaining boost side effects
-	// (send out boost, update timeline, etc).
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ActivityAnnounce,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       boost,
-		Origin:         requester,
-		Target:         target.Account,
-	})
+	if pendingApproval {
+		// Boost is pending approval, which means it
+		// must target a status with an interaction
+		// policy that requires approval for announces.
+		// Queue up Create AnnounceRequest side effects.
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounceRequest,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       boost,
+			Origin:         requester,
+			Target:         target.Account,
+		})
+	} else {
+		// "Normal" boost with no explicit approval
+		// required, queue Create Announce side effects.
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounce,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       boost,
+			Origin:         requester,
+			Target:         target.Account,
+		})
+	}
 
 	return p.c.GetAPIStatus(ctx, requester, boost)
 }

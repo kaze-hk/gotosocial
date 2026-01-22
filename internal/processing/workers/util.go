@@ -284,29 +284,19 @@ func (u *utils) redirectFollowers(
 	return true
 }
 
-// impoliteFaveRequest stores an interaction request
-// for the given fave, and notifies the interactee.
-//
-// It should be used only when an actor has sent a Like
-// directly in response to a post that requires approval
-// for it, instead of sending a LikeRequest.
-func (u *utils) impoliteFaveRequest(
+// storeInteractionRequest ensures that
+// the given interaction request for the
+// given interaction is stored in the db.
+func (u *utils) storeInteractionRequest(
 	ctx context.Context,
-	fave *gtsmodel.StatusFave,
+	intReq *gtsmodel.InteractionRequest,
 ) error {
-	// Only create interaction request
-	// if fave targets a local status.
-	if fave.Status == nil ||
-		!fave.Status.IsLocal() {
-		return nil
-	}
-
 	// Lock on the interaction URI.
-	unlock := u.state.ProcessingLocks.Lock(fave.URI)
+	unlock := u.state.ProcessingLocks.Lock(intReq.InteractionURI)
 	defer unlock()
 
 	// Ensure no req with this URI exists already.
-	req, err := u.state.DB.GetInteractionRequestByInteractionURI(ctx, fave.URI)
+	req, err := u.state.DB.GetInteractionRequestByInteractionURI(ctx, intReq.InteractionURI)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf("db error checking for existing interaction request: %w", err)
 	}
@@ -317,109 +307,9 @@ func (u *utils) impoliteFaveRequest(
 		return nil
 	}
 
-	// Create + store new impolite interaction request.
-	req = typeutils.StatusFaveToImpoliteInteractionRequest(fave)
-	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
+	// Store interaction request.
+	if err := u.state.DB.PutInteractionRequest(ctx, intReq); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
-	}
-
-	// Notify *local* account of pending fave.
-	if err := u.surface.notifyPendingFave(ctx, fave); err != nil {
-		return gtserror.Newf("error notifying pending fave: %w", err)
-	}
-
-	return nil
-}
-
-// impoliteReplyRequest stores an interaction request
-// for the given reply, and notifies the interactee.
-//
-// It should be used only when an actor has sent a reply
-// directly in response to a post that requires approval
-// for it, instead of sending a ReplyRequest.
-func (u *utils) impoliteReplyRequest(
-	ctx context.Context,
-	reply *gtsmodel.Status,
-) error {
-	// Only create interaction request if
-	// status replies to a local status.
-	if reply.InReplyTo == nil ||
-		!reply.InReplyTo.IsLocal() {
-		return nil
-	}
-
-	// Lock on the interaction URI.
-	unlock := u.state.ProcessingLocks.Lock(reply.URI)
-	defer unlock()
-
-	// Ensure no req with this URI exists already.
-	req, err := u.state.DB.GetInteractionRequestByInteractionURI(ctx, reply.URI)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return gtserror.Newf("db error checking for existing interaction request: %w", err)
-	}
-
-	if req != nil {
-		// Interaction req already exists,
-		// no need to do anything else.
-		return nil
-	}
-
-	// Create + store impolite interaction request.
-	req = typeutils.StatusToImpoliteInteractionRequest(reply)
-	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
-		return gtserror.Newf("db error storing interaction request: %w", err)
-	}
-
-	// Notify *local* account of pending reply.
-	if err := u.surface.notifyPendingReply(ctx, reply); err != nil {
-		return gtserror.Newf("error notifying pending reply: %w", err)
-	}
-
-	return nil
-}
-
-// impoliteAnnounceRequest stores an interaction request
-// for the given announce, and notifies the interactee.
-//
-// It should be used only when an actor has sent an Announce
-// directly in response to a post that requires approval
-// for it, instead of sending an AnnounceRequest.
-func (u *utils) impoliteAnnounceRequest(
-	ctx context.Context,
-	boost *gtsmodel.Status,
-) error {
-	// Only create interaction request if
-	// status announces a local status.
-	if boost.BoostOf == nil ||
-		!boost.BoostOf.IsLocal() {
-		return nil
-	}
-
-	// Lock on the interaction URI.
-	unlock := u.state.ProcessingLocks.Lock(boost.URI)
-	defer unlock()
-
-	// Ensure no req with this URI exists already.
-	req, err := u.state.DB.GetInteractionRequestByInteractionURI(ctx, boost.URI)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return gtserror.Newf("db error checking for existing interaction request: %w", err)
-	}
-
-	if req != nil {
-		// Interaction req already exists,
-		// no need to do anything else.
-		return nil
-	}
-
-	// Create + store impolite interaction request.
-	req = typeutils.StatusToImpoliteInteractionRequest(boost)
-	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
-		return gtserror.Newf("db error storing interaction request: %w", err)
-	}
-
-	// Notify *local* account of pending announce.
-	if err := u.surface.notifyPendingAnnounce(ctx, boost); err != nil {
-		return gtserror.Newf("error notifying pending announce: %w", err)
 	}
 
 	return nil

@@ -35,7 +35,7 @@ import (
 const (
 	confirmEmailPath         = "/" + uris.ConfirmEmailPath
 	profileGroupPath         = "/@:username"
-	statusPath               = "/statuses/:" + apiutil.WebStatusIDKey // leave out the '/@:username' prefix as this will be served within the profile group
+	statusPath               = "/statuses/:" + apiutil.IDKey // leave out the '/@:username' prefix as this will be served within the profile group
 	tagsPath                 = "/tags/:" + apiutil.TagNameKey
 	customCSSPath            = profileGroupPath + "/custom.css"
 	instanceCustomCSSPath    = "/custom.css"

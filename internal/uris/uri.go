@@ -27,28 +27,31 @@ import (
 )
 
 const (
-	UsersPath          = "users"          // UsersPath is for serving users info
-	StatusesPath       = "statuses"       // StatusesPath is for serving statuses
-	InboxPath          = "inbox"          // InboxPath represents the activitypub inbox location
-	OutboxPath         = "outbox"         // OutboxPath represents the activitypub outbox location
-	FollowersPath      = "followers"      // FollowersPath represents the activitypub followers location
-	FollowingPath      = "following"      // FollowingPath represents the activitypub following location
-	LikedPath          = "liked"          // LikedPath represents the activitypub liked location
-	CollectionsPath    = "collections"    // CollectionsPath represents the activitypub collections location
-	FeaturedPath       = "featured"       // FeaturedPath represents the activitypub featured location
-	PublicKeyPath      = "main-key"       // PublicKeyPath is for serving an account's public key
-	FollowPath         = "follow"         // FollowPath used to generate the URI for an individual follow or follow request
-	UpdatePath         = "updates"        // UpdatePath is used to generate the URI for an account update
-	BlocksPath         = "blocks"         // BlocksPath is used to generate the URI for a block
-	MovesPath          = "moves"          // MovesPath is used to generate the URI for a move
-	ReportsPath        = "reports"        // ReportsPath is used to generate the URI for a report/flag
-	ConfirmEmailPath   = "confirm_email"  // ConfirmEmailPath is used to generate the URI for an email confirmation link
-	FileserverPath     = "fileserver"     // FileserverPath is a path component for serving attachments + media
-	EmojiPath          = "emoji"          // EmojiPath represents the activitypub emoji location
-	TagsPath           = "tags"           // TagsPath represents the activitypub tags location
-	AcceptsPath        = "accepts"        // AcceptsPath represents the activitypub Accept's location
-	AuthorizationsPath = "authorizations" // AuthorizationsPath represents the location of an Authorization type such as LikeAuthorization, ReplyAuthorization, etc.
-	RejectsPath        = "rejects"        // RejectsPath represents the activitypub Reject's location
+	UsersPath            = "users"             // UsersPath is for serving users info
+	StatusesPath         = "statuses"          // StatusesPath is for serving statuses
+	InboxPath            = "inbox"             // InboxPath represents the activitypub inbox location
+	OutboxPath           = "outbox"            // OutboxPath represents the activitypub outbox location
+	FollowersPath        = "followers"         // FollowersPath represents the activitypub followers location
+	FollowingPath        = "following"         // FollowingPath represents the activitypub following location
+	LikedPath            = "liked"             // LikedPath represents the activitypub liked location
+	CollectionsPath      = "collections"       // CollectionsPath represents the activitypub collections location
+	FeaturedPath         = "featured"          // FeaturedPath represents the activitypub featured location
+	PublicKeyPath        = "main-key"          // PublicKeyPath is for serving an account's public key
+	FollowPath           = "follow"            // FollowPath used to generate the URI for an individual follow or follow request
+	UpdatePath           = "updates"           // UpdatePath is used to generate the URI for an account update
+	BlocksPath           = "blocks"            // BlocksPath is used to generate the URI for a block
+	MovesPath            = "moves"             // MovesPath is used to generate the URI for a move
+	ReportsPath          = "reports"           // ReportsPath is used to generate the URI for a report/flag
+	ConfirmEmailPath     = "confirm_email"     // ConfirmEmailPath is used to generate the URI for an email confirmation link
+	FileserverPath       = "fileserver"        // FileserverPath is a path component for serving attachments + media
+	EmojiPath            = "emoji"             // EmojiPath represents the activitypub emoji location
+	TagsPath             = "tags"              // TagsPath represents the activitypub tags location
+	AcceptsPath          = "accepts"           // AcceptsPath represents the activitypub Accept's location
+	AuthorizationsPath   = "authorizations"    // AuthorizationsPath represents the location of an Authorization type such as LikeAuthorization, ReplyAuthorization, etc.
+	RejectsPath          = "rejects"           // RejectsPath represents the activitypub Reject's location
+	LikeRequestsPath     = "like_requests"     // LikeRequestsPath is used to generate the URI for a LikeRequest.
+	ReplyRequestsPath    = "reply_requests"    // ReplyRequestsPath is used to generate the URI for a ReplyRequest.
+	AnnounceRequestsPath = "announce_requests" // LikeRequestsPath is used to generate the URI for an AnnounceRequest.
 )
 
 // UserURIs contains a bunch of UserURIs
@@ -222,6 +225,48 @@ func GenerateURIForAuthorization(username string, id string) string {
 		UsersPath,
 		username,
 		AuthorizationsPath,
+		id,
+	)
+}
+
+// GenerateURIForLikeRequest returns the AP URI for a new LikeRequest object,
+// Eg., https://example.org/users/whatever_user/like_requests/01F7XTH1QGBAPMGF49WJZ91XGC
+func GenerateURIForLikeRequest(username string, id string) string {
+	proto := config.GetProtocol()
+	host := config.GetHost()
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		LikeRequestsPath,
+		id,
+	)
+}
+
+// GenerateURIForReplyRequest returns the AP URI for a new ReplyRequest object,
+// Eg., https://example.org/users/whatever_user/reply_requests/01F7XTH1QGBAPMGF49WJZ91XGC
+func GenerateURIForReplyRequest(username string, id string) string {
+	proto := config.GetProtocol()
+	host := config.GetHost()
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		ReplyRequestsPath,
+		id,
+	)
+}
+
+// GenerateURIForAnnounceRequest returns the AP URI for a new AnnounceRequest object,
+// Eg., https://example.org/users/whatever_user/announce_requests/01F7XTH1QGBAPMGF49WJZ91XGC
+func GenerateURIForAnnounceRequest(username string, id string) string {
+	proto := config.GetProtocol()
+	host := config.GetHost()
+	return buildURL4(proto,
+		host,
+		UsersPath,
+		username,
+		AnnounceRequestsPath,
 		id,
 	)
 }

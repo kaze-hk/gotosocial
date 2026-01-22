@@ -157,6 +157,10 @@ func serializeActivityable(t vocab.Type, includeContext bool) (map[string]interf
 		return nil, err
 	}
 
+	if err := NormalizeOutgoingInstrumentProp(activityable, data); err != nil {
+		return nil, err
+	}
+
 	return data, nil
 }
 

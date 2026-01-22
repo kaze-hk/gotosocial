@@ -20,7 +20,6 @@ package web
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
@@ -52,21 +51,11 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		return
 	}
 
-	statusID, errWithCode := apiutil.ParseWebStatusID(c.Param(apiutil.WebStatusIDKey))
+	statusID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
-
-	// Normalize requested username + status ID:
-	//
-	//   - Usernames on our instance are (currently) always lowercase.
-	//   - StatusIDs on our instance are (currently) always ULIDs.
-	//
-	// todo: Update this logic when different username patterns
-	// are allowed, and/or when status slugs are introduced.
-	requestedUser = strings.ToLower(requestedUser)
-	statusID = strings.ToUpper(statusID)
 
 	// Check what type of content is being requested. If we're getting an AP
 	// request on this endpoint we should render the AP representation instead.

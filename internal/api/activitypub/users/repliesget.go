@@ -18,12 +18,9 @@
 package users
 
 import (
-	"errors"
 	"net/http"
-	"strings"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
-	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"github.com/gin-gonic/gin"
 )
@@ -98,31 +95,15 @@ import (
 //				"$ref": "#/definitions/error"
 //			description: not found
 func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
-	// usernames on our instance are always lowercase
-	requestedUser := strings.ToLower(c.Param(apiutil.UsernameKey))
-	if requestedUser == "" {
-		err := errors.New("no username specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	username, statusID, contentType, errWithCode := m.parseCommonWithID(c)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	// status IDs on our instance are always uppercase
-	requestedStatusID := strings.ToUpper(c.Param(apiutil.IDKey))
-	if requestedStatusID == "" {
-		err := errors.New("no status id specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	contentType, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubOrHTMLHeaders...)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	if contentType == string(apiutil.TextHTML) {
-		// redirect to the status
-		c.Redirect(http.StatusSeeOther, "/@"+requestedUser+"/statuses/"+requestedStatusID)
+	if contentType == apiutil.TextHTML {
+		// Redirect to status web view.
+		c.Redirect(http.StatusSeeOther, "/@"+username+"/statuses/"+statusID)
 		return
 	}
 
@@ -158,8 +139,8 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 	// Fetch serialized status replies response for input status.
 	resp, errWithCode := m.processor.Fedi().StatusRepliesGet(
 		c.Request.Context(),
-		requestedUser,
-		requestedStatusID,
+		username,
+		statusID,
 		page,
 		onlyOtherAccounts,
 	)

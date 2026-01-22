@@ -27,7 +27,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"github.com/stretchr/testify/suite"
 )
@@ -57,9 +56,23 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 			suite.FailNow(err.Error())
 		}
 
-		// Put an impolite interaction request in the DB for this reply.
-		req := typeutils.StatusToImpoliteInteractionRequest(reply)
-		if err := suite.state.DB.PutInteractionRequest(ctx, req); err != nil {
+		// Put an interaction request in the DB for this reply.
+		intReqID := id.NewULIDFromTime(reply.CreatedAt)
+		intReq := &gtsmodel.InteractionRequest{
+			ID:                    intReqID,
+			TargetStatusID:        reply.InReplyToID,
+			TargetStatus:          reply.InReplyTo,
+			TargetAccountID:       reply.InReplyToAccountID,
+			TargetAccount:         reply.InReplyToAccount,
+			InteractingAccountID:  reply.AccountID,
+			InteractingAccount:    reply.Account,
+			InteractionRequestURI: reply.URI + gtsmodel.ImpoliteReplyRequestSuffix,
+			InteractionURI:        reply.URI,
+			InteractionType:       gtsmodel.InteractionReply,
+			Polite:                util.Ptr(false),
+			Reply:                 reply,
+		}
+		if err := suite.state.DB.PutInteractionRequest(ctx, intReq); err != nil {
 			suite.FailNow(err.Error())
 		}
 
@@ -83,9 +96,23 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 			suite.FailNow(err.Error())
 		}
 
-		// Put an impolite interaction request in the DB for this boost.
-		req := typeutils.StatusToImpoliteInteractionRequest(boost)
-		if err := suite.state.DB.PutInteractionRequest(ctx, req); err != nil {
+		// Put an interaction request in the DB for this boost.
+		intReqID := id.NewULIDFromTime(boost.CreatedAt)
+		intReq := &gtsmodel.InteractionRequest{
+			ID:                    intReqID,
+			TargetStatusID:        boost.BoostOfID,
+			TargetStatus:          boost.BoostOf,
+			TargetAccountID:       boost.BoostOfAccountID,
+			TargetAccount:         boost.BoostOfAccount,
+			InteractingAccountID:  boost.AccountID,
+			InteractingAccount:    boost.Account,
+			InteractionRequestURI: boost.URI + gtsmodel.ImpoliteAnnounceRequestSuffix,
+			InteractionURI:        boost.URI,
+			InteractionType:       gtsmodel.InteractionAnnounce,
+			Polite:                util.Ptr(false),
+			Announce:              boost,
+		}
+		if err := suite.state.DB.PutInteractionRequest(ctx, intReq); err != nil {
 			suite.FailNow(err.Error())
 		}
 
@@ -110,8 +137,22 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 		}
 
 		// Put an impolite interaction request in the DB for this fave.
-		req := typeutils.StatusFaveToImpoliteInteractionRequest(fave)
-		if err := suite.state.DB.PutInteractionRequest(ctx, req); err != nil {
+		intReqID := id.NewULIDFromTime(fave.CreatedAt)
+		intReq := &gtsmodel.InteractionRequest{
+			ID:                    intReqID,
+			TargetStatusID:        fave.StatusID,
+			TargetStatus:          fave.Status,
+			TargetAccountID:       fave.TargetAccountID,
+			TargetAccount:         fave.TargetAccount,
+			InteractingAccountID:  fave.AccountID,
+			InteractingAccount:    fave.Account,
+			InteractionRequestURI: fave.URI + gtsmodel.ImpoliteLikeRequestSuffix,
+			InteractionURI:        fave.URI,
+			InteractionType:       gtsmodel.InteractionLike,
+			Polite:                util.Ptr(false),
+			Like:                  fave,
+		}
+		if err := suite.state.DB.PutInteractionRequest(ctx, intReq); err != nil {
 			suite.FailNow(err.Error())
 		}
 

@@ -22,14 +22,12 @@ import (
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/streams"
-	"code.superseriousbusiness.org/activity/streams/vocab"
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // federate wraps functions for federating
@@ -133,10 +131,6 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 
 // CreateStatus sends the given status out to relevant
 // recipients with the Outbox of the status creator.
-//
-// If the status is pending approval, then it will be
-// sent **ONLY** to the inbox of the account it replies to,
-// ignoring shared inboxes.
 func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// Do nothing if the status
 	// shouldn't be federated.
@@ -159,20 +153,6 @@ func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) er
 	statusable, err := f.converter.StatusToAS(ctx, status)
 	if err != nil {
 		return gtserror.Newf("error converting status to Statusable: %w", err)
-	}
-
-	// If status is pending approval,
-	// it must be a reply. Deliver it
-	// **ONLY** to the account it replies
-	// to, on behalf of the replier.
-	if util.PtrOrValue(status.PendingApproval, false) {
-		return f.deliverToInboxOnly(
-			ctx,
-			status.Account,
-			status.InReplyToAccount,
-			// Status has to be wrapped in Create activity.
-			typeutils.WrapStatusableInCreate(statusable, false),
-		)
 	}
 
 	// Parse the outbox URI of the status author.
@@ -690,10 +670,6 @@ func (f *federate) RejectFollow(ctx context.Context, follow *gtsmodel.Follow) er
 
 // Like sends the given fave out to relevant
 // recipients with the Outbox of the status creator.
-//
-// If the fave is pending approval, then it will be
-// sent **ONLY** to the inbox of the account it faves,
-// ignoring shared inboxes.
 func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	// Populate model.
 	if err := f.state.DB.PopulateStatusFave(ctx, fave); err != nil {
@@ -710,18 +686,6 @@ func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	like, err := f.converter.FaveToAS(ctx, fave)
 	if err != nil {
 		return gtserror.Newf("error converting fave to AS Like: %w", err)
-	}
-
-	// If fave is pending approval,
-	// deliver it **ONLY** to the account
-	// it faves, on behalf of the faver.
-	if util.PtrOrValue(fave.PendingApproval, false) {
-		return f.deliverToInboxOnly(
-			ctx,
-			fave.Account,
-			fave.TargetAccount,
-			like,
-		)
 	}
 
 	// Parse relevant URI(s).
@@ -745,10 +709,6 @@ func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 
 // Announce sends the given boost out to relevant
 // recipients with the Outbox of the status creator.
-//
-// If the boost is pending approval, then it will be
-// sent **ONLY** to the inbox of the account it boosts,
-// ignoring shared inboxes.
 func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 	// Populate model.
 	if err := f.state.DB.PopulateStatus(ctx, boost); err != nil {
@@ -767,18 +727,6 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 		return gtserror.Newf("error converting boost to AS: %w", err)
 	}
 
-	// If announce is pending approval,
-	// deliver it **ONLY** to the account
-	// it boosts, on behalf of the booster.
-	if util.PtrOrValue(boost.PendingApproval, false) {
-		return f.deliverToInboxOnly(
-			ctx,
-			boost.Account,
-			boost.BoostOfAccount,
-			announce,
-		)
-	}
-
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(boost.Account.OutboxURI)
 	if err != nil {
@@ -792,57 +740,6 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 		return gtserror.Newf(
 			"error sending activity %T via outbox %s: %w",
 			announce, outboxIRI, err,
-		)
-	}
-
-	return nil
-}
-
-// deliverToInboxOnly delivers the given Activity
-// *only* to the inbox of targetAcct, on behalf of
-// sendingAcct, regardless of the `to` and `cc` values
-// set on the activity. This should be used specifically
-// for sending "pending approval" activities.
-func (f *federate) deliverToInboxOnly(
-	ctx context.Context,
-	sendingAcct *gtsmodel.Account,
-	targetAcct *gtsmodel.Account,
-	t vocab.Type,
-) error {
-	if targetAcct.IsLocal() {
-		// If this is a local target,
-		// they've already received it.
-		return nil
-	}
-
-	toInbox, err := url.Parse(targetAcct.InboxURI)
-	if err != nil {
-		return gtserror.Newf(
-			"error parsing target inbox uri: %w",
-			err,
-		)
-	}
-
-	tsport, err := f.TransportController().NewTransportForUsername(
-		ctx,
-		sendingAcct.Username,
-	)
-	if err != nil {
-		return gtserror.Newf(
-			"error getting transport to deliver activity %T to target inbox %s: %w",
-			t, targetAcct.InboxURI, err,
-		)
-	}
-
-	m, err := ap.Serialize(t)
-	if err != nil {
-		return err
-	}
-
-	if err := tsport.Deliver(ctx, m, toInbox); err != nil {
-		return gtserror.Newf(
-			"error delivering activity %T to target inbox %s: %w",
-			t, targetAcct.InboxURI, err,
 		)
 	}
 
@@ -1201,6 +1098,59 @@ func (f *federate) RejectInteraction(
 		return gtserror.Newf(
 			"error sending activity %T for %v via outbox %s: %w",
 			reject, req.InteractionType, outboxIRI, err,
+		)
+	}
+
+	return nil
+}
+
+// InteractionRequest sends out the given
+// *gtsmodel.InteractionRequest as a polite
+// LikeRequest, ReplyRequest, or AnnounceRequest,
+// to the interaction target's inbox.
+func (f *federate) InteractionRequest(
+	ctx context.Context,
+	req *gtsmodel.InteractionRequest,
+) error {
+	// Populate model.
+	if err := f.state.DB.PopulateInteractionRequest(ctx, req); err != nil {
+		return gtserror.Newf("error populating request: %w", err)
+	}
+
+	// Bail if the interacter is remote
+	// or the target is local, we don't
+	// need to do anything then.
+	if req.InteractingAccount.IsRemote() ||
+		req.TargetAccount.IsLocal() {
+		return nil
+	}
+
+	// Bail if the request is
+	// already approved or rejected.
+	if !req.IsPending() {
+		return nil
+	}
+
+	// Parse outbox URI.
+	outboxIRI, err := parseURI(req.InteractingAccount.OutboxURI)
+	if err != nil {
+		return err
+	}
+
+	// Convert req to InteractionRequestable.
+	intReqable, err := f.converter.InteractionReqToASInteractionRequestable(ctx, req)
+	if err != nil {
+		return gtserror.Newf("error converting request to InteractionRequestable: %w", err)
+	}
+
+	// Send the interaction request
+	// via the Actor's outbox.
+	if _, err := f.FederatingActor().Send(
+		ctx, outboxIRI, intReqable,
+	); err != nil {
+		return gtserror.Newf(
+			"error sending activity %T for %v via outbox %s: %w",
+			intReqable, req.InteractionType, outboxIRI, err,
 		)
 	}
 

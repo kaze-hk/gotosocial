@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -82,39 +83,94 @@ func ExtractInstruments(with WithInstrument) []TypeOrIRI {
 	return instrs
 }
 
-// ExtractActivityData will extract the usable data type (e.g. Note, Question, etc) and corresponding JSON, from activity.
-func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) ([]TypeOrIRI, []any, bool) {
+// ExtractActivityObjectsAndInstruments will extract the usable
+// data type(s) (e.g. Note, Question, etc) and corresponding raw
+// JSON(s), from the `object` and `instrument` field of given activity.
+func ExtractActivityObjectsAndInstruments(
+	activity pub.Activity,
+	rawJSON map[string]any,
+) ([]TypeOrIRI, []any) {
 	switch typeName := activity.GetTypeName(); {
-	// Activity (has "object").
+	// Activity: has "object"
+	// and/or "instrument".
 	case isActivity(typeName):
-		objTypes := ExtractObjects(activity)
-		if len(objTypes) == 0 {
-			return nil, nil, false
-		}
+		// Gather object types and raw json.
+		objTypes, objJSON := extractObjectTypesAndJSON(activity, rawJSON)
 
-		var objJSON []any
-		switch json := rawJSON["object"].(type) {
-		case nil:
-			// do nothing
-		case map[string]any:
-			// Wrap map in slice.
-			objJSON = []any{json}
-		case []any:
-			// Use existing slice.
-			objJSON = json
-		}
+		// Gather instrument types and raw json.
+		instTypes, instJSON := extractInstrumentTypesAndJSON(activity, rawJSON)
 
-		return objTypes, objJSON, true
+		// Return concatenated slices for further processing.
+		return slices.Concat(objTypes, instTypes), slices.Concat(objJSON, instJSON)
 
-	// IntransitiveAcitivity (no "object").
+	// IntransitiveActivity: no
+	// "object" or "instrument".
 	case isIntransitiveActivity(typeName):
 		asTypeOrIRI := _TypeOrIRI{activity} // wrap activity.
-		return []TypeOrIRI{&asTypeOrIRI}, []any{rawJSON}, true
+		return []TypeOrIRI{&asTypeOrIRI}, []any{rawJSON}
 
 	// Unknown.
 	default:
-		return nil, nil, false
+		return nil, nil
 	}
+}
+
+// extractObjectTypesAndJSON is a utility
+// function to get objects and their correspnding
+// raw json from the given activity.
+func extractObjectTypesAndJSON(
+	activity pub.Activity,
+	rawJSON map[string]any,
+) ([]TypeOrIRI, []any) {
+	objTypes := ExtractObjects(activity)
+	if len(objTypes) == 0 {
+		return nil, nil
+	}
+
+	// Look for corresponding
+	// objects in the JSON.
+	var objJSON []any
+	switch json := rawJSON["object"].(type) {
+	case nil:
+		// do nothing
+	case map[string]any:
+		// Wrap map in slice.
+		objJSON = []any{json}
+	case []any:
+		// Use existing slice.
+		objJSON = json
+	}
+
+	return objTypes, objJSON
+}
+
+// extractInstrumentTypesAndJSON is a utility
+// function to get instruments and their correspnding
+// raw json from the given activity.
+func extractInstrumentTypesAndJSON(
+	activity pub.Activity,
+	rawJSON map[string]any,
+) ([]TypeOrIRI, []any) {
+	instTypes := ExtractInstruments(activity)
+	if len(instTypes) == 0 {
+		return nil, nil
+	}
+
+	// Look for corresponding
+	// instruments in the JSON.
+	var instJSON []any
+	switch json := rawJSON["instrument"].(type) {
+	case nil:
+		// do nothing
+	case map[string]any:
+		// Wrap map in slice.
+		instJSON = []any{json}
+	case []any:
+		// Use existing slice.
+		instJSON = json
+	}
+
+	return instTypes, instJSON
 }
 
 // ExtractAccountables extracts Accountable objects from a slice TypeOrIRI, returning extracted and remaining TypeOrIRIs.

@@ -33,15 +33,19 @@ import (
 	another instance to dereference something.
 */
 
-// NormalizeIncomingActivityObject normalizes the 'object'.'content' field of the given Activity.
+// NormalizeIncomingActivity normalizes any
+// Statusables and Accountables in the 'object' and
+// 'instrument' fields of the given Activity.
 //
-// The rawActivity map should the freshly deserialized json representation of the Activity.
-//
-// This function is a noop if the type passed in is anything except a Create or Update with a Statusable or Accountable as its Object.
-func NormalizeIncomingActivity(activity pub.Activity, rawJSON map[string]interface{}) {
-	// From the activity extract the data vocab.Type + its "raw" JSON.
-	dataIfaces, rawData, ok := ExtractActivityData(activity, rawJSON)
-	if !ok || len(dataIfaces) != len(rawData) {
+// The rawJSON map should be the freshly
+// deserialized json representation of the Activity.
+func NormalizeIncomingActivity(
+	activity pub.Activity,
+	rawJSON map[string]any,
+) {
+	// From the activity extract the data vocab.Types + "rawData" JSON.
+	dataIfaces, rawData := ExtractActivityObjectsAndInstruments(activity, rawJSON)
+	if len(dataIfaces) != len(rawData) {
 		// non-equal lengths *shouldn't* happen,
 		// but this is just an integrity check.
 		return
@@ -762,6 +766,95 @@ func NormalizeOutgoingObjectProp(item WithObject, rawJSON map[string]interface{}
 	} else {
 		// Array of objects.
 		rawJSON["object"] = objects
+	}
+
+	return nil
+}
+
+// NormalizeOutgoingInstrumentProp normalizes each Instrument entry in the rawJSON of the given
+// item by calling custom serialization / normalization functions on them in turn.
+//
+// This function also unnests single-entry arrays, so that:
+//
+//	"instrument": [
+//	  {
+//	    ...
+//	  }
+//	]
+//
+// Becomes:
+//
+//	"instrument": {
+//	  ...
+//	}
+//
+// Noop for each Instrument entry that isn't an Accountable or Statusable.
+func NormalizeOutgoingInstrumentProp(item WithInstrument, rawJSON map[string]interface{}) error {
+	instrumentProp := item.GetActivityStreamsInstrument()
+	if instrumentProp == nil {
+		// Nothing to do,
+		// bail early.
+		return nil
+	}
+
+	instrumentPropLen := instrumentProp.Len()
+	if instrumentPropLen == 0 {
+		// Nothing to do,
+		// bail early.
+		return nil
+	}
+
+	// The thing we already serialized has instruments
+	// on it, so we should see if we need to custom
+	// serialize any of those instruments, and replace
+	// them on the data map as necessary.
+	instruments := make([]interface{}, 0, instrumentPropLen)
+	for iter := instrumentProp.Begin(); iter != instrumentProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			// Plain IRIs don't need custom serialization.
+			instruments = append(instruments, iter.GetIRI().String())
+			continue
+		}
+
+		var (
+			instrumentType = iter.GetType()
+			instrumentSer  map[string]interface{}
+		)
+
+		if instrumentType == nil {
+			// This is awkward.
+			return gtserror.Newf("could not resolve instrument iter %T to vocab.Type", iter)
+		}
+
+		var err error
+
+		// In the below statusable serialization,
+		// `@context` will be included in the wrapping
+		// type already, so we shouldn't also include
+		// it in the instrument itself.
+		switch tn := instrumentType.GetTypeName(); {
+		case IsStatusable(tn):
+			// IsStatusable includes Pollable as well.
+			instrumentSer, err = serializeStatusable(instrumentType, false)
+
+		default:
+			// No custom serializer for this type; serialize as normal.
+			instrumentSer, err = instrumentType.Serialize()
+		}
+
+		if err != nil {
+			return err
+		}
+
+		instruments = append(instruments, instrumentSer)
+	}
+
+	if instrumentPropLen == 1 {
+		// Unnest single instrument.
+		rawJSON["instrument"] = instruments[0]
+	} else {
+		// Array of instruments.
+		rawJSON["instrument"] = instruments
 	}
 
 	return nil

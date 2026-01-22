@@ -19,7 +19,6 @@ package web
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"code.superseriousbusiness.org/gopkg/log"
@@ -55,11 +54,6 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
-
-	// Usernames on our instance will always be lowercase.
-	//
-	// todo: https://codeberg.org/superseriousbusiness/gotosocial/issues/1813
-	username = strings.ToLower(username)
 
 	// Parse paging parameters from request.
 	page, errWithCode := paging.ParseIDPage(c,

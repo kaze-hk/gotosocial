@@ -20,7 +20,6 @@ package web
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"code.superseriousbusiness.org/gopkg/log"
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -67,7 +66,6 @@ func (m *Module) prepareProfile(c *gin.Context) *profile {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return nil
 	}
-	requestedUser = strings.ToLower(requestedUser)
 
 	// Check what type of content is being requested.
 	// If we're getting an AP request on this endpoint

@@ -18,12 +18,9 @@
 package users
 
 import (
-	"errors"
 	"net/http"
-	"strings"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
-	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
 )
 
@@ -37,30 +34,21 @@ import (
 // And of course, the request should be refused if the account or server making the
 // request is blocked.
 func (m *Module) UsersGETHandler(c *gin.Context) {
-	// usernames on our instance are always lowercase
-	requestedUser := strings.ToLower(c.Param(apiutil.UsernameKey))
-	if requestedUser == "" {
-		err := errors.New("no username specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	username, contentType, errWithCode := m.parseCommon(c)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	contentType, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubOrHTMLHeaders...)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	// If HTML is requested, redirect
-	// to user's profile instead.
-	if contentType == string(apiutil.TextHTML) {
-		c.Redirect(http.StatusSeeOther, "/@"+requestedUser)
+	if contentType == apiutil.TextHTML {
+		// Redirect to account web view.
+		c.Redirect(http.StatusSeeOther, "/@"+username)
 		return
 	}
 
 	resp, errWithCode := m.processor.Fedi().UserGet(
 		c.Request.Context(),
-		requestedUser,
+		username,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

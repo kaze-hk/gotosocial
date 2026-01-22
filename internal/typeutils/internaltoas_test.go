@@ -1516,7 +1516,7 @@ func (suite *InternalToASTestSuite) TestImpoliteInteractionReqToASAcceptAnnounce
 		TargetAccount:         acceptingAccount,
 		InteractingAccountID:  interactingAccount.ID,
 		InteractingAccount:    interactingAccount,
-		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K" + gtsmodel.AnnounceRequestSuffix,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K" + gtsmodel.ImpoliteAnnounceRequestSuffix,
 		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:       gtsmodel.InteractionAnnounce,
 		Polite:                util.Ptr(false),
@@ -1569,7 +1569,7 @@ func (suite *InternalToASTestSuite) TestImpoliteInteractionReqToASAcceptLike() {
 		TargetAccount:         acceptingAccount,
 		InteractingAccountID:  interactingAccount.ID,
 		InteractingAccount:    interactingAccount,
-		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K" + gtsmodel.LikeRequestSuffix,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K" + gtsmodel.ImpoliteLikeRequestSuffix,
 		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:       gtsmodel.InteractionLike,
 		Polite:                util.Ptr(false),
@@ -1714,6 +1714,129 @@ func (suite *InternalToASTestSuite) TestPoliteInteractionReqToASAuthorization() 
   "interactingObject": "https://fossbros-anonymous.io/users/foss_satan/likes/01J1AKRRHQ6MDDQHV0TP716T2K",
   "interactionTarget": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
   "type": "LikeAuthorization"
+}`, string(b))
+}
+
+func (suite *InternalToASTestSuite) TestInteractionReqToASInteractionRequestable() {
+	targetAccount := suite.testAccounts["local_account_1"]
+	interactingAccount := suite.testAccounts["remote_account_1"]
+	interactingStatus := suite.testStatuses["remote_account_1_status_1"]
+
+	req := &gtsmodel.InteractionRequest{
+		ID:                    "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		TargetStatusID:        "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		TargetStatus:          &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+		TargetAccountID:       targetAccount.ID,
+		TargetAccount:         targetAccount,
+		InteractingAccountID:  interactingAccount.ID,
+		InteractingAccount:    interactingAccount,
+		InteractionRequestURI: "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionURI:        "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:       gtsmodel.InteractionReply,
+		Reply:                 interactingStatus,
+		Polite:                util.Ptr(true),
+	}
+
+	accept, err := suite.typeconverter.InteractionReqToASInteractionRequestable(
+		suite.T().Context(),
+		req,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	i, err := ap.Serialize(accept)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(i, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "blurhash": "toot:blurhash",
+      "sensitive": "as:sensitive",
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
+  "actor": "http://fossbros-anonymous.io/users/foss_satan",
+  "id": "https://fossbros-anonymous.io/users/foss_satan/interaction_requests/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "instrument": {
+    "attachment": [
+      {
+        "blurhash": "L3Q9_@4n9E?axW4mD$Mx~q00Di%L",
+        "mediaType": "image/jpeg",
+        "name": "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
+        "type": "Image",
+        "url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg"
+      }
+    ],
+    "attributedTo": "http://fossbros-anonymous.io/users/foss_satan",
+    "cc": "https://www.w3.org/ns/activitystreams#Public",
+    "content": "\u003cp\u003edark souls status bot: \"thoughts of dog\"\u003c/p\u003e",
+    "contentMap": {
+      "en": "\u003cp\u003edark souls status bot: \"thoughts of dog\"\u003c/p\u003e"
+    },
+    "id": "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M",
+    "interactionPolicy": {
+      "canAnnounce": {
+        "always": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "approvalRequired": [],
+        "automaticApproval": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "manualApproval": []
+      },
+      "canLike": {
+        "always": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "approvalRequired": [],
+        "automaticApproval": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "manualApproval": []
+      },
+      "canReply": {
+        "always": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "approvalRequired": [],
+        "automaticApproval": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "manualApproval": []
+      }
+    },
+    "published": "2021-09-20T12:40:37+02:00",
+    "replies": {
+      "first": {
+        "id": "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M/replies?page=true",
+        "next": "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M/replies?page=true\u0026only_other_accounts=false",
+        "partOf": "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M/replies",
+        "type": "CollectionPage"
+      },
+      "id": "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M/replies",
+      "type": "Collection"
+    },
+    "sensitive": false,
+    "summary": "",
+    "tag": [],
+    "to": "http://fossbros-anonymous.io/users/foss_satan/followers",
+    "type": "Note",
+    "url": "http://fossbros-anonymous.io/@foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M"
+  },
+  "object": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
+  "to": "http://localhost:8080/users/the_mighty_zork",
+  "type": "ReplyRequest"
 }`, string(b))
 }
 

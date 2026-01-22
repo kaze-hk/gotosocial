@@ -38,6 +38,9 @@ const (
 	StatusRepliesPath      = StatusPath + "/replies"
 	AcceptPath             = BasePath + "/" + uris.AcceptsPath + "/:" + apiutil.IDKey
 	AuthorizationsPath     = BasePath + "/" + uris.AuthorizationsPath + "/:" + apiutil.IDKey
+	LikeRequestsPath       = BasePath + "/" + uris.LikeRequestsPath + "/:" + apiutil.IDKey
+	ReplyRequestsPath      = BasePath + "/" + uris.ReplyRequestsPath + "/:" + apiutil.IDKey
+	AnnounceRequestsPath   = BasePath + "/" + uris.AnnounceRequestsPath + "/:" + apiutil.IDKey
 )
 
 type Module struct {
@@ -61,4 +64,7 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, OutboxPath, m.OutboxGETHandler)
 	attachHandler(http.MethodGet, AcceptPath, m.AcceptGETHandler)
 	attachHandler(http.MethodGet, AuthorizationsPath, m.AuthorizationGETHandler)
+	attachHandler(http.MethodGet, LikeRequestsPath, m.LikeRequestsGETHandler)
+	attachHandler(http.MethodGet, ReplyRequestsPath, m.ReplyRequestsGETHandler)
+	attachHandler(http.MethodGet, AnnounceRequestsPath, m.AnnounceRequestsGETHandler)
 }

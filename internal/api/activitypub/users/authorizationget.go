@@ -21,32 +21,25 @@ import (
 	"net/http"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
-	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
 )
 
 // AuthorizationGETHandler serves an accepted interaction request as a
 // LikeAuthorization, ReplyAuthorization, or AnnounceAuthorization type.
 func (m *Module) AuthorizationGETHandler(c *gin.Context) {
-	username, errWithCode := apiutil.ParseUsername(c.Param(apiutil.UsernameKey))
+	username, id, contentType, errWithCode := m.parseCommonWithID(c)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	reqID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+	if contentType == apiutil.TextHTML {
+		// Redirect to account web view.
+		c.Redirect(http.StatusSeeOther, "/@"+username)
 		return
 	}
 
-	contentType, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubHeaders...)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	resp, errWithCode := m.processor.Fedi().AuthorizationGet(c.Request.Context(), username, reqID)
+	resp, errWithCode := m.processor.Fedi().AuthorizationGet(c.Request.Context(), username, id)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

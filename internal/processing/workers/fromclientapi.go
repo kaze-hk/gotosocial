@@ -20,7 +20,6 @@ package workers
 import (
 	"context"
 	"errors"
-	"time"
 
 	"code.superseriousbusiness.org/gopkg/log"
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
@@ -91,6 +90,10 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ActivityQuestion:
 			return p.clientAPI.CreatePollVote(ctx, cMsg)
 
+		// CREATE REPLY REQUEST
+		case ap.ActivityReplyRequest:
+			return p.clientAPI.CreateReplyRequest(ctx, cMsg)
+
 		// CREATE FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.CreateFollowReq(ctx, cMsg)
@@ -99,9 +102,17 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ActivityLike:
 			return p.clientAPI.CreateLike(ctx, cMsg)
 
+		// CREATE LIKE REQUEST
+		case ap.ActivityLikeRequest:
+			return p.clientAPI.CreateLikeRequest(ctx, cMsg)
+
 		// CREATE ANNOUNCE/BOOST
 		case ap.ActivityAnnounce:
 			return p.clientAPI.CreateAnnounce(ctx, cMsg)
+
+		// CREATE ANNOUNCE REQUEST
+		case ap.ActivityAnnounceRequest:
+			return p.clientAPI.CreateAnnounceRequest(ctx, cMsg)
 
 		// CREATE BLOCK
 		case ap.ActivityBlock:
@@ -260,110 +271,115 @@ func (p *clientAPI) CreateUser(ctx context.Context, cMsg *messages.FromClientAPI
 }
 
 func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientAPI) error {
-	var status *gtsmodel.Status
-	var backfill bool
-
-	// Check passed client message model type.
-	switch model := cMsg.GTSModel.(type) {
-	case *gtsmodel.Status:
-		status = model
-	case *gtsmodel.BackfillStatus:
-		status = model.Status
-		backfill = true
-	default:
-		return gtserror.Newf("%T not parseable as *gtsmodel.Status or *gtsmodel.BackfillStatus", cMsg.GTSModel)
+	status, ok := cMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
 	}
 
-	// If pending approval is true then status must
-	// reply to a status (either one of ours or a
-	// remote) that requires approval for the reply.
-	pendingApproval := util.PtrOrZero(status.PendingApproval)
+	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
 
-	switch {
-	case pendingApproval && !status.PreApproved:
-		// If approval is required and status isn't
-		// preapproved, then send out the Create to
-		// only the replied-to account (if it's remote),
-		// and/or notify the account that's being
-		// interacted with (if it's local): they can
-		// approve or deny the interaction later.
-		if err := p.utils.impoliteReplyRequest(ctx, status); err != nil {
-			return gtserror.Newf("error pending reply: %w", err)
-		}
+	if err := p.federate.CreateStatus(ctx, status); err != nil {
+		log.Errorf(ctx, "error federating status: %v", err)
+	}
 
-		// Send Create to *remote* account inbox ONLY.
-		if err := p.federate.CreateStatus(ctx, status); err != nil {
-			return gtserror.Newf("error federating pending reply: %w", err)
-		}
+	return nil
+}
 
-		// Return early.
-		return nil
+func (p *clientAPI) CreateReplyRequest(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	reply, ok := cMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	}
 
-	case pendingApproval && status.PreApproved:
-		// If approval is required and status is
-		// preapproved, that means this is a reply
-		// to one of our statuses with permission
-		// that matched on a following/followers
-		// collection. Do the Accept immediately and
-		// then process everything else as normal,
-		// sending out the Create with the approval
-		// URI attached.
+	// Create a polite reply request.
+	intReqID := id.NewULIDFromTime(reply.CreatedAt)
+	intReq := &gtsmodel.InteractionRequest{
+		ID:                    intReqID,
+		TargetStatusID:        reply.InReplyToID,
+		TargetStatus:          reply.InReplyTo,
+		TargetAccountID:       reply.InReplyToAccountID,
+		TargetAccount:         reply.InReplyToAccount,
+		InteractingAccountID:  reply.AccountID,
+		InteractingAccount:    reply.Account,
+		InteractionRequestURI: uris.GenerateURIForReplyRequest(reply.Account.Username, intReqID),
+		InteractionURI:        reply.URI,
+		InteractionType:       gtsmodel.InteractionReply,
+		Polite:                util.Ptr(true),
+		Reply:                 reply,
+	}
 
-		// Store an already-accepted interaction request.
-		requestID := id.NewULID()
-		approval := &gtsmodel.InteractionRequest{
-			ID:                    requestID,
-			TargetStatusID:        status.InReplyToID,
-			TargetAccountID:       status.InReplyToAccountID,
-			TargetAccount:         status.InReplyToAccount,
-			InteractingAccountID:  status.AccountID,
-			InteractingAccount:    status.Account,
-			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(status.URI, gtsmodel.ReplyRequestSuffix),
-			InteractionURI:        status.URI,
-			InteractionType:       gtsmodel.InteractionReply,
-			Polite:                util.Ptr(false), // TODO: Change this in v0.21.0 when we only send out polite requests.
-			Reply:                 status,
-			ResponseURI:           uris.GenerateURIForAccept(status.InReplyToAccount.Username, requestID),
-			AuthorizationURI:      uris.GenerateURIForAuthorization(status.InReplyToAccount.Username, requestID),
-			AcceptedAt:            time.Now(),
-		}
-		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
-			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
-		}
-
-		// Mark the status as now approved.
-		status.PendingApproval = util.Ptr(false)
-		status.PreApproved = false
-		status.ApprovedByURI = approval.AuthorizationURI
-		if err := p.state.DB.UpdateStatus(
-			ctx,
-			status,
-			"pending_approval",
-			"approved_by_uri",
+	if !reply.PreApproved {
+		// If the reply is not pre-approved, just
+		// store the interaction request, notify
+		// (local) target or federate request.
+		if err := p.utils.storeInteractionRequest(
+			ctx, intReq,
 		); err != nil {
-			return gtserror.Newf("db error updating status: %w", err)
+			return gtserror.Newf("error storing interaction request: %w", err)
 		}
 
-		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
-			return gtserror.Newf("error federating pre-approval of reply: %w", err)
+		// Notify target account (if local) of pending reply.
+		if err := p.surface.notifyPendingReply(ctx, intReq.Reply); err != nil {
+			return gtserror.Newf("error notifying pending reply: %w", err)
 		}
 
-		// Don't return, just continue as normal.
+		// Send interaction request to target account (if remote).
+		if err := p.federate.InteractionRequest(ctx, intReq); err != nil {
+			return gtserror.Newf("error federating interaction request: %w", err)
+		}
+
+		return nil
 	}
 
-	// We specifically do not timeline
-	// or notify for backfilled statuses,
-	// as these are more for archival than
-	// newly posted content for user feeds.
-	if !backfill {
+	// If the reply is pre-approved, then it must
+	// target a status on our instance, and the
+	// replier gets automatic approval due to being
+	// in the author's followers/following collection.
+	//
+	// Mark the interaction request as accepted, store it,
+	// mark the interaction as approved, and then continue
+	// with side effects as normal.
 
-		if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
-			log.Errorf(ctx, "error timelining and notifying status: %v", err)
-		}
+	// Update intReq fields to
+	// mark it as accepted.
+	intReq.MarkAccepted()
 
-		if err := p.federate.CreateStatus(ctx, status); err != nil {
-			log.Errorf(ctx, "error federating status: %v", err)
-		}
+	// Put it in the DB.
+	if err := p.utils.storeInteractionRequest(
+		ctx, intReq,
+	); err != nil {
+		return gtserror.Newf("error storing interaction request: %w", err)
+	}
+
+	// Mark the status as now approved, referring to
+	// the accepted interaction request we just stored.
+	reply.PendingApproval = util.Ptr(false)
+	reply.PreApproved = false
+	reply.ApprovedByURI = intReq.AuthorizationURI
+	if err := p.state.DB.UpdateStatus(
+		ctx,
+		reply,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		return gtserror.Newf("db error updating status: %w", err)
+	}
+
+	// Send out the approval as Accept.
+	if err := p.federate.AcceptInteraction(ctx, intReq); err != nil {
+		return gtserror.Newf("error federating pre-approval of reply: %w", err)
+	}
+
+	// Timeline + notify the reply.
+	if err := p.surface.timelineAndNotifyStatus(ctx, reply); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
+	// Send out the approved reply.
+	if err := p.federate.CreateStatus(ctx, reply); err != nil {
+		log.Errorf(ctx, "error federating status: %v", err)
 	}
 
 	return nil
@@ -465,83 +481,6 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		return gtserror.Newf("error populating status fave: %w", err)
 	}
 
-	// If pending approval is true then fave must
-	// target a status (either one of ours or a
-	// remote) that requires approval for the fave.
-	pendingApproval := util.PtrOrZero(fave.PendingApproval)
-
-	switch {
-	case pendingApproval && !fave.PreApproved:
-		// If approval is required and fave isn't
-		// preapproved, then send out the Like to
-		// only the faved account (if it's remote),
-		// and/or notify the account that's being
-		// interacted with (if it's local): they can
-		// approve or deny the interaction later.
-		if err := p.utils.impoliteFaveRequest(ctx, fave); err != nil {
-			return gtserror.Newf("error pending fave: %w", err)
-		}
-
-		// Send Like to *remote* account inbox ONLY.
-		if err := p.federate.Like(ctx, fave); err != nil {
-			return gtserror.Newf("error federating pending Like: %v", err)
-		}
-
-		// Return early.
-		return nil
-
-	case pendingApproval && fave.PreApproved:
-		// If approval is required and fave is
-		// preapproved, that means this is a fave
-		// of one of our statuses with permission
-		// that matched on a following/followers
-		// collection. Do the Accept immediately and
-		// then process everything else as normal,
-		// sending out the Like with the approval
-		// URI attached.
-
-		// Store an already-accepted interaction request.
-		requestID := id.NewULID()
-		approval := &gtsmodel.InteractionRequest{
-			ID:                    requestID,
-			TargetStatusID:        fave.StatusID,
-			TargetAccountID:       fave.TargetAccountID,
-			TargetAccount:         fave.TargetAccount,
-			InteractingAccountID:  fave.AccountID,
-			InteractingAccount:    fave.Account,
-			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(fave.URI, gtsmodel.LikeRequestSuffix),
-			InteractionURI:        fave.URI,
-			InteractionType:       gtsmodel.InteractionLike,
-			Polite:                util.Ptr(false), // TODO: Change this in v0.21.0 when we only send out polite requests.
-			Like:                  fave,
-			ResponseURI:           uris.GenerateURIForAccept(fave.TargetAccount.Username, requestID),
-			AuthorizationURI:      uris.GenerateURIForAuthorization(fave.TargetAccount.Username, requestID),
-			AcceptedAt:            time.Now(),
-		}
-		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
-			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
-		}
-
-		// Mark the fave itself as now approved.
-		fave.PendingApproval = util.Ptr(false)
-		fave.PreApproved = false
-		fave.ApprovedByURI = approval.AuthorizationURI
-		if err := p.state.DB.UpdateStatusFave(
-			ctx,
-			fave,
-			"pending_approval",
-			"approved_by_uri",
-		); err != nil {
-			return gtserror.Newf("db error updating status fave: %w", err)
-		}
-
-		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
-			return gtserror.Newf("error federating pre-approval of fave: %w", err)
-		}
-
-		// Don't return, just continue as normal.
-	}
-
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
@@ -553,87 +492,205 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 	return nil
 }
 
+func (p *clientAPI) CreateLikeRequest(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	fave, ok := cMsg.GTSModel.(*gtsmodel.StatusFave)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", cMsg.GTSModel)
+	}
+
+	// Create a polite like request.
+	intReqID := id.NewULIDFromTime(fave.CreatedAt)
+	intReq := &gtsmodel.InteractionRequest{
+		ID:                    intReqID,
+		TargetStatusID:        fave.StatusID,
+		TargetStatus:          fave.Status,
+		TargetAccountID:       fave.TargetAccountID,
+		TargetAccount:         fave.TargetAccount,
+		InteractingAccountID:  fave.AccountID,
+		InteractingAccount:    fave.Account,
+		InteractionRequestURI: uris.GenerateURIForLikeRequest(fave.Account.Username, intReqID),
+		InteractionURI:        fave.URI,
+		InteractionType:       gtsmodel.InteractionLike,
+		Polite:                util.Ptr(true),
+		Like:                  fave,
+	}
+
+	if !fave.PreApproved {
+		// If the fave is not pre-approved, just
+		// store the interaction request, notify
+		// (local) target or federate request.
+		if err := p.utils.storeInteractionRequest(
+			ctx, intReq,
+		); err != nil {
+			return gtserror.Newf("error storing interaction request: %w", err)
+		}
+
+		// Notify target account (if local) of pending fave.
+		if err := p.surface.notifyPendingFave(ctx, intReq.Like); err != nil {
+			return gtserror.Newf("error notifying pending fave: %w", err)
+		}
+
+		// Send interaction request to target account (if remote).
+		if err := p.federate.InteractionRequest(ctx, intReq); err != nil {
+			return gtserror.Newf("error federating interaction request: %w", err)
+		}
+
+		return nil
+	}
+
+	// If the fave is pre-approved, then it must
+	// target a status on our instance, and the
+	// faver gets automatic approval due to being
+	// in the author's followers/following collection.
+	//
+	// Mark the interaction request as accepted, store it,
+	// mark the interaction as approved, and then continue
+	// with side effects as normal.
+
+	// Update intReq fields to
+	// mark it as accepted.
+	intReq.MarkAccepted()
+
+	// Put it in the DB.
+	if err := p.utils.storeInteractionRequest(
+		ctx, intReq,
+	); err != nil {
+		return gtserror.Newf("error storing interaction request: %w", err)
+	}
+
+	// Mark the fave as now approved, referring to
+	// the accepted interaction request we just stored.
+	fave.PendingApproval = util.Ptr(false)
+	fave.PreApproved = false
+	fave.ApprovedByURI = intReq.AuthorizationURI
+	if err := p.state.DB.UpdateStatusFave(
+		ctx,
+		fave,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		return gtserror.Newf("db error updating status fave: %w", err)
+	}
+
+	// Send out the approval as an Accept.
+	if err := p.federate.AcceptInteraction(ctx, intReq); err != nil {
+		return gtserror.Newf("error federating pre-approval of fave: %w", err)
+	}
+
+	// Notify the status author about the fave.
+	if err := p.surface.notifyFave(ctx, fave); err != nil {
+		log.Errorf(ctx, "error notifying fave: %v", err)
+	}
+
+	// We don't (yet) federate Likes out
+	// to anyone but the target of the like,
+	// so there's no need to send it anywhere.
+	// Just return.
+	return nil
+}
+
 func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	boost, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
 	}
 
-	// If pending approval is true then status must
-	// boost a status (either one of ours or a
-	// remote) that requires approval for the boost.
-	pendingApproval := util.PtrOrZero(boost.PendingApproval)
+	// Timeline and notify the boost wrapper status.
+	if err := p.surface.timelineAndNotifyStatus(ctx, boost); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
 
-	switch {
-	case pendingApproval && !boost.PreApproved:
-		// If approval is required and boost isn't
-		// preapproved, then send out the Announce to
-		// only the boosted account (if it's remote),
-		// and/or notify the account that's being
-		// interacted with (if it's local): they can
-		// approve or deny the interaction later.
-		if err := p.utils.impoliteAnnounceRequest(ctx, boost); err != nil {
-			return gtserror.Newf("error pending boost: %w", err)
-		}
+	// Notify the boost target account (if local).
+	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
+		log.Errorf(ctx, "error notifying boost: %v", err)
+	}
 
-		// Send Announce to *remote* account inbox ONLY.
-		if err := p.federate.Announce(ctx, boost); err != nil {
-			return gtserror.Newf("error federating pending Announce: %v", err)
-		}
+	// Send out the Announce.
+	if err := p.federate.Announce(ctx, boost); err != nil {
+		log.Errorf(ctx, "error federating announce: %v", err)
+	}
 
-		// Return early.
-		return nil
+	return nil
+}
 
-	case pendingApproval && boost.PreApproved:
-		// If approval is required and boost is
-		// preapproved, that means this is a boost
-		// of one of our statuses with permission
-		// that matched on a following/followers
-		// collection. Do the Accept immediately and
-		// then process everything else as normal,
-		// sending out the Create with the approval
-		// URI attached.
+func (p *clientAPI) CreateAnnounceRequest(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	boost, ok := cMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	}
 
-		// Store an already-accepted interaction request.
-		requestID := id.NewULID()
-		approval := &gtsmodel.InteractionRequest{
-			ID:                    requestID,
-			TargetStatusID:        boost.BoostOfID,
-			TargetAccountID:       boost.BoostOfAccountID,
-			TargetAccount:         boost.BoostOfAccount,
-			InteractingAccountID:  boost.AccountID,
-			InteractingAccount:    boost.Account,
-			InteractionRequestURI: gtsmodel.ForwardCompatibleInteractionRequestURI(boost.URI, gtsmodel.AnnounceRequestSuffix),
-			InteractionURI:        boost.URI,
-			InteractionType:       gtsmodel.InteractionAnnounce,
-			Polite:                util.Ptr(false), // TODO: Change this in v0.21.0 when we only send out polite requests.
-			Announce:              boost,
-			ResponseURI:           uris.GenerateURIForAccept(boost.BoostOfAccount.Username, requestID),
-			AuthorizationURI:      uris.GenerateURIForAuthorization(boost.BoostOfAccount.Username, requestID),
-			AcceptedAt:            time.Now(),
-		}
-		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
-			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
-		}
+	// Create a polite reply request.
+	intReqID := id.NewULIDFromTime(boost.CreatedAt)
+	intReq := &gtsmodel.InteractionRequest{
+		ID:                    intReqID,
+		TargetStatusID:        boost.BoostOfID,
+		TargetStatus:          boost.BoostOf,
+		TargetAccountID:       boost.BoostOfAccountID,
+		TargetAccount:         boost.BoostOfAccount,
+		InteractingAccountID:  boost.AccountID,
+		InteractingAccount:    boost.Account,
+		InteractionRequestURI: uris.GenerateURIForAnnounceRequest(boost.Account.Username, intReqID),
+		InteractionURI:        boost.URI,
+		InteractionType:       gtsmodel.InteractionAnnounce,
+		Polite:                util.Ptr(true),
+		Announce:              boost,
+	}
 
-		// Mark the boost itself as now approved.
-		boost.PendingApproval = util.Ptr(false)
-		boost.PreApproved = false
-		boost.ApprovedByURI = approval.AuthorizationURI
-		if err := p.state.DB.UpdateStatus(
-			ctx,
-			boost,
-			"pending_approval",
-			"approved_by_uri",
+	if !boost.PreApproved {
+		// If the boost is not pre-approved, just
+		// store the interaction request, notify
+		// (local) target or federate request.
+		if err := p.utils.storeInteractionRequest(
+			ctx, intReq,
 		); err != nil {
-			return gtserror.Newf("db error updating status: %w", err)
+			return gtserror.Newf("error storing interaction request: %w", err)
 		}
 
-		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
-			return gtserror.Newf("error federating pre-approval of boost: %w", err)
+		// Notify target account (if local) of pending announce.
+		if err := p.surface.notifyPendingAnnounce(ctx, intReq.Announce); err != nil {
+			return gtserror.Newf("error notifying pending announce: %w", err)
 		}
 
-		// Don't return, just continue as normal.
+		// Send interaction request to target account (if remote).
+		if err := p.federate.InteractionRequest(ctx, intReq); err != nil {
+			return gtserror.Newf("error federating interaction request: %w", err)
+		}
+
+		return nil
+	}
+
+	// If the boost is pre-approved, then it must
+	// target a status on our instance, and the
+	// booster gets automatic approval due to being
+	// in the author's followers/following collection.
+	//
+	// Mark the interaction request as accepted, store it,
+	// mark the interaction as approved, and then continue
+	// with side effects as normal.
+
+	// Update intReq fields to
+	// mark it as accepted.
+	intReq.MarkAccepted()
+
+	// Put it in the DB.
+	if err := p.utils.storeInteractionRequest(
+		ctx, intReq,
+	); err != nil {
+		return gtserror.Newf("error storing interaction request: %w", err)
+	}
+
+	// Mark the status as now approved, referring to
+	// the accepted interaction request we just stored.
+	boost.PendingApproval = util.Ptr(false)
+	boost.PreApproved = false
+	boost.ApprovedByURI = intReq.AuthorizationURI
+	if err := p.state.DB.UpdateStatus(
+		ctx,
+		boost,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		return gtserror.Newf("db error updating status: %w", err)
 	}
 
 	// Timeline and notify the boost wrapper status.
@@ -646,6 +703,12 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		log.Errorf(ctx, "error notifying boost: %v", err)
 	}
 
+	// Send out the approval as an Accept.
+	if err := p.federate.AcceptInteraction(ctx, intReq); err != nil {
+		return gtserror.Newf("error federating pre-approval of boost: %w", err)
+	}
+
+	// Send out the announce itself.
 	if err := p.federate.Announce(ctx, boost); err != nil {
 		log.Errorf(ctx, "error federating announce: %v", err)
 	}

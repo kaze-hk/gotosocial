@@ -417,8 +417,3 @@ type Content struct {
 	Content    string
 	ContentMap map[string]string
 }
-
-// BackfillStatus is a wrapper for creating a status without pushing notifications to followers.
-type BackfillStatus struct {
-	*Status
-}

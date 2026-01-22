@@ -21,13 +21,11 @@ import (
 	"net/http"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
-	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"github.com/gin-gonic/gin"
 )
 
-// FollowingGETHandler returns a collection of URIs for accounts that the target user follows, formatted so that other AP servers can understand it.
-func (m *Module) FollowingGETHandler(c *gin.Context) {
-	username, contentType, errWithCode := m.parseCommon(c)
+func (m *Module) LikeRequestsGETHandler(c *gin.Context) {
+	username, id, contentType, errWithCode := m.parseCommonWithID(c)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -39,17 +37,51 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 		return
 	}
 
-	page, errWithCode := paging.ParseIDPage(c,
-		1,  // min limit
-		80, // max limit
-		0,  // default = disabled
-	)
+	resp, errWithCode := m.processor.Fedi().LikeRequestGet(c.Request.Context(), username, id)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().FollowingGet(c.Request.Context(), username, page)
+	apiutil.JSONType(c, http.StatusOK, contentType, resp)
+}
+
+func (m *Module) ReplyRequestsGETHandler(c *gin.Context) {
+	username, id, contentType, errWithCode := m.parseCommonWithID(c)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if contentType == apiutil.TextHTML {
+		// Redirect to account web view.
+		c.Redirect(http.StatusSeeOther, "/@"+username)
+		return
+	}
+
+	resp, errWithCode := m.processor.Fedi().ReplyRequestGet(c.Request.Context(), username, id)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	apiutil.JSONType(c, http.StatusOK, contentType, resp)
+}
+
+func (m *Module) AnnounceRequestsGETHandler(c *gin.Context) {
+	username, id, contentType, errWithCode := m.parseCommonWithID(c)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if contentType == apiutil.TextHTML {
+		// Redirect to account web view.
+		c.Redirect(http.StatusSeeOther, "/@"+username)
+		return
+	}
+
+	resp, errWithCode := m.processor.Fedi().AnnounceRequestGet(c.Request.Context(), username, id)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

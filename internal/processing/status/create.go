@@ -302,21 +302,35 @@ func (p *Processor) Create(
 		status.InReplyTo.PendingApproval = util.Ptr(false)
 	}
 
-	var model any = status
-	if backfill {
-		// We specifically wrap backfilled statuses in
-		// a different type to signal to worker process.
-		model = &gtsmodel.BackfillStatus{Status: status}
-	}
+	switch {
+	case backfill:
+		// Don't queue side effects of status creation
+		// if this is a backfill status. For backfill
+		// statuses, just inserting them in the database
+		// is enough. We shouldn't federate, notify, etc.
 
-	// Queue remaining create side effects
-	// (send out status, update timeline, etc).
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ObjectNote,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       model,
-		Origin:         requester,
-	})
+	case *status.PendingApproval:
+		// Status is pending approval, which means it
+		// must be a reply to a status with an interaction
+		// policy that requires approval for replies.
+		// Queue up Create ReplyRequest side effects.
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+			APObjectType:   ap.ActivityReplyRequest,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			Origin:         requester,
+		})
+
+	default:
+		// "Normal" status with no explicit approval
+		// required, queue Create Status side effects.
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			Origin:         requester,
+		})
+	}
 
 	return p.c.GetAPIStatus(ctx, requester, status)
 }

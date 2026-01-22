@@ -63,10 +63,6 @@ const (
 
 	TagNameKey = "tag_name"
 
-	/* Web endpoint keys */
-
-	WebStatusIDKey = "status"
-
 	/* Domain permission keys */
 
 	DomainPermissionExportKey         = "export"
@@ -247,6 +243,9 @@ func ParseID(value string) (string, gtserror.WithCode) {
 		return "", requiredError(key)
 	}
 
+	// ULIDs are always uppercase.
+	value = strings.ToUpper(value)
+
 	return value, nil
 }
 
@@ -287,15 +286,10 @@ func ParseUsername(value string) (string, gtserror.WithCode) {
 		return "", requiredError(key)
 	}
 
-	return value, nil
-}
-
-func ParseWebStatusID(value string) (string, gtserror.WithCode) {
-	key := WebStatusIDKey
-
-	if value == "" {
-		return "", requiredError(key)
-	}
+	// Usernames on our instance are always lowercase.
+	// TODO: Update this when we allow different cases etc.
+	// See: https://codeberg.org/superseriousbusiness/gotosocial/issues/1813
+	value = strings.ToLower(value)
 
 	return value, nil
 }

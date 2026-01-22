@@ -18,46 +18,27 @@
 package users
 
 import (
-	"errors"
 	"net/http"
-	"strings"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
-	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
 )
 
 // StatusGETHandler serves the target status as an activitystreams NOTE so that other AP servers can parse it.
 func (m *Module) StatusGETHandler(c *gin.Context) {
-	// usernames on our instance are always lowercase
-	requestedUser := strings.ToLower(c.Param(apiutil.UsernameKey))
-	if requestedUser == "" {
-		err := errors.New("no username specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	username, statusID, contentType, errWithCode := m.parseCommonWithID(c)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	// status IDs on our instance are always uppercase
-	requestedStatusID := strings.ToUpper(c.Param(apiutil.IDKey))
-	if requestedStatusID == "" {
-		err := errors.New("no status id specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	if contentType == apiutil.TextHTML {
+		// Redirect to status web view.
+		c.Redirect(http.StatusSeeOther, "/@"+username+"/statuses/"+statusID)
 		return
 	}
 
-	contentType, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubOrHTMLHeaders...)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	if contentType == string(apiutil.TextHTML) {
-		// redirect to the status
-		c.Redirect(http.StatusSeeOther, "/@"+requestedUser+"/statuses/"+requestedStatusID)
-		return
-	}
-
-	resp, errWithCode := m.processor.Fedi().StatusGet(c.Request.Context(), requestedUser, requestedStatusID)
+	resp, errWithCode := m.processor.Fedi().StatusGet(c.Request.Context(), username, statusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
