@@ -459,7 +459,7 @@ For example, actor `@boobslover6969@boobs.example.com` should send a `ReplyReque
   },
   [... rest of the Note ...]
 }
-  ```
+```
 
 #### Case 2: Approval is Conditional on Presence in a Followers or Following Collection
 
