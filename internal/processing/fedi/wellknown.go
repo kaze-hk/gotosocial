@@ -24,6 +24,7 @@ import (
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 const (
@@ -47,7 +48,6 @@ var (
 	nodeInfoProtocols = []string{"activitypub"}
 	nodeInfoInbound   = []string{}
 	nodeInfoOutbound  = []string{}
-	nodeInfoMetadata  = make(map[string]any)
 )
 
 // NodeInfoRelGet returns a well known response giving the path to node info.
@@ -109,6 +109,14 @@ func (p *Processor) NodeInfoGet(ctx context.Context, schemaVersion string) (*api
 		}
 	}
 
+	// Fill `metadata` field with instance info
+	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
+	if err != nil {
+		err := fmt.Errorf("db error getting instance: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	metadata := getNodeInfoMetadata(instance)
+
 	nodeInfo := &apimodel.Nodeinfo{
 		Version: schemaVersion,
 		Software: apimodel.NodeInfoSoftware{
@@ -128,7 +136,7 @@ func (p *Processor) NodeInfoGet(ctx context.Context, schemaVersion string) (*api
 			},
 			LocalPosts: postCount,
 		},
-		Metadata: nodeInfoMetadata,
+		Metadata: metadata,
 	}
 
 	if schemaVersion == "2.1" {
@@ -137,6 +145,52 @@ func (p *Processor) NodeInfoGet(ctx context.Context, schemaVersion string) (*api
 	}
 
 	return nodeInfo, nil
+}
+
+// getNodeInfoMetadata populates + returns a
+// `metadata` map based on Misskey's nodeinfo metadata.
+func getNodeInfoMetadata(instance *gtsmodel.Instance) map[string]any {
+	nodeInfoMetadata := make(map[string]any)
+
+	// nodeName: Name of this instance.
+	// Using title as name should be OK.
+	nodeInfoMetadata["nodeName"] = instance.Title
+
+	// nodeDescription: description of the site.
+	// Misskey seems to use HTML here, so it should be fine.
+	nodeInfoMetadata["nodeDescription"] = instance.Description
+
+	// Contact related info.
+	contactField := make(map[string]string, 2)
+	if instance.ContactAccount != nil {
+		contactField["name"] = "@" + instance.ContactAccount.Username + "@" + config.GetAccountDomain()
+	}
+	if instance.ContactEmail != "" {
+		contactField["email"] = instance.ContactEmail
+		nodeInfoMetadata["inquiryUrl"] = "mailto:" + instance.ContactEmail
+	}
+	if len(contactField) != 0 {
+		nodeInfoMetadata["nodeAdmins"] = []any{contactField}
+		nodeInfoMetadata["maintainer"] = contactField
+	}
+
+	// Instance preferred languages.
+	langs := config.GetInstanceLanguages()
+	if len(langs) != 0 {
+		nodeInfoMetadata["langs"] = langs.Strings()
+	} else {
+		// Empty array as fallback.
+		nodeInfoMetadata["langs"] = make([]string, 0)
+	}
+
+	// Other metadata: maybe not
+	// necessary, but put here anyway
+	nodeInfoMetadata["repositoryUrl"] = nodeInfoRepo
+	nodeInfoMetadata["disableRegistration"] = !config.GetAccountsRegistrationOpen()
+	nodeInfoMetadata["maxNoteTextLength"] = config.GetStatusesMaxChars()
+	nodeInfoMetadata["tosUrl"] = config.GetProtocol() + "://" + config.GetHost() + "/about#terms"
+
+	return nodeInfoMetadata
 }
 
 // HostMetaGet returns a host-meta struct in response to a host-meta request.
