@@ -67,7 +67,7 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 	accountMeta := baseMeta.WithAccount(&apimodel.WebAccount{Account: acct})
 
 	suite.EqualValues(OGMeta{
-		Title:       "example person!!, @example_account@example.org",
+		Title:       "example person!! (@example_account@example.org)",
 		Type:        "profile",
 		Locale:      "en",
 		URL:         "https://example.org/@example_account",
@@ -79,18 +79,12 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 				Alt:    "Avatar for example_account",
 				URL:    "https://example.org/avatar.jpg",
 			},
-			{
-				// Instance avatar.
-				OGType:   "image",
-				URL:      "https://example.org/instance-avatar.webp",
-				MIMEType: "image/webp",
-			},
 		},
 		ArticlePublisher:     "",
 		ArticleAuthor:        "",
 		ArticleModifiedTime:  "",
 		ArticlePublishedTime: "",
-		ProfileUsername:      "example_account",
+		ProfileUsername:      "example_account@example.org",
 	}, *accountMeta)
 }
 
@@ -114,7 +108,7 @@ func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
 	accountMeta := baseMeta.WithAccount(&apimodel.WebAccount{Account: acct})
 
 	suite.EqualValues(OGMeta{
-		Title:       "example person!!, @example_account@example.org",
+		Title:       "example person!! (@example_account@example.org)",
 		Type:        "profile",
 		Locale:      "en",
 		URL:         "https://example.org/@example_account",
@@ -126,18 +120,12 @@ func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
 				Alt:    "Avatar for example_account",
 				URL:    "https://example.org/avatar.jpg",
 			},
-			{
-				// Instance avatar.
-				OGType:   "image",
-				URL:      "https://example.org/instance-avatar.webp",
-				MIMEType: "image/webp",
-			},
 		},
 		ArticlePublisher:     "",
 		ArticleAuthor:        "",
 		ArticleModifiedTime:  "",
 		ArticlePublishedTime: "",
-		ProfileUsername:      "example_account",
+		ProfileUsername:      "example_account@example.org",
 	}, *accountMeta)
 }
 
@@ -190,25 +178,13 @@ func (suite *OpenGraphTestSuite) TestWithStatus() {
 	statusMeta := baseMeta.WithStatus(status)
 
 	suite.EqualValues(OGMeta{
-		Title:       "Post by example person!!, @example_account@example.org",
-		Type:        "article",
-		Locale:      "en",
-		URL:         "https://example.org/@example_account/12345",
-		SiteName:    "example.org",
-		Description: "**test status**",
-		Media: []OGMedia{
-			{
-				OGType: "image",
-				Alt:    "Avatar for example_account",
-				URL:    "https://example.org/avatar.jpg",
-			},
-			{
-				// Instance avatar.
-				OGType:   "image",
-				URL:      "https://example.org/instance-avatar.webp",
-				MIMEType: "image/webp",
-			},
-		},
+		Title:                "example person!! (@example_account@example.org)",
+		Type:                 "article",
+		Locale:               "en",
+		URL:                  "https://example.org/@example_account/12345",
+		SiteName:             "example.org",
+		Description:          "**test status**",
+		Media:                []OGMedia{},
 		ArticlePublisher:     "https://example.org/@example_account",
 		ArticleAuthor:        "https://example.org/@example_account",
 		ArticleModifiedTime:  "2025-01-18T11:00:00+00:00",
@@ -337,12 +313,12 @@ func (suite *OpenGraphTestSuite) TestWithStatusWithImage() {
 	statusMeta := baseMeta.WithStatus(status)
 
 	suite.EqualValues(OGMeta{
-		Title:       "Post by example person!!, @example_account@example.org",
+		Title:       "example person!! (@example_account@example.org)",
 		Type:        "article",
 		Locale:      "en",
 		URL:         "https://example.org/@example_account/12345",
 		SiteName:    "example.org",
-		Description: "**test status**",
+		Description: "[2 media attachments] **test status**",
 		Media: []OGMedia{
 			{
 				OGType:   "image",
@@ -351,6 +327,14 @@ func (suite *OpenGraphTestSuite) TestWithStatusWithImage() {
 				MIMEType: "image/png",
 				Width:    "1920",
 				Height:   "1080",
+			},
+			{
+				OGType:   "image",
+				Alt:      "another example image",
+				URL:      "https://example.org/@example_account/12345/example2.png",
+				MIMEType: "image/png",
+				Width:    "1000",
+				Height:   "1000",
 			},
 		},
 		ArticlePublisher:     "https://example.org/@example_account",
