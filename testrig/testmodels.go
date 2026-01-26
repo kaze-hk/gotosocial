@@ -4199,21 +4199,15 @@ func NewTestWebPushSubscriptions() map[string]*gtsmodel.WebPushSubscription {
 
 func NewTestInteractionRequests() map[string]*gtsmodel.InteractionRequest {
 	return map[string]*gtsmodel.InteractionRequest{
-		// Impolite reply request.
-		//
-		// TODO: in v0.21.0 change this to a polite
-		// reply request, as this is a local interaction
-		// request, and polite is the only kind we'll
-		// be sending out *ourselves* from then on.
 		"admin_account_reply_turtle": {
 			ID:                    "01J5QVXCCEATJYSXM9H6MZT4JR",
 			TargetStatusID:        "01F8MHC8VWDRBQR0N1BATDDEM5",
 			TargetAccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InteractingAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
 			InteractionURI:        "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
-			InteractionRequestURI: "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ#ReplyRequest",
+			InteractionRequestURI: "http://localhost:8080/users/admin/reply_requests/01J5QVXCCEATJYSXM9H6MZT4JR",
 			InteractionType:       gtsmodel.InteractionReply,
-			Polite:                util.Ptr(false),
+			Polite:                util.Ptr(true),
 		},
 	}
 }

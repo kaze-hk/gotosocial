@@ -726,9 +726,6 @@ func (f *DB) parseAcceptInteractionRequestable(
 	} else {
 
 		// Request stored for this interaction URI.
-		//
-		// Note: this path is not actually possible until v0.21.0,
-		// because we don't send out polite requests yet in v0.20.0.
 
 		// If the request is already accepted,
 		// we don't need to do anything at all.

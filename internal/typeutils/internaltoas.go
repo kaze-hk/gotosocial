@@ -2076,6 +2076,16 @@ func (c *Converter) InteractionReqToASAccept(
 	// Accepting the interaction.
 	ap.AppendActorIRIs(accept, actorIRI)
 
+	// If set, also include the "result" URI
+	// of the interaction Authorization object.
+	if req.AuthorizationURI != "" {
+		resultIRI, err := url.Parse(req.AuthorizationURI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid authorization uri: %w", err)
+		}
+		ap.AppendResultIRIs(accept, resultIRI)
+	}
+
 	polite := req.IsPolite()
 	if polite {
 		// If accepting a polite request, put
@@ -2117,23 +2127,10 @@ func (c *Converter) InteractionReqToASAccept(
 		// Set the thing.
 		accept.SetActivityStreamsObject(objProp)
 
-		// If polite, also include the "result" URI
-		// of the interaction Authorization object.
-		resultIRI, err := url.Parse(req.AuthorizationURI)
-		if err != nil {
-			return nil, gtserror.Newf("invalid authorization uri: %w", err)
-		}
-		ap.AppendResultIRIs(accept, resultIRI)
-
 	} else {
-		// If accepting an impolite request, just set
-		// interaction URI as object and target status
-		// IRI as target. Don't give authorization in
-		// result field, as this will confuse pre v0.20.0
-		// instances who don't understand Auth types yet.
-		//
-		// TODO: remove this path in v0.21.0 and send an
-		// accept of a Request for impolite requests too.
+		// If accepting an impolite request,
+		// just set interaction URI as object
+		// and target status IRI as target.
 		ap.AppendObjectIRIs(accept, objectIRI)
 		ap.AppendTargetIRIs(accept, targetIRI)
 	}
@@ -2275,12 +2272,9 @@ func (c *Converter) InteractionReqToASReject(
 		reject.SetActivityStreamsObject(objProp)
 
 	} else {
-		// If rejecting an impolite request, just set
-		// interaction URI as object and target status
-		// IRI as target.
-		//
-		// TODO: remove this path in v0.21.0 and send a
-		// Reject of a Request for impolite requests too.
+		// If rejecting an impolite request,
+		// just set interaction URI as object
+		// and target status IRI as target.
 		ap.AppendObjectIRIs(reject, objectIRI)
 		ap.AppendTargetIRIs(reject, targetIRI)
 	}
@@ -2400,7 +2394,7 @@ func (c *Converter) InteractionReqToASAuthorization(
 }
 
 // appendASInteractionAuthorization is a utility function
-// that sets `approvedBy`, and (if possible) `likeAuthorization`,
+// that sets `approvedBy`, or (if possible) `likeAuthorization`,
 // `replyAuthorization`, and/or `announceAuthorization`.
 func (c *Converter) appendASInteractionAuthorization(
 	ctx context.Context,
@@ -2447,18 +2441,6 @@ func (c *Converter) appendASInteractionAuthorization(
 			"approvedByURIStr %s corresponded to not-accepted interaction request %s",
 			approvedByURIStr, intReq.ID,
 		)
-	}
-
-	// Deprecated: Set `approvedBy`
-	// property to URI of the Accept.
-	//
-	// Todo: Remove this in v0.21.0.
-	if wap, ok := t.(ap.WithApprovedBy); ok {
-		responseURI, err := url.Parse(intReq.ResponseURI)
-		if err != nil {
-			return gtserror.Newf("error parsing responseURI: %w", err)
-		}
-		ap.SetApprovedBy(wap, responseURI)
 	}
 
 	// Set the appropriate authorization

@@ -944,7 +944,6 @@ func (suite *InternalToASTestSuite) TestStatusToASPoliteApproved() {
     "https://gotosocial.org/ns",
     "https://www.w3.org/ns/activitystreams"
   ],
-  "approvedBy": "http://localhost:8080/users/1happyturtle/accepts/01J5QVXCCEATJYSXM9H6MZT4JR",
   "attributedTo": "http://localhost:8080/users/admin",
   "cc": [
     "http://localhost:8080/users/admin/followers",
@@ -1050,7 +1049,6 @@ func (suite *InternalToASTestSuite) TestStatusToASPImpoliteApproved() {
     "https://gotosocial.org/ns",
     "https://www.w3.org/ns/activitystreams"
   ],
-  "approvedBy": "http://localhost:8080/users/1happyturtle/accepts/01J5QVXCCEATJYSXM9H6MZT4JR",
   "attributedTo": "http://localhost:8080/users/admin",
   "cc": [
     "http://localhost:8080/users/admin/followers",
