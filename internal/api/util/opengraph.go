@@ -180,8 +180,8 @@ func (o *OGMeta) WithStatus(status *apimodel.WebStatus) *OGMeta {
 		o.Description = o.Title
 	}
 
-	// Prepend account image.
-	o.prependMedia(ogImgForAcct(status.Account))
+	// Gather ogMedias for this status.
+	ogMedias := []OGMedia{}
 
 	if l := len(status.MediaAttachments); l != 0 && !status.Sensitive {
 
@@ -201,10 +201,6 @@ func (o *OGMeta) WithStatus(status *apimodel.WebStatus) *OGMeta {
 				MIMEType: a.MIMEType,
 				Alt:      desc,
 			}
-
-			// Gather ogMedias for
-			// this attachment.
-			ogMedias := []OGMedia{}
 
 			// Add further tags
 			// depending on type.
@@ -252,16 +248,21 @@ func (o *OGMeta) WithStatus(status *apimodel.WebStatus) *OGMeta {
 				)
 			}
 
-			// Prepend gathered entries.
+			// Replace generic entries with gathered ones.
 			//
 			// This will cause the full-size
 			// entry to appear before its
 			// thumbnail entry (if set).
-			o.prependMedia(ogMedias...)
+			o.Media = ogMedias
 
 			// Done!
 			break
 		}
+	}
+
+	if len(ogMedias) == 0 {
+		// Prepend account image to default media.
+		o.prependMedia(ogImgForAcct(status.Account))
 	}
 
 	o.ArticlePublisher = status.Account.URL
