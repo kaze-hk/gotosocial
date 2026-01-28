@@ -1200,51 +1200,54 @@ func (d *Dereferencer) dereferenceAccountStats(
 	// it will just fall back to counting local.
 
 	// Followers first.
-	if count, err := d.countCollection(
+	followersCount, err := d.countCollection(
 		ctx,
 		account.FollowersURI,
 		requestUser,
-	); err != nil {
+	)
+	if err != nil {
 		// Log this but don't bail.
 		log.Warnf(ctx,
 			"couldn't count followers for @%s@%s: %v",
 			account.Username, account.Domain, err,
 		)
-	} else if count > 0 {
-		// Positive integer is useful!
-		account.Stats.FollowersCount = &count
+	} else if followersCount >= 0 {
+		// Zero or positive integer is useful!
+		account.Stats.FollowersCount = &followersCount
 	}
 
 	// Now following.
-	if count, err := d.countCollection(
+	followingCount, err := d.countCollection(
 		ctx,
 		account.FollowingURI,
 		requestUser,
-	); err != nil {
+	)
+	if err != nil {
 		// Log this but don't bail.
 		log.Warnf(ctx,
 			"couldn't count following for @%s@%s: %v",
 			account.Username, account.Domain, err,
 		)
-	} else if count > 0 {
-		// Positive integer is useful!
-		account.Stats.FollowingCount = &count
+	} else if followingCount >= 0 {
+		// Zero or positive integer is useful!
+		account.Stats.FollowingCount = &followingCount
 	}
 
 	// Now statuses count.
-	if count, err := d.countCollection(
+	statusesCount, err := d.countCollection(
 		ctx,
 		account.OutboxURI,
 		requestUser,
-	); err != nil {
+	)
+	if err != nil {
 		// Log this but don't bail.
 		log.Warnf(ctx,
 			"couldn't count statuses for @%s@%s: %v",
 			account.Username, account.Domain, err,
 		)
-	} else if count > 0 {
-		// Positive integer is useful!
-		account.Stats.StatusesCount = &count
+	} else if statusesCount >= 0 {
+		// Zero or positive integer is useful!
+		account.Stats.StatusesCount = &statusesCount
 	}
 
 	// Update stats now.

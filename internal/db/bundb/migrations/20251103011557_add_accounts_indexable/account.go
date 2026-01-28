@@ -267,8 +267,6 @@ type Account struct {
 	Settings *gtsmodel.AccountSettings `bun:"-"`
 
 	// gtsmodel.AccountStats for this account.
-	//
-	// Local accounts only.
 	Stats *gtsmodel.AccountStats `bun:"-"`
 
 	// True if the actor hides to-public statusables

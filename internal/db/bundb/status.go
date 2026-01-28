@@ -587,13 +587,22 @@ func insertStatus(ctx context.Context, tx bun.Tx, status *gtsmodel.Status) error
 }
 
 func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) error {
-	var isPinning bool
-	for _, col := range columns {
-		if col == "pinned_at" {
+	// Check if pinning or unpinning
+	// based on whether the pinned_at
+	// column is being updated.
+	var isPinning, isUnpinning bool
+	if slices.Contains(columns, "pinned_at") {
+		if !status.PinnedAt.IsZero() {
+			// Status is
+			// becoming pinned.
 			isPinning = true
-			break
+		} else {
+			// Status is
+			// becoming unpinned.
+			isUnpinning = true
 		}
 	}
+
 	return s.state.Caches.DB.Status.Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
@@ -653,24 +662,25 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 				return err
 			}
 
+			// If pinning or unpinning,
+			// update account stats.
 			switch {
-			case !isPinning:
-				// nothing
-				return nil
-
-			case !status.PinnedAt.IsZero():
+			case isPinning:
 				// Increment author pinned statistics.
-				return decrementAccountStats(ctx, tx,
+				return incrementAccountStats(ctx, tx,
 					"statuses_pinned_count",
 					status.AccountID,
 				)
 
-			default:
+			case isUnpinning:
 				// Decrement author pinned statistics.
 				return decrementAccountStats(ctx, tx,
 					"statuses_pinned_count",
 					status.AccountID,
 				)
+			default:
+				// Nothing.
+				return nil
 			}
 		})
 	})

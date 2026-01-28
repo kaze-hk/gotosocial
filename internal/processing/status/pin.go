@@ -103,22 +103,17 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
+	// Update "pinned_at" for this status.
+	// This will also update account stats in the db.
 	targetStatus.PinnedAt = time.Now()
 	if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
 		err = gtserror.Newf("db error pinning status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Update account stats.
+	// Increment pinned count on in-memory
+	// account model before returning it.
 	*requestingAccount.Stats.StatusesPinnedCount++
-	if err := p.state.DB.UpdateAccountStats(
-		ctx,
-		requestingAccount.Stats,
-		"statuses_pinned_count",
-	); err != nil {
-		err = gtserror.Newf("db error updating stats: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
 
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
@@ -155,26 +150,20 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Update "pinned_at" for this status.
+	// This will also update account stats in the db.
 	targetStatus.PinnedAt = time.Time{}
 	if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
 		err = gtserror.Newf("db error unpinning status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Update account stats.
-	//
-	// Clamp to 0 to avoid funny business.
+	// Decrement pinned count on in-memory
+	// account model before returning it,
+	// clamping to 0 to avoid funny business.
 	*requestingAccount.Stats.StatusesPinnedCount--
 	if *requestingAccount.Stats.StatusesPinnedCount < 0 {
 		*requestingAccount.Stats.StatusesPinnedCount = 0
-	}
-	if err := p.state.DB.UpdateAccountStats(
-		ctx,
-		requestingAccount.Stats,
-		"statuses_pinned_count",
-	); err != nil {
-		err = gtserror.Newf("db error updating stats: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)

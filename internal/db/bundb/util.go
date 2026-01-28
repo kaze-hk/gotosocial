@@ -179,20 +179,34 @@ func incrementAccountStats(ctx context.Context, tx bun.Tx, col bun.Ident, accoun
 	if _, err := tx.NewUpdate().
 		Model((*gtsmodel.AccountStats)(nil)).
 		Where("? = ?", bun.Ident("account_id"), accountID).
-		Set("? = (? + 1)", col, col).
+		Set("? = (? + 1)", bun.Ident(col), bun.Ident(col)).
 		Exec(ctx); err != nil {
 		return gtserror.Newf("error updating %s: %w", col, err)
 	}
 	return nil
 }
 
-// decrementAccountStats will decrement the given column in the `account_stats` table matching `account_id`.
+// decrementAccountStats will decrement the given column in the `account_stats`
+// table matching `account_id`, not allowing the value to decrement below 0.
 func decrementAccountStats(ctx context.Context, tx bun.Tx, col bun.Ident, accountID string) error {
-	if _, err := tx.NewUpdate().
+	q := tx.NewUpdate().
 		Model((*gtsmodel.AccountStats)(nil)).
-		Where("? = ?", bun.Ident("account_id"), accountID).
-		Set("? = (? - 1)", col, col).
-		Exec(ctx); err != nil {
+		Where("? = ?", bun.Ident("account_id"), accountID)
+
+	// Set either to zero or to [col]-1 using
+	// MAX (sqlite) or GREATEST (postgres) funcs.
+	switch d := tx.Dialect().Name(); d {
+	case dialect.SQLite:
+		// https://sqlite.org/lang_corefunc.html#max_scalar
+		q = q.Set("? = MAX(0, ? - 1)", bun.Ident(col), bun.Ident(col))
+	case dialect.PG:
+		// https://www.postgresql.org/docs/current/functions-conditional.html#FUNCTIONS-GREATEST-LEAST
+		q = q.Set("? = GREATEST(0, ? - 1)", bun.Ident(col), bun.Ident(col))
+	default:
+		panic("dialect " + d.String() + " was neither pg nor sqlite")
+	}
+
+	if _, err := q.Exec(ctx); err != nil {
 		return gtserror.Newf("error updating %s: %w", col, err)
 	}
 	return nil
