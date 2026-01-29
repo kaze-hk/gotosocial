@@ -236,3 +236,34 @@ With her hands on her hips looking annoyed she says &#34;That sign won&#39;t sto
 		t.Fatalf("unexpected output:\n`%s`\n", out)
 	}
 }
+
+func TestOutdentOGMeta(t *testing.T) {
+	const html = template.HTML(`<html lang="en">
+    <head>
+        <meta property="og:description" content="here is
+        a
+        
+        multiline toot
+        with some
+        significant whitespace!
+        
+        &lt;3 &lt;3 &lt;3">
+    </head>`)
+
+	const expected = template.HTML(`<html lang="en">
+    <head>
+        <meta property="og:description" content="here is
+a
+
+multiline toot
+with some
+significant whitespace!
+
+&lt;3 &lt;3 &lt;3">
+    </head>`)
+
+	out := outdentOGMeta(html)
+	if out != expected {
+		t.Fatalf("unexpected output:\n`%s`\n", out)
+	}
+}

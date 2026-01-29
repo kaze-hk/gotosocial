@@ -148,6 +148,7 @@ var funcMap = template.FuncMap{
 	"indentAttr":          indentAttr,
 	"isNil":               isNil,
 	"outdentPreformatted": outdentPreformatted,
+	"outdentOGMeta":       outdentOGMeta,
 	"noescapeAttr":        noescapeAttr,
 	"noescape":            noescape,
 	"oddOrEven":           oddOrEven,
@@ -312,6 +313,23 @@ var (
 	// Find content of alt or title attributes.
 	indentAltOrTitle = regexp.MustCompile(`(?Ums)\b(?:alt|title)="(.*)"(?:\b|>|$)`)
 
+	// One indent level is four spaces,
+	// so the start of an element inside
+	// <head> will be indented 8 spaces, eg:
+	//
+	//	<!DOCTYPE html>
+	//	<html lang="en">
+	//	    <head>
+	//	        <meta property="og:description"> <-- the thing we're looking for
+	headContentIndent = strings.Repeat(indentStr, 2)
+	// Find content of <meta> elements for
+	// `description` and `og:description`.
+	indentHeadOGDescription = regexp.MustCompile(
+		`(?Ums)^` +
+			headContentIndent +
+			`<meta (?:property="og:description"|name="description") content="(.*)">$`,
+	)
+
 	// Map of lazily-compiled replaceIndent
 	// regexes, keyed by the indent they
 	// replace, to avoid recompilation.
@@ -338,6 +356,57 @@ func indentAttr(n int, html template.HTMLAttr) template.HTMLAttr {
 		indents[:n*indentStrLen],
 	)
 	return noescapeAttr(out)
+}
+
+// outdentOGMeta outdents all preformatted text
+// inside of "description" and "og:description"
+// <meta> elements in the given html fragment.
+func outdentOGMeta(html template.HTML) template.HTML {
+	output := regexes.ReplaceAllStringFunc(indentHeadOGDescription, string(html),
+		func(match string, buf *bytes.Buffer) string {
+			// Reuse the regex to pull out submatches.
+			matches := indentHeadOGDescription.FindAllStringSubmatch(match, -1)
+
+			// Ensure matches
+			// expected length.
+			if len(matches) != 1 {
+				return match
+			}
+
+			// Ensure inner matches
+			// expected length.
+			innerMatches := matches[0]
+			if len(innerMatches) != 2 {
+				return match
+			}
+
+			// We know the length of indent
+			// before elements inside head>
+			// beforehand, it's two levels.
+			indent := headContentIndent
+
+			// Load or create + store the
+			// regex to replace this indent,
+			// avoiding recompilation.
+			var replaceIndent *regexp.Regexp
+			if replaceIndentI, ok := replaceIndents.Load(indent); ok {
+				// Got regex for this indent.
+				replaceIndent = replaceIndentI.(*regexp.Regexp)
+			} else {
+				// No regex stored for
+				// this indent yet, store it.
+				replaceIndent = regexp.MustCompile(`(?m)^` + indent)
+				replaceIndents.Store(indent, replaceIndent)
+			}
+
+			// Keep the initial indent before the element,
+			// but remove all occurrences of the indent
+			// at the start of each line inside the match.
+			return indent + replaceIndent.ReplaceAllString(match, "")
+		},
+	)
+
+	return noescape(output)
 }
 
 // outdentPreformatted outdents all preformatted text in

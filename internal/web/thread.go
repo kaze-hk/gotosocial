@@ -143,7 +143,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	page := apiutil.WebPage{
 		Template:    "thread.tmpl",
 		Instance:    instance,
-		OGMeta:      apiutil.OGBase(instance).WithStatus(context.Status),
+		OGMeta:      apiutil.OGStatus(instance, acct, context.Status),
 		Stylesheets: stylesheets,
 		Javascript: []apiutil.JavascriptEntry{
 			{

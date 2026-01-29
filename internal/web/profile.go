@@ -243,7 +243,7 @@ func (m *Module) profileMicroblog(c *gin.Context, p *profile) {
 	page := apiutil.WebPage{
 		Template:    "profile.tmpl",
 		Instance:    p.instance,
-		OGMeta:      apiutil.OGBase(p.instance).WithAccount(p.account),
+		OGMeta:      apiutil.OGAccount(p.instance, p.account),
 		Stylesheets: stylesheets,
 		Javascript: []apiutil.JavascriptEntry{
 			{
@@ -317,7 +317,7 @@ func (m *Module) profileGallery(c *gin.Context, p *profile) {
 	page := apiutil.WebPage{
 		Template:    "profile-gallery.tmpl",
 		Instance:    p.instance,
-		OGMeta:      apiutil.OGBase(p.instance).WithAccount(p.account),
+		OGMeta:      apiutil.OGAccount(p.instance, p.account),
 		Stylesheets: stylesheets,
 		Javascript: []apiutil.JavascriptEntry{
 			{

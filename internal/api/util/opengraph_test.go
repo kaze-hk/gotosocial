@@ -22,7 +22,6 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"github.com/stretchr/testify/suite"
 )
@@ -31,40 +30,24 @@ type OpenGraphTestSuite struct {
 	suite.Suite
 }
 
-func (suite *OpenGraphTestSuite) TestParseDescription() {
-	tests := []struct {
-		name, in, exp string
-	}{
-		{name: "shellcmd", in: `echo '\e]8;;http://example.com\e\This is a link\e]8;;\e'`, exp: `echo &#39;&bsol;e]8;;http://example.com&bsol;e&bsol;This is a link&bsol;e]8;;&bsol;e&#39;`},
-		{name: "newlines", in: "test\n\ntest\ntest", exp: "test test test"},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		suite.Run(tt.name, func() {
-			suite.Equal(tt.exp, ParseDescription(tt.in))
-		})
-	}
-}
-
 func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
-	baseMeta := OGBase(&apimodel.InstanceV1{
+	instance := &apimodel.InstanceV1{
 		AccountDomain: "example.org",
 		Languages:     []string{"en"},
 		Thumbnail:     "https://example.org/instance-avatar.webp",
 		ThumbnailType: "image/webp",
-	})
+	}
 
 	acct := &apimodel.Account{
 		Acct:        "example_account",
 		DisplayName: "example person!!",
 		URL:         "https://example.org/@example_account",
-		Note:        "<p>This is my profile, read it and weep! Weep then!</p>",
+		Note:        "<p>This is my profile, read it and weep!<br/>Weep then!</p>",
 		Username:    "example_account",
 		Avatar:      "https://example.org/avatar.jpg",
 	}
 
-	accountMeta := baseMeta.WithAccount(&apimodel.WebAccount{Account: acct})
+	accountMeta := OGAccount(instance, &apimodel.WebAccount{Account: acct})
 
 	suite.EqualValues(OGMeta{
 		Title:       "example person!! (@example_account@example.org)",
@@ -72,7 +55,7 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 		Locale:      "en",
 		URL:         "https://example.org/@example_account",
 		SiteName:    "example.org",
-		Description: "This is my profile, read it and weep! Weep then!",
+		Description: "This is my profile, read it and weep!\nWeep then!",
 		Media: []OGMedia{
 			{
 				OGType: "image",
@@ -89,12 +72,12 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 }
 
 func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
-	baseMeta := OGBase(&apimodel.InstanceV1{
+	instance := &apimodel.InstanceV1{
 		AccountDomain: "example.org",
 		Languages:     []string{"en"},
 		Thumbnail:     "https://example.org/instance-avatar.webp",
 		ThumbnailType: "image/webp",
-	})
+	}
 
 	acct := &apimodel.Account{
 		Acct:        "example_account",
@@ -105,7 +88,7 @@ func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
 		Avatar:      "https://example.org/avatar.jpg",
 	}
 
-	accountMeta := baseMeta.WithAccount(&apimodel.WebAccount{Account: acct})
+	accountMeta := OGAccount(instance, &apimodel.WebAccount{Account: acct})
 
 	suite.EqualValues(OGMeta{
 		Title:       "example person!! (@example_account@example.org)",
@@ -130,38 +113,29 @@ func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
 }
 
 func (suite *OpenGraphTestSuite) TestWithStatus() {
-	baseMeta := OGBase(&apimodel.InstanceV1{
+	instance := &apimodel.InstanceV1{
 		AccountDomain: "example.org",
 		Languages:     []string{"en"},
 		Thumbnail:     "https://example.org/instance-avatar.webp",
 		ThumbnailType: "image/webp",
-	})
+	}
 
 	acct := &apimodel.Account{
 		Acct:        "example_account",
 		DisplayName: "example person!!",
 		URL:         "https://example.org/@example_account",
-		Note:        "", // <- empty
 		Username:    "example_account",
 		Avatar:      "https://example.org/avatar.jpg",
 	}
 
 	apiStatus := &apimodel.Status{
-		ID:               "12345",
-		CreatedAt:        "2025-01-18T00:00:00+00:00",
-		EditedAt:         util.Ptr("2025-01-18T11:00:00+00:00"),
-		Sensitive:        false,
-		SpoilerText:      "",
-		Visibility:       typeutils.VisToAPIVis(gtsmodel.VisibilityPublic),
-		LocalOnly:        false,
-		Language:         util.Ptr("en"),
-		URI:              "https://example.org/statuses/12345",
-		URL:              "https://example.org/@example_account/12345",
-		Content:          "<b>test status</b>",
-		Account:          acct,
-		MediaAttachments: []*apimodel.Attachment{},
-		Text:             "**test status**",
-		ContentType:      apimodel.StatusContentTypeMarkdown,
+		ID:        "12345",
+		CreatedAt: "2025-01-18T00:00:00+00:00",
+		EditedAt:  util.Ptr("2025-01-18T11:00:00+00:00"),
+		URI:       "https://example.org/statuses/12345",
+		URL:       "https://example.org/@example_account/12345",
+		Content:   "<p><b>test status</b><p><p>here's another line</p>",
+		Account:   acct,
 	}
 
 	status := &apimodel.WebStatus{
@@ -175,7 +149,7 @@ func (suite *OpenGraphTestSuite) TestWithStatus() {
 		},
 	}
 
-	statusMeta := baseMeta.WithStatus(status)
+	statusMeta := OGStatus(instance, status.Account, status)
 
 	suite.EqualValues(OGMeta{
 		Title:                "example person!! (@example_account@example.org)",
@@ -183,103 +157,78 @@ func (suite *OpenGraphTestSuite) TestWithStatus() {
 		Locale:               "en",
 		URL:                  "https://example.org/@example_account/12345",
 		SiteName:             "example.org",
-		Description:          "**test status**",
-		Media:                []OGMedia{},
+		Description:          "test status\n\nhere's another line",
 		ArticlePublisher:     "https://example.org/@example_account",
 		ArticleAuthor:        "https://example.org/@example_account",
 		ArticleModifiedTime:  "2025-01-18T11:00:00+00:00",
 		ArticlePublishedTime: "2025-01-18T00:00:00+00:00",
-		ProfileUsername:      "",
+		ProfileUsername:      "example_account@example.org",
 	}, *statusMeta)
 }
 
 func (suite *OpenGraphTestSuite) TestWithStatusWithImage() {
-	baseMeta := OGBase(&apimodel.InstanceV1{
+	instance := &apimodel.InstanceV1{
 		AccountDomain: "example.org",
 		Languages:     []string{"en"},
 		Thumbnail:     "https://example.org/instance-avatar.webp",
 		ThumbnailType: "image/webp",
-	})
+	}
 
 	acct := &apimodel.Account{
 		Acct:        "example_account",
 		DisplayName: "example person!!",
 		URL:         "https://example.org/@example_account",
-		Note:        "", // <- empty
 		Username:    "example_account",
 		Avatar:      "https://example.org/avatar.jpg",
 	}
 
 	imageAttachment := &apimodel.Attachment{
-		ID:               "00IMAGE00",
-		Type:             "image",
-		URL:              util.Ptr("https://example.org/@example_account/12345/example.png"),
-		TextURL:          util.Ptr("https://example.org/@example_account/12345/example.png"),
-		PreviewURL:       util.Ptr("https://example.org/@example_account/12345/small/example.png"),
-		RemoteURL:        nil,
-		PreviewRemoteURL: nil,
+		ID:         "00IMAGE00",
+		Type:       "image",
+		URL:        util.Ptr("https://example.org/@example_account/12345/example.png"),
+		TextURL:    util.Ptr("https://example.org/@example_account/12345/example.png"),
+		PreviewURL: util.Ptr("https://example.org/@example_account/12345/small/example.png"),
 		Meta: &apimodel.MediaMeta{
 			Original: apimodel.MediaDimensions{
 				Width:  1920,
 				Height: 1080,
-				Size:   "1920x1080",
-				Aspect: 1920.0 / 1080,
 			},
 			Small: apimodel.MediaDimensions{
 				Width:  320,
 				Height: 240,
-				Size:   "320x240",
-				Aspect: 320.0 / 240,
 			},
-			Focus: nil,
 		},
 		Description: util.Ptr("an example image"),
 		Blurhash:    util.Ptr("LKE3VIw}0KD%a2o{M|t7NFWps:t7"), // <- from testmodels
 	}
 
 	anotherImageAttachment := &apimodel.Attachment{
-		ID:               "00IMAGE11",
-		Type:             "image",
-		URL:              util.Ptr("https://example.org/@example_account/12345/example2.png"),
-		TextURL:          util.Ptr("https://example.org/@example_account/12345/example2.png"),
-		PreviewURL:       util.Ptr("https://example.org/@example_account/12345/small/example2.png"),
-		RemoteURL:        nil,
-		PreviewRemoteURL: nil,
+		ID:         "00IMAGE11",
+		Type:       "image",
+		URL:        util.Ptr("https://example.org/@example_account/12345/example2.png"),
+		TextURL:    util.Ptr("https://example.org/@example_account/12345/example2.png"),
+		PreviewURL: util.Ptr("https://example.org/@example_account/12345/small/example2.png"),
 		Meta: &apimodel.MediaMeta{
 			Original: apimodel.MediaDimensions{
 				Width:  1000,
 				Height: 1000,
-				Size:   "1000x1000",
-				Aspect: 1,
 			},
 			Small: apimodel.MediaDimensions{
 				Width:  200,
 				Height: 200,
-				Size:   "200x200",
-				Aspect: 1,
 			},
-			Focus: nil,
 		},
 		Description: util.Ptr("another example image"),
-		Blurhash:    util.Ptr("LNABP8o#Dge,S6M}axxVEQjYxWbH"), // <- from testmodels
 	}
 
 	apiStatus := &apimodel.Status{
 		ID:               "12345",
 		CreatedAt:        "2025-01-18T00:00:00+00:00",
 		EditedAt:         util.Ptr("2025-01-18T11:00:00+00:00"),
-		Sensitive:        false,
-		SpoilerText:      "",
-		Visibility:       typeutils.VisToAPIVis(gtsmodel.VisibilityPublic),
-		LocalOnly:        false,
-		Language:         util.Ptr("en"),
-		URI:              "https://example.org/statuses/12345",
 		URL:              "https://example.org/@example_account/12345",
-		Content:          "<b>test status</b>",
+		Content:          "<p>test status <span class=\"h-card\"><a href=\"https://example.org/c/mutual_aid\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>mutual_aid@example.org</span></a></span> <a href=\"https://example.org/tags/MutualAidRequest\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>MutualAidRequest</span></a></p>",
 		Account:          acct,
 		MediaAttachments: []*apimodel.Attachment{imageAttachment, anotherImageAttachment},
-		Text:             "**test status**",
-		ContentType:      apimodel.StatusContentTypeMarkdown,
 	}
 
 	webAttachment := &apimodel.WebAttachment{
@@ -300,17 +249,11 @@ func (suite *OpenGraphTestSuite) TestWithStatusWithImage() {
 
 	status := &apimodel.WebStatus{
 		Status:           apiStatus,
-		SpoilerContent:   "", // <- empty
 		MediaAttachments: []*apimodel.WebAttachment{webAttachment, anotherWebAttachment},
-		Account: &apimodel.WebAccount{
-			Account:          acct,
-			AvatarAttachment: nil,
-			HeaderAttachment: nil,
-			WebLayout:        gtsmodel.WebLayoutMicroblog.String(),
-		},
+		Account:          &apimodel.WebAccount{Account: acct},
 	}
 
-	statusMeta := baseMeta.WithStatus(status)
+	statusMeta := OGStatus(instance, status.Account, status)
 
 	suite.EqualValues(OGMeta{
 		Title:       "example person!! (@example_account@example.org)",
@@ -318,7 +261,7 @@ func (suite *OpenGraphTestSuite) TestWithStatusWithImage() {
 		Locale:      "en",
 		URL:         "https://example.org/@example_account/12345",
 		SiteName:    "example.org",
-		Description: "[2 media attachments] **test status**",
+		Description: "[2 media attachments] test status @mutual_aid@example.org #MutualAidRequest",
 		Media: []OGMedia{
 			{
 				OGType:   "image",
@@ -341,7 +284,7 @@ func (suite *OpenGraphTestSuite) TestWithStatusWithImage() {
 		ArticleAuthor:        "https://example.org/@example_account",
 		ArticleModifiedTime:  "2025-01-18T11:00:00+00:00",
 		ArticlePublishedTime: "2025-01-18T00:00:00+00:00",
-		ProfileUsername:      "",
+		ProfileUsername:      "example_account@example.org",
 	}, *statusMeta)
 }
 
