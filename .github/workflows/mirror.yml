@@ -5,6 +5,9 @@ on:
     - cron: '0 * * * *' # 每小时运行一次
   workflow_dispatch:
 
+permissions:
+  contents: write  # 添加这行，授予写入权限
+
 jobs:
   mirror:
     runs-on: ubuntu-latest
