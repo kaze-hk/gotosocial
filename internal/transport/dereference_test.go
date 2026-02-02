@@ -120,8 +120,8 @@ func (suite *DereferenceTestSuite) TestDerefLocalStatus() {
 	defer resp.Body.Close()
 
 	suite.Equal(http.StatusOK, resp.StatusCode)
-	suite.EqualValues(1444, resp.ContentLength)
-	suite.Equal("1444", resp.Header.Get("Content-Length"))
+	suite.EqualValues(1525, resp.ContentLength)
+	suite.Equal("1525", resp.Header.Get("Content-Length"))
 	suite.Equal(apiutil.AppActivityLDJSON, resp.Header.Get("Content-Type"))
 
 	b, err := io.ReadAll(resp.Body)
@@ -158,6 +158,11 @@ func (suite *DereferenceTestSuite) TestDerefLocalStatus() {
     "canLike": {
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
+      ]
+    },
+    "canQuote": {
+      "automaticApproval": [
+        "http://localhost:8080/users/the_mighty_zork"
       ]
     },
     "canReply": {

@@ -664,11 +664,10 @@ func NormalizeOutgoingInteractionPolicyProp(item WithInteractionPolicy, rawJSON 
 		"canLike",
 		"canReply",
 		"canAnnounce",
+		"canQuote",
 	} {
-		// Either "canAnnounce", "canLike", or "canApprove"
 		rulesValMap, ok := policyMap[rulesKey].(map[string]interface{})
 		if !ok {
-
 			// Malformed or not
 			// present, skip it.
 			return
