@@ -311,13 +311,31 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		// "cannot determine id of activitystreams value" from activity/pub/util.go
 		// This likely means we've been delivered a type we just don't recognise.
 		// If this is so, just log it and return `false, nil` so caller gets 202.
-		if strings.Contains(err.Error(), "cannot determine id of activitystreams") {
+		errString := err.Error()
+		if strings.Contains(errString, "cannot determine id of activitystreams") {
 			var l = "ignored unhandleable Activity posted to inbox"
 			if b != nil {
 				l += ": " + string(b)
 			}
 			log.Warnf(ctx, l)
 			return false, nil
+		}
+
+		// Check for error "object [blah] not in activity origin" from
+		// activity/pub/util.go. This means someone is trying to send
+		// an Activity that updates or deletes an object that doesn't
+		// belong to them, eg., `@someone@example.org` is trying to
+		// Delete or Update an object on a different server.
+		if strings.Contains(errString, "not in activity origin") {
+			const text = "actor not permitted to delete or update object that doesn't belong to them"
+			if b != nil {
+				// Log the object so we can
+				// keep track of these things.
+				log.Warnf(ctx, text+": "+string(b))
+			}
+
+			// Tell the remote server they're not allowed to do that.
+			return false, gtserror.NewErrorForbidden(errors.New(text), text)
 		}
 
 		// Something else went wrong, what the heck!

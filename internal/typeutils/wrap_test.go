@@ -104,6 +104,11 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
           "https://www.w3.org/ns/activitystreams#Public"
         ]
       },
+      "canQuote": {
+        "automaticApproval": [
+          "http://localhost:8080/users/the_mighty_zork"
+        ]
+      },
       "canReply": {
         "automaticApproval": [
           "https://www.w3.org/ns/activitystreams#Public"

@@ -584,6 +584,11 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
         "https://www.w3.org/ns/activitystreams#Public"
       ]
     },
+    "canQuote": {
+      "automaticApproval": [
+        "http://localhost:8080/users/the_mighty_zork"
+      ]
+    },
     "canReply": {
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
@@ -667,6 +672,11 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
     "canLike": {
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
+      ]
+    },
+    "canQuote": {
+      "automaticApproval": [
+        "http://localhost:8080/users/admin"
       ]
     },
     "canReply": {
@@ -771,6 +781,11 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
         "https://www.w3.org/ns/activitystreams#Public"
       ]
     },
+    "canQuote": {
+      "automaticApproval": [
+        "http://localhost:8080/users/admin"
+      ]
+    },
     "canReply": {
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
@@ -853,6 +868,11 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
     "canLike": {
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
+      ]
+    },
+    "canQuote": {
+      "automaticApproval": [
+        "http://localhost:8080/users/admin"
       ]
     },
     "canReply": {
@@ -963,6 +983,11 @@ func (suite *InternalToASTestSuite) TestStatusToASPoliteApproved() {
         "https://www.w3.org/ns/activitystreams#Public"
       ]
     },
+    "canQuote": {
+      "automaticApproval": [
+        "http://localhost:8080/users/admin"
+      ]
+    },
     "canReply": {
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
@@ -1066,6 +1091,11 @@ func (suite *InternalToASTestSuite) TestStatusToASPImpoliteApproved() {
     "canLike": {
       "automaticApproval": [
         "https://www.w3.org/ns/activitystreams#Public"
+      ]
+    },
+    "canQuote": {
+      "automaticApproval": [
+        "http://localhost:8080/users/admin"
       ]
     },
     "canReply": {
@@ -1758,6 +1788,11 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASInteractionRequestable
       "canLike": {
         "automaticApproval": [
           "https://www.w3.org/ns/activitystreams#Public"
+        ]
+      },
+      "canQuote": {
+        "automaticApproval": [
+          "http://fossbros-anonymous.io/users/foss_satan"
         ]
       },
       "canReply": {

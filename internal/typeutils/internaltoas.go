@@ -2026,6 +2026,24 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	canAnnounceProp.AppendGoToSocialCanAnnounce(canAnnounce)
 	policy.SetGoToSocialCanAnnounce(canAnnounceProp)
 
+	/*
+		CAN QUOTE
+		todo: GtS doesn't support quote posts yet so
+		just set restrictive quote policy (self only).
+	*/
+
+	canQuote := streams.NewGoToSocialCanQuote()
+	canQuoteAutomaticApprovalProp := streams.NewGoToSocialAutomaticApprovalProperty()
+	authorIRI, err := url.Parse(status.Account.URI)
+	if err != nil {
+		return nil, gtserror.Newf("error setting canQuote.automaticApproval: %w", err)
+	}
+	canQuoteAutomaticApprovalProp.AppendIRI(authorIRI)
+	canQuote.SetGoToSocialAutomaticApproval(canQuoteAutomaticApprovalProp)
+	canQuoteProp := streams.NewGoToSocialCanQuoteProperty()
+	canQuoteProp.AppendGoToSocialCanQuote(canQuote)
+	policy.SetGoToSocialCanQuote(canQuoteProp)
+
 	return policy, nil
 }
 
