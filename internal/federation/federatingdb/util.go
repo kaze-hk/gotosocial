@@ -95,7 +95,7 @@ func sameActor(actor1 vocab.ActivityStreamsActorProperty, actor2 vocab.ActivityS
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
 func (f *DB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error) {
-	log.DebugKV(ctx, "newID", serialize{t})
+	log.DebugKV(ctx, "newID", Serialize{t})
 
 	// Most of our types set an ID already
 	// by this point, return this if found.
@@ -167,6 +167,7 @@ func (f *DB) collectIRIs(_ context.Context, iris []*url.URL) (vocab.ActivityStre
 // to an inbox, and the account who received
 // the request in their inbox.
 type activityContext struct {
+
 	// The account that owns the inbox
 	// or URI being interacted with.
 	receivingAcct *gtsmodel.Account
@@ -208,29 +209,29 @@ func getActivityContext(ctx context.Context) activityContext {
 	}
 }
 
-// serialize wraps a vocab.Type to provide
+// Serialize wraps a vocab.Type to provide
 // lazy-serialization along with error output.
-type serialize struct{ item vocab.Type }
+type Serialize struct{ vocab.Type }
 
-func (s serialize) MarshalJSON() ([]byte, error) {
-	m, err := ap.Serialize(s.item)
+func (s Serialize) MarshalJSON() ([]byte, error) {
+	m, err := ap.Serialize(s.Type)
 	if err != nil {
-		return nil, fmt.Errorf("error serializing: %w", err)
-	}
-	return json.Marshal(m)
-}
-
-func (s serialize) String() string {
-	m, err := ap.Serialize(s.item)
-	if err != nil {
-		return "!(error serializing: " + err.Error() + ")"
+		return nil, fmt.Errorf("error serializing %T: %w", s.Type, err)
 	}
 
 	b, err := json.Marshal(m)
 	if err != nil {
-		return "!(error marshaling: " + err.Error() + ")"
+		return nil, fmt.Errorf("error marshaling %T: %w", s.Type, err)
 	}
 
+	return b, nil
+}
+
+func (s Serialize) String() string {
+	b, err := s.MarshalJSON()
+	if err != nil {
+		return "!(" + err.Error() + ")"
+	}
 	return byteutil.B2S(b)
 }
 

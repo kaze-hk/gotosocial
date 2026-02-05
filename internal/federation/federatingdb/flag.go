@@ -31,7 +31,7 @@ import (
 )
 
 func (f *DB) Flag(ctx context.Context, flaggable vocab.ActivityStreamsFlag) error {
-	log.DebugKV(ctx, "flag", serialize{flaggable})
+	log.DebugKV(ctx, "flag", Serialize{flaggable})
 
 	// Mark activity as handled.
 	f.storeActivityID(flaggable)

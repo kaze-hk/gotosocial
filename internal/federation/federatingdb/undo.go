@@ -33,7 +33,7 @@ import (
 )
 
 func (f *DB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
-	log.DebugKV(ctx, "undo", serialize{undo})
+	log.DebugKV(ctx, "undo", Serialize{undo})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {

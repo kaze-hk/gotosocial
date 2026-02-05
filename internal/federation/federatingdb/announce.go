@@ -30,7 +30,7 @@ import (
 )
 
 func (f *DB) Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
-	log.DebugKV(ctx, "announce", serialize{announce})
+	log.DebugKV(ctx, "announce", Serialize{announce})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {

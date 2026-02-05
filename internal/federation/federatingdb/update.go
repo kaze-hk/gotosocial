@@ -41,7 +41,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *DB) Update(ctx context.Context, asType vocab.Type) error {
-	log.DebugKV(ctx, "update", serialize{asType})
+	log.DebugKV(ctx, "update", Serialize{asType})
 
 	// Mark activity as handled.
 	f.storeActivityID(asType)

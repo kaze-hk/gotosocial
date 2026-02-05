@@ -96,6 +96,13 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 			}
 
 			if len(c.Errors) > 0 {
+				// Append any extra log fields
+				// attached to request errors.
+				for _, err := range c.Errors {
+					extra := gtserror.LogFields(err.Err)
+					fields = append(fields, extra...)
+				}
+
 				// Always attach any found errors.
 				fields = append(fields, kv.Field{
 					"errors", c.Errors,
@@ -119,7 +126,9 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 			// Get appropriate text for this code.
 			statusText := http.StatusText(code)
 			if statusText == "" {
-				// Look for custom codes.
+
+				// Look for
+				// custom codes.
 				switch code {
 				case gtserror.StatusClientClosedRequest:
 					statusText = gtserror.StatusTextClientClosedRequest

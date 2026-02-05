@@ -19,6 +19,7 @@ package gtserror
 
 import (
 	"codeberg.org/gruf/go-errors/v2"
+	"codeberg.org/gruf/go-kv/v2"
 )
 
 // package private error key type.
@@ -41,7 +42,39 @@ const (
 	spamKey
 	notPermittedKey
 	limitReachedKey
+	logFieldKey
 )
+
+// LogFields returns any logging key-value
+// fields that may have been attached to error.
+func LogFields(err error) []kv.Field {
+	if ptr, _ := errors.Value(err, logFieldKey).(*[]kv.Field); ptr != nil {
+		return *ptr
+	}
+	return nil
+}
+
+// WithLogField attaches given key-value pair as field to error, for later logging.
+func WithLogField(err error, key string, value any) error {
+	if ptr, _ := errors.Value(err, logFieldKey).(*[]kv.Field); ptr != nil {
+		(*ptr) = append((*ptr), kv.Field{K: key, V: value})
+		return err
+	}
+	ptr := new([]kv.Field)
+	(*ptr) = append((*ptr), kv.Field{K: key, V: value})
+	return errors.WithValue(err, logFieldKey, ptr)
+}
+
+// WithLogFields attaches given key-value fields to error, for later logging.
+func WithLogFields(err error, fields ...kv.Field) error {
+	if ptr, _ := errors.Value(err, logFieldKey).(*[]kv.Field); ptr != nil {
+		(*ptr) = append((*ptr), fields...)
+		return err
+	}
+	ptr := new([]kv.Field)
+	(*ptr) = append((*ptr), fields...)
+	return errors.WithValue(err, logFieldKey, ptr)
+}
 
 // LimitReached indicates that this error was caused by
 // some kind of limit being reached, e.g. media upload limit.

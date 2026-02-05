@@ -46,7 +46,7 @@ import (
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
 func (f *DB) Create(ctx context.Context, asType vocab.Type) error {
-	log.DebugKV(ctx, "create", serialize{asType})
+	log.DebugKV(ctx, "create", Serialize{asType})
 
 	// Cache entry for this activity type's ID for later
 	// checks in the Exist() function if we see it again.

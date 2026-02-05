@@ -30,7 +30,7 @@ import (
 )
 
 func (f *DB) Block(ctx context.Context, blockable vocab.ActivityStreamsBlock) error {
-	log.DebugKV(ctx, "block", serialize{blockable})
+	log.DebugKV(ctx, "block", Serialize{blockable})
 
 	// Extract relevant values from passed ctx.
 	activityContext := getActivityContext(ctx)
