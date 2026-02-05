@@ -36,7 +36,7 @@ import (
 )
 
 func (f *DB) Move(ctx context.Context, move vocab.ActivityStreamsMove) error {
-	log.DebugKV(ctx, "move", serialize{move})
+	log.DebugKV(ctx, "move", Serialize{move})
 
 	// Mark activity as handled.
 	f.storeActivityID(move)

@@ -32,7 +32,7 @@ import (
 )
 
 func (f *DB) Like(ctx context.Context, likeable vocab.ActivityStreamsLike) error {
-	log.DebugKV(ctx, "like", serialize{likeable})
+	log.DebugKV(ctx, "like", Serialize{likeable})
 
 	// Mark activity as handled.
 	f.storeActivityID(likeable)

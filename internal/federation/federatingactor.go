@@ -19,7 +19,6 @@ package federation
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -34,6 +33,7 @@ import (
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/federation/federatingdb"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
@@ -260,7 +260,8 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		return false, gtserror.NewErrorForbidden(errors.New(text), text)
 	}
 
-	// Copy existing URL + add request host and scheme.
+	// Copy existing URL + add
+	// request host and scheme.
 	inboxID := func() *url.URL {
 		u := new(url.URL)
 		*u = *r.URL
@@ -275,6 +276,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	//
 	// Post the activity to the Actor's inbox and trigger side effects.
 	if err := f.sideEffectActor.PostInbox(ctx, inboxID, activity); err != nil {
+
 		// Check if it's a bad request because the
 		// object or target props weren't populated,
 		// or we failed parsing activity details.
@@ -282,10 +284,12 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		// Log such activities to help debug, then
 		// return the rejection (400) to the peer.
 		if gtserror.IsMalformed(err) ||
-			errors.Is(err, pub.ErrObjectRequired) ||
-			errors.Is(err, pub.ErrTargetRequired) {
+			errorsv2.IsV2(err,
+				pub.ErrObjectRequired,
+				pub.ErrTargetRequired) {
 
-			l = l.WithField("activity", activity)
+			// Include the activity in logging context for useful info.
+			l = l.WithField("activity", federatingdb.Serialize{activity})
 			l.Warnf("malformed incoming activity: %v", err)
 
 			const text = "malformed incoming activity"
@@ -298,60 +302,47 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 			return false, errWithCode
 		}
 
-		// There's been some other error.
-		//
-		// Serialize it if possible so we can log
-		// it in a useful way + hopefully fix it!
-		var b []byte
-		if raw, sErr := activity.Serialize(); sErr == nil {
-			b, _ = json.Marshal(raw)
-		}
+		// Extract error string for some
+		// more specific AP error handling.
+		switch errStr := err.Error(); {
 
 		// Check for errors "cannot determine id of activitystreams property" or
 		// "cannot determine id of activitystreams value" from activity/pub/util.go
 		// This likely means we've been delivered a type we just don't recognise.
 		// If this is so, just log it and return `false, nil` so caller gets 202.
-		errString := err.Error()
-		if strings.Contains(errString, "cannot determine id of activitystreams") {
-			var l = "ignored unhandleable Activity posted to inbox"
-			if b != nil {
-				l += ": " + string(b)
-			}
-			log.Warnf(ctx, l)
+		case strings.Contains(errStr, "cannot determine id of activitystreams"):
+
+			// Include the activity in logging context for useful info.
+			l = l.WithField("activity", federatingdb.Serialize{activity})
+			l.Warn(ctx, "ignored unhandleable Activity posted to inbox")
 			return false, nil
-		}
 
 		// Check for error "object [blah] not in activity origin" from
 		// activity/pub/util.go. This means someone is trying to send
 		// an Activity that updates or deletes an object that doesn't
 		// belong to them, eg., `@someone@example.org` is trying to
 		// Delete or Update an object on a different server.
-		if strings.Contains(errString, "not in activity origin") {
+		//
+		// Tell the remote server they're not allowed to do that.
+		case strings.Contains(errStr, "not in activity origin"):
+
+			// Include the activity in attached log fields on error for useful info in later logging.
 			const text = "actor not permitted to delete or update object that doesn't belong to them"
-			if b != nil {
-				// Log the object so we can
-				// keep track of these things.
-				log.Warnf(ctx, text+": "+string(b))
-			}
-
-			// Tell the remote server they're not allowed to do that.
-			return false, gtserror.NewErrorForbidden(errors.New(text), text)
+			err := gtserror.WithLogField(errors.New(text), "activity", federatingdb.Serialize{activity})
+			return false, gtserror.NewErrorForbidden(err, text)
 		}
 
-		// Something else went wrong, what the heck!
-		// This is an actual 500-able error.
-		var wrappedErr error
-		if b != nil {
-			wrappedErr = gtserror.Newf("error calling sideEffectActor.PostInbox with activity %s: %w", string(b), err)
-		} else {
-			wrappedErr = gtserror.Newf("error calling sideEffectActor.PostInbox with unserializable activity: %w", err)
-		}
-		return false, gtserror.NewErrorInternalError(wrappedErr)
+		// Something else went wrong, what the heck! This is an actual 500-able error.
+		// Include the activity in attached log fields on error for useful info in later logging.
+		err := gtserror.Newf("error calling sideEffectActor.PostInbox: %w", err)
+		err = gtserror.WithLogField(err, "activity", federatingdb.Serialize{activity})
+		return false, gtserror.NewErrorInternalError(err)
 	}
 
 	// Side effects are complete. Now delegate determining whether
 	// to do inbox forwarding, as well as the action to do it.
 	if err := f.sideEffectActor.InboxForwarding(ctx, inboxID, activity); err != nil {
+
 		// As a not-ideal side-effect, InboxForwarding will try
 		// to create entries if the federatingDB returns `false`
 		// when calling `Exists()` to determine whether the Activity
@@ -368,8 +359,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		// This check may be removed when the `Exists()` func
 		// is updated, and/or federating callbacks are handled
 		// properly.
-		if !errorsv2.IsV2(
-			err,
+		if !errorsv2.IsV2(err,
 			db.ErrAlreadyExists,
 			db.ErrNoEntries,
 		) {

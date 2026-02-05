@@ -30,7 +30,7 @@ import (
 )
 
 func (f *DB) Follow(ctx context.Context, followable vocab.ActivityStreamsFollow) error {
-	log.DebugKV(ctx, "follow", serialize{followable})
+	log.DebugKV(ctx, "follow", Serialize{followable})
 
 	// Mark activity as handled.
 	f.storeActivityID(followable)

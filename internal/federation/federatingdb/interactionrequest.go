@@ -204,7 +204,7 @@ func (f *DB) parseInteractionRequest(ctx context.Context, intRequest ap.Interact
 }
 
 func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeRequest) error {
-	log.DebugKV(ctx, "LikeRequest", serialize{likeReq})
+	log.DebugKV(ctx, "LikeRequest", Serialize{likeReq})
 
 	// Parse out base level interaction request information.
 	partial, err := f.parseInteractionRequest(ctx, likeReq)
@@ -329,7 +329,7 @@ func (f *DB) LikeRequest(ctx context.Context, likeReq vocab.GoToSocialLikeReques
 }
 
 func (f *DB) ReplyRequest(ctx context.Context, replyReq vocab.GoToSocialReplyRequest) error {
-	log.DebugKV(ctx, "ReplyRequest", serialize{replyReq})
+	log.DebugKV(ctx, "ReplyRequest", Serialize{replyReq})
 
 	// Parse out base level interaction request information.
 	partial, err := f.parseInteractionRequest(ctx, replyReq)
@@ -462,7 +462,7 @@ func (f *DB) ReplyRequest(ctx context.Context, replyReq vocab.GoToSocialReplyReq
 }
 
 func (f *DB) AnnounceRequest(ctx context.Context, announceReq vocab.GoToSocialAnnounceRequest) error {
-	log.DebugKV(ctx, "AnnounceRequest", serialize{announceReq})
+	log.DebugKV(ctx, "AnnounceRequest", Serialize{announceReq})
 
 	// Parse out base level interaction request information.
 	partial, err := f.parseInteractionRequest(ctx, announceReq)

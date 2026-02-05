@@ -35,7 +35,7 @@ import (
 )
 
 func (f *DB) Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error {
-	log.DebugKV(ctx, "reject", serialize{reject})
+	log.DebugKV(ctx, "reject", Serialize{reject})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {

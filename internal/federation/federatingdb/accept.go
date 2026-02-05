@@ -48,7 +48,7 @@ func (f *DB) GetAccept(
 }
 
 func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
-	log.DebugKV(ctx, "accept", serialize{accept})
+	log.DebugKV(ctx, "accept", Serialize{accept})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {

@@ -20,7 +20,6 @@ package util
 import (
 	"net/http"
 	"net/netip"
-	"slices"
 
 	"code.superseriousbusiness.org/gopkg/log"
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -32,6 +31,7 @@ import (
 // rendering an HTML template within
 // a standard GtS "page" template.
 type WebPage struct {
+
 	// Name of the template for rendering
 	// the page. Eg., "example.tmpl".
 	Template string
@@ -158,11 +158,13 @@ func injectTrustedProxiesRec(
 
 	// Check if clientIP is set
 	// to loopback / localhost.
+
 	case "::1", "0:0:0:0:0:0:0:1":
 		// Suggest precise ipv6 loopback.
 		trustedProxiesRec := clientIP + ipv6CIDR
 		obj["trustedProxiesRec"] = trustedProxiesRec
 		return
+
 	case "127.0.0.1":
 		// Suggest precise ipv4 loopback.
 		trustedProxiesRec := clientIP + ipv4CIDR
@@ -170,14 +172,18 @@ func injectTrustedProxiesRec(
 		return
 	}
 
+	var hasRemoteIPHeader bool
+
 	// Check for common real IP headers
 	// "X-Forwarded-For" or "X-Real-IP".
-	if !slices.ContainsFunc(
-		realIPHeaderKeys,
-		func(key string) bool {
-			return c.GetHeader(key) != ""
-		},
-	) {
+	for _, key := range realIPHeaderKeys {
+		if c.GetHeader(key) != "" {
+			hasRemoteIPHeader = true
+			break
+		}
+	}
+
+	if !hasRemoteIPHeader {
 		// Upstream hasn't set a
 		// remote IP header so we're
 		// probably not in a reverse
