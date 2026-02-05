@@ -2,7 +2,8 @@ name: Mirror from Codeberg
 
 on:
   schedule:
-    - cron: '0 * * * *' # 每小时运行一次
+    - cron: '17 */2 * * *' # Runs at 17 minutes past the hour, every 2 hours
+
   workflow_dispatch:
 
 permissions:
