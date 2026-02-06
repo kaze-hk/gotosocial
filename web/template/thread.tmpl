@@ -74,6 +74,8 @@
     <section class="thread thread-main" aria-labelledby="thread-summary">
         <div class="col-header">
             <h2 id="thread-summary">{{- template "threadSummary" . -}}</h2>
+            {{- /* Include this div so that javascript can be used to toggle show/hide for all entries in a thread */}}
+            <div aria-hidden="true" class="hidden" id="thread-show-hide-all-toggle-wrapper"></div>
             {{- if .context.ThreadRepliesShown }}
             <a href="#replies">jump to replies</a>
             {{- end }}
