@@ -153,10 +153,10 @@ blockquote {
 }
 
 /* Make show more/less buttons more legible */
-.status .button {
+.button, button {
   border: 1px solid var(--feral-orange);
 }
-.status .button:hover {
+.button:hover, button:hover {
   border: 1px solid var(--bleached-bone);
   background: var(--bloodshot);
 }

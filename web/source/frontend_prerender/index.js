@@ -167,9 +167,10 @@ Array.from(document.getElementsByTagName('img')).forEach(img => {
 	});
 });
 
-// Change the spoiler / content warning boxes from generic
-// "toggle visibility" to show/hide depending on state,
-// and add keyboard functionality to spoiler buttons.
+// Utility function to change the spoiler / content
+// warning boxes from generic "toggle visibility" to
+// show/hide depending on state, and add keyboard
+// functionality to spoiler buttons.
 function dynamicSpoiler(className, updateFunc) {
 	Array.from(document.getElementsByClassName(className)).forEach((spoiler) => {
 		const update = updateFunc(spoiler);
@@ -179,7 +180,18 @@ function dynamicSpoiler(className, updateFunc) {
 		}
 	});
 }
+
+// Tracks whether there's at least one
+// text-spoiler details element on the page.
+var textSpoilersCount = 0;
+
+// Enable dynamic show/hide for all
+// text-spoiler <details> elements.
 dynamicSpoiler("text-spoiler", (details) => {
+	// Increment hasTextSpoilers so we know
+	// to inject the "show/hide all" button.
+	textSpoilersCount++;
+
 	const summary = details.children[0];
 	const button = details.querySelector(".button");
 
@@ -212,6 +224,9 @@ dynamicSpoiler("text-spoiler", (details) => {
 			: "Show more";
 	};
 });
+
+// Enable dynamic show/hide for all
+// media-spoiler <details> elements.
 dynamicSpoiler("media-spoiler", (details) => {
 	const summary = details.children[0];
 	const button = details.querySelector(".eye.button");
@@ -250,6 +265,74 @@ dynamicSpoiler("media-spoiler", (details) => {
 		}
 	};
 });
+
+// If there's at least two text spoilers in this
+// thread, enable the "show / hide all" button.
+if (textSpoilersCount > 1) {
+	const wrapper = document.getElementById("thread-show-hide-all-toggle-wrapper");
+	if (wrapper) {
+		// Define button texts.
+		const expandText = "Expand all spoilers";
+		const collapseText = "Collapse all spoilers"; 
+
+		// Create button in initial "closed" state,
+		// ie., "click to expand all spoilers".
+		const button = document.createElement("button");
+		button.className = "thread-show-hide-all-toggle-button";
+		button.textContent = expandText;
+		button.setAttribute("aria-label", expandText);
+
+		button.onclick = (e) => {
+			e.preventDefault();
+			
+			// Check if button currently says expand all or collapse all.
+			const expanding = button.textContent === expandText;
+			
+			// Expand or collapse each text spoiler by clicking its button.
+			Array.from(document.getElementsByClassName("text-spoiler")).forEach((details) => {
+				const innerButton = details.querySelector(".button");
+				if (expanding && !details.open) {
+					// We're expanding but this text
+					// spoiler is collapsed, expand it.
+					innerButton.click();
+				} else if (!expanding && details.open) {
+					// We're collapsing but this text
+					// spoiler is expanded, collapse it.
+					if (details.open) {
+						innerButton.click();
+					}
+				}
+			});
+
+			if (expanding) {
+				// We just expanded. Set button to "open" state,
+				// ie., show "click to collapse all spoilers"
+				button.textContent = collapseText;
+				button.setAttribute("aria-label", collapseText);
+			} else {
+				// We just collapsed. Set button to "closed" state,
+				// ie., "click to expand all spoilers".
+				button.textContent = expandText;
+				button.setAttribute("aria-label", expandText);
+			}
+		};
+		
+		// Let enter also trigger the button
+		// (for those using keyboard to navigate).
+		button.addEventListener("keydown", (e) => {
+			if (e.key === "Enter") {
+				e.preventDefault();
+				button.click();
+			}
+		});
+
+		// Add button to wrapper and
+		// remove wrapper's "hidden" props.
+		wrapper.appendChild(button);
+		wrapper.className = "";
+		wrapper.ariaHidden = false;
+	}
+}
 
 // Reformat time text to browser locale.
 // Define + reuse one DateTimeFormat (cheaper).

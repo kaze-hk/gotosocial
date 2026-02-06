@@ -239,6 +239,7 @@ blockquote {
 
 /* Button stuff */
 button, .button {
+  text-shadow: 1px 1px 1px black;
   border-left: 1px solid var(--ecks-pee-darkest-green);
   border-right: 1px solid var(--ecks-pee-darkest-green);
 }

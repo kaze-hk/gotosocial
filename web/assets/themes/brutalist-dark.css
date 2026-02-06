@@ -138,12 +138,12 @@ html, body {
 }
 
 /* Make show more/less buttons more legible */
-.button {
+.button, button {
   background-color: var(--almost-black);
   color: var(--almost-white);
   border: var(--single-border);
 }
-.button:hover {
+.button:hover, button:hover {
   background-color: var(--almost-black);
   color: var(--almost-white);
   border: var(--thick-dashed-border);

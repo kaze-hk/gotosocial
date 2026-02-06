@@ -162,13 +162,13 @@ button, .button,
   font-family: 'Noto Sans Mono', monospace;
 }
 
-.button {
+.button, button {
   color: var(--base1);
   background: var(--base02);
   border: var(--boxshadow-border);
 }
 
-.button:hover {
+.button:hover, button:hover {
   color: var(--base0);
   background: var(--base03);
   border: var(--boxshadow-border);
