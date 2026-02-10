@@ -78,6 +78,13 @@ func (d *Dereferencer) GetEmoji(
 		return nil, gtserror.SetUnretrievable(err)
 	}
 
+	// Get maximum supported remote emoji size.
+	maxsz := int64(config.GetMediaEmojiRemoteMaxSize()) // #nosec G115 -- Already validated.
+
+	if maxsz == 0 {
+		return nil, gtserror.SetUnretrievable(gtserror.Newf("Remote emoji fetching disabled"))
+	}
+
 	// Generate shortcode@domain for locks + logging.
 	shortcodeDomain := shortcode + "@" + domain
 
@@ -113,9 +120,6 @@ func (d *Dereferencer) GetEmoji(
 				err := gtserror.Newf("error getting instance transport: %w", err)
 				return nil, nil, err
 			}
-
-			// Get maximum supported remote emoji size.
-			maxsz := int64(config.GetMediaEmojiRemoteMaxSize()) // #nosec G115 -- Already validated.
 
 			// Prepare data function to dereference remote emoji media.
 			data := func(context.Context) (io.ReadCloser, error) {
