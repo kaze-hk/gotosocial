@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
-	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
 	"github.com/stretchr/testify/suite"
 )
@@ -92,27 +91,38 @@ func (suite *EmojiTestSuite) TestDereferenceEmojiBlocking() {
 	storedStatic, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
 	suite.NoError(err)
 	suite.Len(storedStatic, emoji.ImageStaticFileSize)
+}
+
+func (suite *EmojiTestSuite) TestDereferenceEmojiMaxSizeZero() {
+	ctx := suite.T().Context()
+	emojiImageRemoteURL := "http://example.org/media/emojis/1781772.gif"
+	emojiImageStaticRemoteURL := "http://example.org/media/emojis/1781772.gif"
+	emojiURI := "http://example.org/emojis/1781772"
+	emojiShortcode := "peglin"
+	emojiDomain := "example.org"
 
 	// ensure setting max size to zero doesn't fetch anything
 	config.SetMediaEmojiRemoteMaxSize(0)
 
-	_, maxSizeErr := suite.dereferencer.GetEmoji(
+	// Emoji model should be returned, but
+	// should not be cached in our storage.
+	emoji, err := suite.dereferencer.GetEmoji(
 		ctx,
-		"harrydubois",
-		"rcm.revachol",
-		"https://rcm.revachol/media/emojis/harry.gif",
+		emojiShortcode,
+		emojiDomain,
+		emojiImageRemoteURL,
 		media.AdditionalEmojiInfo{
 			URI:                  &emojiURI,
 			Domain:               &emojiDomain,
 			ImageRemoteURL:       &emojiImageRemoteURL,
 			ImageStaticRemoteURL: &emojiImageStaticRemoteURL,
-			Disabled:             &emojiDisabled,
-			VisibleInPicker:      &emojiVisibleInPicker,
 		},
 		false,
 		false,
 	)
-	suite.True(gtserror.IsUnretrievable(maxSizeErr))
+	suite.NoError(err)
+	suite.NotNil(emoji)
+	suite.False(emoji.Cached())
 }
 
 func TestEmojiTestSuite(t *testing.T) {

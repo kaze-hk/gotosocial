@@ -81,10 +81,6 @@ func (d *Dereferencer) GetEmoji(
 	// Get maximum supported remote emoji size.
 	maxsz := int64(config.GetMediaEmojiRemoteMaxSize()) // #nosec G115 -- Already validated.
 
-	if maxsz == 0 {
-		return nil, gtserror.SetUnretrievable(gtserror.Newf("Remote emoji fetching disabled"))
-	}
-
 	// Generate shortcode@domain for locks + logging.
 	shortcodeDomain := shortcode + "@" + domain
 
