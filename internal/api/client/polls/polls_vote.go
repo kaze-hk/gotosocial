@@ -107,8 +107,7 @@ func (m *Module) PollVotePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

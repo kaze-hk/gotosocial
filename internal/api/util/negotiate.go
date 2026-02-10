@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"strings"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
 )
 
@@ -115,27 +116,12 @@ var CSVHeaders = []string{
 // often-used Accept types.
 //
 // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation#server-driven_content_negotiation
-func NegotiateAccept(c *gin.Context, offers ...string) (string, error) {
-	if len(offers) == 0 {
-		return "", errors.New("no format offered")
-	}
-
-	strings := []string{}
-	for _, o := range offers {
-		strings = append(strings, string(o))
-	}
-
-	accepts := c.Request.Header.Values("Accept")
-	if len(accepts) == 0 {
-		// there's no accept header set, just return the first offer
-		return strings[0], nil
-	}
-
-	format := NegotiateFormat(c, strings...)
+func NegotiateAccept(c *gin.Context, offers ...string) (string, gtserror.WithCode) {
+	format := NegotiateFormat(c, offers...)
 	if format == "" {
-		return "", fmt.Errorf("no format can be offered for requested Accept header(s) %s; this endpoint offers %s", accepts, offers)
+		text := fmt.Sprintf("no format can be offered for requested Accept header(s) %s; this endpoint offers %s", c.Accepted, offers)
+		return "", gtserror.NewErrorNotAcceptable(errors.New(text), text)
 	}
-
 	return format, nil
 }
 
@@ -153,9 +139,11 @@ func NegotiateFormat(c *gin.Context, offered ...string) string {
 			c.Accepted = append(c.Accepted, parseAccept(a)...)
 		}
 	}
+
 	if len(c.Accepted) == 0 {
 		return offered[0]
 	}
+
 	for _, accepted := range c.Accepted {
 		for _, offer := range offered {
 			// According to RFC 2616 and RFC 2396, non-ASCII characters are not allowed in headers,
@@ -174,6 +162,7 @@ func NegotiateFormat(c *gin.Context, offered ...string) string {
 			}
 		}
 	}
+
 	return ""
 }
 

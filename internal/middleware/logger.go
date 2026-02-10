@@ -138,7 +138,8 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 			}
 
 			// Generate a nicer looking bytecount.
-			size := bytesize.Size(c.Writer.Size()) // #nosec G115 -- Just logging
+			sizeInt64 := max(0, c.Writer.Size())
+			size := bytesize.Size(sizeInt64) // #nosec G115 -- Just logging
 
 			// Write log entry with status text + body size.
 			l.Logf(lvl, "%s: wrote %s", statusText, size)

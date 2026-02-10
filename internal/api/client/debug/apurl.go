@@ -15,10 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build debug || debugenv
-// +build debug debugenv
-
-package admin
+package debug
 
 import (
 	"fmt"
@@ -29,7 +26,58 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (m *Module) DebugAPUrlHandler(c *gin.Context) {
+// APUrlGETHandler swagger:operation GET /api/v1/debug/apurl apURL
+//
+// Perform a GET to the specified ActivityPub URL and return detailed debugging information.
+//
+//	---
+//	tags:
+//	- debug
+//
+//	produces:
+//	- application/json
+//
+//	parameters:
+//	-
+//		name: url
+//		type: string
+//		description: >-
+//			The URL / ActivityPub ID to dereference.
+//			This should be a full URL, including protocol.
+//			Eg., `https://example.org/users/someone`
+//		in: query
+//		required: true
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- admin:write
+//
+//	responses:
+//		'200':
+//			name: Debug response.
+//			schema:
+//				"$ref": "#/definitions/debugAPUrlResponse"
+//		'400':
+//			schema:
+//				"$ref": "#/definitions/error"
+//			description: bad request
+//		'401':
+//			schema:
+//				"$ref": "#/definitions/error"
+//			description: unauthorized
+//		'404':
+//			schema:
+//				"$ref": "#/definitions/error"
+//			description: not found
+//		'406':
+//			schema:
+//				"$ref": "#/definitions/error"
+//			description: not acceptable
+//		'500':
+//			schema:
+//				"$ref": "#/definitions/error"
+//			description: internal server error
+func (m *Module) APUrlGETHandler(c *gin.Context) {
 	authed, errWithCode := apiutil.TokenAuth(c,
 		true, true, true, true,
 		apiutil.ScopeAdminWrite,
@@ -45,8 +93,8 @@ func (m *Module) DebugAPUrlHandler(c *gin.Context) {
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -57,31 +105,4 @@ func (m *Module) DebugAPUrlHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
-}
-
-func (m *Module) DebugClearCachesHandler(c *gin.Context) {
-	authed, errWithCode := apiutil.TokenAuth(c,
-		true, true, true, true,
-		apiutil.ScopeAdminWrite,
-	)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	if !*authed.User.Admin {
-		err := fmt.Errorf("user %s not an admin", authed.User.ID)
-		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	// Sweep all caches down to 0 (empty).
-	m.state.Caches.Sweep(0)
-
-	c.JSON(http.StatusOK, gin.H{"status": "OK"})
 }

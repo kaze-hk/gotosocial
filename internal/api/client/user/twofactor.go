@@ -88,8 +88,8 @@ func (m *Module) TwoFactorQRCodePngGETHandler(c *gin.Context) {
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, "image/png"); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+	if _, errWithCode := apiutil.NegotiateAccept(c, "image/png"); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -179,8 +179,8 @@ func (m *Module) TwoFactorQRCodeURIGETHandler(c *gin.Context) {
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.TextPlain); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.TextPlain); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -273,8 +273,8 @@ func (m *Module) TwoFactorEnablePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -369,8 +369,8 @@ func (m *Module) TwoFactorDisablePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

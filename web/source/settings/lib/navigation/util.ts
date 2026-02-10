@@ -21,7 +21,6 @@ import { createContext, useContext } from "react";
 const RoleContext = createContext<string[]>([]);
 const BaseUrlContext = createContext<string>("");
 const MenuLevelContext = createContext<number>(0);
-const InstanceDebugContext = createContext<boolean>(false);
 
 function urlSafe(str: string) {
 	return str.toLowerCase().replace(/[\s/]+/g, "-");
@@ -68,10 +67,6 @@ function useMenuLevel() {
 	return useContext(MenuLevelContext);
 }
 
-function useInstanceDebug() {
-	return useContext(InstanceDebugContext);
-}
-
 export {
 	urlSafe,
 	RoleContext,
@@ -81,6 +76,4 @@ export {
 	useBaseUrl,
 	MenuLevelContext,
 	useMenuLevel,
-	InstanceDebugContext,
-	useInstanceDebug,
 };

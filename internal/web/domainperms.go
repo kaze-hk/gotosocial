@@ -47,8 +47,7 @@ func (m *Module) domainBlocklistGETHandler(c *gin.Context) {
 	}
 
 	// We only serve text/html at this endpoint.
-	if _, err := apiutil.NegotiateAccept(c, apiutil.TextHTML); err != nil {
-		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.TextHTML); errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
@@ -98,8 +97,7 @@ func (m *Module) domainAllowlistGETHandler(c *gin.Context) {
 	}
 
 	// We only serve text/html at this endpoint.
-	if _, err := apiutil.NegotiateAccept(c, apiutil.TextHTML); err != nil {
-		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.TextHTML); errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}

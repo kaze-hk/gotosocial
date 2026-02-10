@@ -47,8 +47,7 @@ func (m *Module) getHeaderFilter(c *gin.Context, get func(context.Context, strin
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
@@ -86,8 +85,7 @@ func (m *Module) getHeaderFilters(c *gin.Context, get func(context.Context) ([]*
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
@@ -124,8 +122,7 @@ func (m *Module) createHeaderFilter(c *gin.Context, create func(context.Context,
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

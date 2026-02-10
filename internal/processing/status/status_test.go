@@ -112,6 +112,8 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 		suite.federator,
 		suite.typeConverter,
 		visFilter,
+		muteFilter,
+		statusFilter,
 		intFilter,
 		processing.GetParseMentionFunc(
 			&suite.state,

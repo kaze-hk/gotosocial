@@ -23,7 +23,6 @@ import (
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/processing"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
-	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
 )
 
@@ -70,9 +69,6 @@ const (
 	EmailTestPath                            = EmailPath + "/test"
 	InstanceRulesPath                        = BasePath + "/instance/rules"
 	InstanceRulesPathWithID                  = InstanceRulesPath + "/:" + apiutil.IDKey
-	DebugPath                                = BasePath + "/debug"
-	DebugAPUrlPath                           = DebugPath + "/apurl"
-	DebugClearCachesPath                     = DebugPath + "/caches/clear"
 
 	FilterQueryKey        = "filter"
 	MaxShortcodeDomainKey = "max_shortcode_domain"
@@ -183,10 +179,4 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodPost, InstanceRulesPath, m.RulePOSTHandler)
 	attachHandler(http.MethodPatch, InstanceRulesPathWithID, m.RulePATCHHandler)
 	attachHandler(http.MethodDelete, InstanceRulesPathWithID, m.RuleDELETEHandler)
-
-	// debug stuff
-	if debug.DEBUG {
-		attachHandler(http.MethodGet, DebugAPUrlPath, m.DebugAPUrlHandler)
-		attachHandler(http.MethodPost, DebugClearCachesPath, m.DebugClearCachesHandler)
-	}
 }

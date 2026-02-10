@@ -120,6 +120,104 @@ type Status struct {
 	InteractionPolicy InteractionPolicy `json:"interaction_policy"`
 }
 
+// StatusVisibilityDebugResponse provides detailed
+// visibility information for a requested status.
+// The information layout largerly matches how we
+// cache and store visibility, mute and filtering
+// results internally, and is more for GoToSocial
+// developer debug information rather than knowing
+// exactly which mention etc was muted or filtered.
+//
+// swagger:model statusVisibilityDebugResponse
+type StatusVisibilityDebugResponse struct {
+
+	// URI is the URI of the status in question.
+	URI string `json:"uri"`
+
+	// Mute contains any details about a mute currently
+	// acting on status. An empty result indicates
+	// no mute (active or not) is matching on status.
+	Mute *StatusMuteResult `json:"mute,omitempty"`
+
+	// MuteNotifications contains any details about a
+	// notification mute currently acting on status. An empty
+	// result indicates no mute (active or not) is matching on status.
+	MuteNotifications *StatusMuteResult `json:"mute_notifications,omitempty"`
+
+	// Contains any filters matching on status across any contexts. An
+	// empty result indicates no filters in any contexts match on status.
+	Filters *StatusFiltersResult `json:"filters,omitempty"`
+
+	// Visibility contains visibility information for status
+	// across all contexts we check in, these indicate whether
+	// status should be shown in the given context based on
+	// core status attributes (e.g. is a boost) or account blocks.
+	Visibility StatusVisibilityResult `json:"visibility"`
+}
+
+type StatusVisibilityResult struct {
+	// General indicates whether status
+	// should appear AT ALL to user.
+	General bool `json:"general"`
+
+	// Public indicates whether status
+	// should appear on public timelines.
+	Public bool `json:"public"`
+
+	// Home indicates whether status
+	// should appear on home timelines.
+	Home bool `json:"home"`
+
+	// Tag indicates whether status
+	// should appear on tag timelines.
+	Tag bool `json:"tag"`
+}
+
+type StatusMuteResult struct {
+	// Active indicates whether this
+	// mute is active on the status.
+	Active bool `json:"active"`
+
+	// Expires indicates mute expiry time string (if any).
+	Expires *string `json:"expires,omitempty"`
+}
+
+type StatusFiltersResult struct {
+	// Public contains filter results active
+	// on status in a public timeline context.
+	Public []StatusFilterResult `json:"public"`
+
+	// Home contains filter results active
+	// on status in a home timeline context.
+	Home []StatusFilterResult `json:"home"`
+
+	// Notifications contains filter results
+	// active on status in a notification context.
+	Notifications []StatusFilterResult `json:"notifications"`
+
+	// Account contains filter results
+	// active on status in an account context.
+	Account []StatusFilterResult `json:"account"`
+
+	// Thread contains filter results
+	// active on status in a thread context.
+	Thread []StatusFilterResult `json:"thread"`
+}
+
+type StatusFilterResult struct {
+	// Result contains a filter result currently
+	// active on the status, only present if the
+	// applying filter policy is not "HIDE".
+	Result *FilterResult `json:"result,omitempty"`
+
+	// Active indicates whether this
+	// filter is active on the status.
+	Active bool `json:"active"`
+
+	// Expires indicates filter expiry time string (if any).
+	Expires *string `json:"expires,omitempty"`
+}
+
 // StatusReblogged represents a reblogged status.
 //
 // swagger:model statusReblogged

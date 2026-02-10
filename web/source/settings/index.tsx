@@ -27,7 +27,7 @@ import { store, persistor } from "./redux/store";
 import { Authorization } from "./components/authorization";
 import Loading from "./components/loading";
 import { Account } from "./lib/types/account";
-import { BaseUrlContext, RoleContext, InstanceDebugContext } from "./lib/navigation/util";
+import { BaseUrlContext, RoleContext } from "./lib/navigation/util";
 import { SidebarMenu } from "./lib/navigation/menu";
 import { Redirect, Route, Router } from "wouter";
 import AdminMenu from "./views/admin/menu";
@@ -37,7 +37,6 @@ import UserRouter from "./views/user/router";
 import { ErrorBoundary } from "./lib/navigation/error";
 import ModerationRouter from "./views/moderation/router";
 import AdminRouter from "./views/admin/router";
-import { useInstanceV1Query } from "./lib/query/gts-api";
 
 interface AppProps {
 	account: Account;
@@ -45,33 +44,29 @@ interface AppProps {
 
 export function App({ account }: AppProps) {
 	const roles: string[] = useMemo(() => [ account.role.name ], [account]);
-	const { data: instance } = useInstanceV1Query();
-	
 	return (
 		<RoleContext.Provider value={roles}>
-			<InstanceDebugContext.Provider value={instance?.debug ?? false}>
-				<BaseUrlContext.Provider value={"/settings"}>
-					<SidebarMenu>
-						<UserMenu />
-						<ModerationMenu />
-						<AdminMenu />
-					</SidebarMenu>
-					<section className="with-sidebar">
-						<Router base="/settings">
-							<ErrorBoundary>
-								<UserRouter />
-								<ModerationRouter />
-								<AdminRouter />
-								{/*
-								Ensure user ends up somewhere
-								if they just open /settings.
-							*/}
-								<Route path="/"><Redirect to="/user/profile" /></Route>
-							</ErrorBoundary>
-						</Router>
-					</section>
-				</BaseUrlContext.Provider>
-			</InstanceDebugContext.Provider>
+			<BaseUrlContext.Provider value={"/settings"}>
+				<SidebarMenu>
+					<UserMenu />
+					<ModerationMenu />
+					<AdminMenu />
+				</SidebarMenu>
+				<section className="with-sidebar">
+					<Router base="/settings">
+						<ErrorBoundary>
+							<UserRouter />
+							<ModerationRouter />
+							<AdminRouter />
+							{/*
+							Ensure user ends up somewhere
+							if they just open /settings.
+						*/}
+							<Route path="/"><Redirect to="/user/profile" /></Route>
+						</ErrorBoundary>
+					</Router>
+				</section>
+			</BaseUrlContext.Provider>
 		</RoleContext.Provider>
 	);
 }
