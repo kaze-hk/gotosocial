@@ -18,7 +18,7 @@
 */
 
 import React from "react";
-import { BaseUrlContext, useBaseUrl, useHasPermission, useInstanceDebug } from "../../lib/navigation/util";
+import { BaseUrlContext, useBaseUrl, useHasPermission } from "../../lib/navigation/util";
 import { Redirect, Route, Router, Switch } from "wouter";
 import { ErrorBoundary } from "../../lib/navigation/error";
 import InstanceSettings from "./instance/settings";
@@ -195,13 +195,6 @@ function AdminDebugRouter() {
 	const parentUrl = useBaseUrl();
 	const thisBase = "/debug";
 	const absBase = parentUrl + thisBase;
-
-	// Don't attach this route if instance
-	// is not running in debug mode.
-	const debug = useInstanceDebug();
-	if (!debug) {
-		return null;
-	}
 
 	return (
 		<BaseUrlContext.Provider value={absBase}>

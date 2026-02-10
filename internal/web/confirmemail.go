@@ -42,8 +42,8 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 	}
 
 	// We only serve text/html at this endpoint.
-	if _, err := apiutil.NegotiateAccept(c, apiutil.TextHTML); err != nil {
-		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), instanceGet)
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.TextHTML); errWithCode != nil {
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
@@ -103,8 +103,8 @@ func (m *Module) confirmEmailPOSTHandler(c *gin.Context) {
 	}
 
 	// We only serve text/html at this endpoint.
-	if _, err := apiutil.NegotiateAccept(c, apiutil.TextHTML); err != nil {
-		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), instanceGet)
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.TextHTML); errWithCode != nil {
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 

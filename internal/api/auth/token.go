@@ -40,8 +40,8 @@ type tokenRequestForm struct {
 // TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
 func (m *Module) TokenPOSTHandler(c *gin.Context) {
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

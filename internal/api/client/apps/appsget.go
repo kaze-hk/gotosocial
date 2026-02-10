@@ -21,7 +21,6 @@ import (
 	"net/http"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
-	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"github.com/gin-gonic/gin"
 )
@@ -123,8 +122,8 @@ func (m *Module) AppsGETHandler(c *gin.Context) {
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

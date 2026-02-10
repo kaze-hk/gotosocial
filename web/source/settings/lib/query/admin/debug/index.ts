@@ -30,26 +30,26 @@ const extended = gtsApi.injectEndpoints({
 				urlParam.set("url", url);
 
 				return {
-					url: `/api/v1/admin/debug/apurl?${urlParam.toString()}`,
+					url: `/api/v1/debug/apurl?${urlParam.toString()}`,
 				};
 			}
 		}),
 		ClearCaches: build.mutation<{}, void>({
 			query: () => ({
 				method: "POST",
-				url: `/api/v1/admin/debug/caches/clear`
+				url: `/api/v1/debug/caches/clear`
 			})
 		}),
 	}),
 });
 
 /**
- * Lazy GET to /api/v1/admin/debug/apurl.
+ * Lazy GET to /api/v1/debug/apurl.
  */
 const useLazyApURLQuery = extended.useLazyApURLQuery;
 
 /**
- * POST to /api/v1/admin/debug/caches/clear to empty in-memory caches.
+ * POST to /api/v1/debug/caches/clear to empty in-memory caches.
  */
 const useClearCachesMutation = extended.useClearCachesMutation;
 

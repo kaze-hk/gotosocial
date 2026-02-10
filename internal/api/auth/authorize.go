@@ -24,7 +24,6 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
-	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/oauth"
 	"github.com/gin-contrib/sessions"
@@ -40,8 +39,8 @@ import (
 // the application is requesting, with a button
 // that they have to click to give it permission.
 func (m *Module) AuthorizeGETHandler(c *gin.Context) {
-	if _, err := apiutil.NegotiateAccept(c, apiutil.HTMLAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+	if _, errWithCode := apiutil.NegotiateAccept(c, apiutil.HTMLAcceptHeaders...); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

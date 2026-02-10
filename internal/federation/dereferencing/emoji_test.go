@@ -22,6 +22,8 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
 	"github.com/stretchr/testify/suite"
 )
@@ -90,6 +92,27 @@ func (suite *EmojiTestSuite) TestDereferenceEmojiBlocking() {
 	storedStatic, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
 	suite.NoError(err)
 	suite.Len(storedStatic, emoji.ImageStaticFileSize)
+
+	// ensure setting max size to zero doesn't fetch anything
+	config.SetMediaEmojiRemoteMaxSize(0)
+
+	_, maxSizeErr := suite.dereferencer.GetEmoji(
+		ctx,
+		"harrydubois",
+		"rcm.revachol",
+		"https://rcm.revachol/media/emojis/harry.gif",
+		media.AdditionalEmojiInfo{
+			URI:                  &emojiURI,
+			Domain:               &emojiDomain,
+			ImageRemoteURL:       &emojiImageRemoteURL,
+			ImageStaticRemoteURL: &emojiImageStaticRemoteURL,
+			Disabled:             &emojiDisabled,
+			VisibleInPicker:      &emojiVisibleInPicker,
+		},
+		false,
+		false,
+	)
+	suite.True(gtserror.IsUnretrievable(maxSizeErr))
 }
 
 func TestEmojiTestSuite(t *testing.T) {

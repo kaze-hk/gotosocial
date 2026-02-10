@@ -20,6 +20,8 @@ package status
 import (
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
+	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/common"
@@ -38,6 +40,8 @@ type Processor struct {
 	federator    *federation.Federator
 	converter    *typeutils.Converter
 	visFilter    *visibility.Filter
+	muteFilter   *mutes.Filter
+	statusFilter *statusfilter.Filter
 	intFilter    *interaction.Filter
 	formatter    *text.Formatter
 	parseMention gtsmodel.ParseMentionFunc
@@ -56,6 +60,8 @@ func New(
 	federator *federation.Federator,
 	converter *typeutils.Converter,
 	visFilter *visibility.Filter,
+	muteFilter *mutes.Filter,
+	statusFilter *statusfilter.Filter,
 	intFilter *interaction.Filter,
 	parseMention gtsmodel.ParseMentionFunc,
 ) Processor {
@@ -65,6 +71,8 @@ func New(
 		federator:    federator,
 		converter:    converter,
 		visFilter:    visFilter,
+		muteFilter:   muteFilter,
+		statusFilter: statusFilter,
 		intFilter:    intFilter,
 		formatter:    text.NewFormatter(state.DB),
 		parseMention: parseMention,

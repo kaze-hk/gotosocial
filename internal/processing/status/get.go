@@ -28,16 +28,16 @@ import (
 )
 
 // Get gets the given status, taking account of privacy settings and blocks etc.
-func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+func (p *Processor) Get(ctx context.Context, requester *gtsmodel.Account, statusID string) (*apimodel.Status, gtserror.WithCode) {
 	target, errWithCode := p.c.GetVisibleTargetStatus(ctx,
-		requestingAccount,
-		targetStatusID,
+		requester,
+		statusID,
 		nil, // default freshness
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
-	return p.c.GetAPIStatus(ctx, requestingAccount, target)
+	return p.c.GetAPIStatus(ctx, requester, target)
 }
 
 // SourceGet returns the *apimodel.StatusSource version of the targetStatusID.

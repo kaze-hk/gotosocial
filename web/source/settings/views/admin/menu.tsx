@@ -19,7 +19,7 @@
 
 import { MenuItem } from "../../lib/navigation/menu";
 import React from "react";
-import { useHasPermission, useInstanceDebug } from "../../lib/navigation/util";
+import { useHasPermission } from "../../lib/navigation/util";
 
 /*
 	EXPORTED COMPONENTS
@@ -163,13 +163,6 @@ function AdminHTTPHeaderPermissionsMenu() {
 }
 
 function AdminDebugMenu() {
-	// Don't attach this menu if instance
-	// is not running in debug mode.
-	const debug = useInstanceDebug();
-	if (!debug) {
-		return null;
-	}
-	
 	return (
 		<MenuItem
 			name="Debug"
