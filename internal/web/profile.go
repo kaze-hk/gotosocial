@@ -352,7 +352,13 @@ func (m *Module) profileGallery(c *gin.Context, p *profile) {
 	galleryItems := make([]*apimodel.WebAttachment, 0, len(p.statusResp.Items)*4)
 	for _, statusI := range p.statusResp.Items {
 		status := statusI.(*apimodel.WebStatus)
-		galleryItems = append(galleryItems, status.MediaAttachments...)
+		if status.Reblog != nil {
+			// Take gallery items from reblogged status.
+			galleryItems = append(galleryItems, status.Reblog.MediaAttachments...)
+		} else {
+			// Take gallery items from status itself.
+			galleryItems = append(galleryItems, status.MediaAttachments...)
+		}
 	}
 
 	// Prepare stylesheets for profile.
@@ -407,6 +413,8 @@ func (m *Module) profileGallery(c *gin.Context, p *profile) {
 			"statuses_next":      p.statusResp.NextLink,
 			"pinned_statuses":    p.pinnedStatuses,
 			"show_back_to_top":   p.paging,
+			"includeBoostsLink":  p.includeBoostsLink,
+			"excludeBoostsLink":  p.excludeBoostsLink,
 		},
 	}
 
