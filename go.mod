@@ -24,16 +24,16 @@ require (
 	codeberg.org/gruf/go-fastpath/v2 v2.0.1
 	codeberg.org/gruf/go-ffmpreg v0.6.16
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
-	codeberg.org/gruf/go-kv/v2 v2.0.9
+	codeberg.org/gruf/go-kv/v2 v2.0.10
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 	codeberg.org/gruf/go-mempool v0.0.0-20251205182607-a05549c9a993
 	codeberg.org/gruf/go-mmap v0.0.0-20251111184116-345a42dab154
-	codeberg.org/gruf/go-mutexes v1.5.8
+	codeberg.org/gruf/go-mutexes v1.5.9
 	codeberg.org/gruf/go-runners v1.7.0
 	codeberg.org/gruf/go-sched v1.3.0
 	codeberg.org/gruf/go-split v1.2.0
 	codeberg.org/gruf/go-storage v0.6.0
-	codeberg.org/gruf/go-structr v0.9.15
+	codeberg.org/gruf/go-structr v0.9.16
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.7.5
 	github.com/SherClockHolmes/webpush-go v1.4.0
@@ -99,9 +99,9 @@ require (
 	code.superseriousbusiness.org/go-jpeg-image-structure/v2 v2.3.0 // indirect
 	code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0 // indirect
 	codeberg.org/gruf/go-kv v1.6.5 // indirect
-	codeberg.org/gruf/go-mangler/v2 v2.0.8 // indirect
+	codeberg.org/gruf/go-mangler/v2 v2.0.9 // indirect
 	codeberg.org/gruf/go-maps v1.0.4 // indirect
-	codeberg.org/gruf/go-xunsafe v0.0.0-20260117210223-fcb7e60d2b22 // indirect
+	codeberg.org/gruf/go-xunsafe v0.0.0-20260211121553-1c99e9364fee // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect

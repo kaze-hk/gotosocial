@@ -267,15 +267,15 @@ codeberg.org/gruf/go-iotools
 ## explicit; go 1.20
 codeberg.org/gruf/go-kv
 codeberg.org/gruf/go-kv/format
-# codeberg.org/gruf/go-kv/v2 v2.0.9
-## explicit; go 1.24.5
+# codeberg.org/gruf/go-kv/v2 v2.0.10
+## explicit; go 1.24.6
 codeberg.org/gruf/go-kv/v2
 codeberg.org/gruf/go-kv/v2/format
 # codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 ## explicit; go 1.21.3
 codeberg.org/gruf/go-list
-# codeberg.org/gruf/go-mangler/v2 v2.0.8
-## explicit; go 1.24.5
+# codeberg.org/gruf/go-mangler/v2 v2.0.9
+## explicit; go 1.24.6
 codeberg.org/gruf/go-mangler/v2
 # codeberg.org/gruf/go-maps v1.0.4
 ## explicit; go 1.20
@@ -286,7 +286,7 @@ codeberg.org/gruf/go-mempool
 # codeberg.org/gruf/go-mmap v0.0.0-20251111184116-345a42dab154
 ## explicit; go 1.20
 codeberg.org/gruf/go-mmap
-# codeberg.org/gruf/go-mutexes v1.5.8
+# codeberg.org/gruf/go-mutexes v1.5.9
 ## explicit; go 1.24.0
 codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-runners v1.7.0
@@ -306,11 +306,11 @@ codeberg.org/gruf/go-storage/internal
 codeberg.org/gruf/go-storage/memory
 codeberg.org/gruf/go-storage/s3
 codeberg.org/gruf/go-storage/s3/cache
-# codeberg.org/gruf/go-structr v0.9.15
-## explicit; go 1.24.5
+# codeberg.org/gruf/go-structr v0.9.16
+## explicit; go 1.24.6
 codeberg.org/gruf/go-structr
-# codeberg.org/gruf/go-xunsafe v0.0.0-20260117210223-fcb7e60d2b22
-## explicit; go 1.24.5
+# codeberg.org/gruf/go-xunsafe v0.0.0-20260211121553-1c99e9364fee
+## explicit; go 1.24.6
 codeberg.org/gruf/go-xunsafe
 # dario.cat/mergo v1.0.2
 ## explicit; go 1.13

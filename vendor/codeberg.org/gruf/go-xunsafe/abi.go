@@ -1,4 +1,4 @@
-//go:build go1.24 && !go1.26
+//go:build go1.24 && !go1.27
 
 package xunsafe
 
@@ -14,12 +14,6 @@ func init() {
 		panic("Abi_Type{} not in sync with abi.Type{}")
 	}
 }
-
-const (
-	// see: go/src/internal/abi/type.go
-	Abi_KindDirectIface uint8 = 1 << 5
-	Abi_KindMask        uint8 = (1 << 5) - 1
-)
 
 // Abi_Type is a copy of the memory layout of abi.Type{}.
 //
@@ -55,20 +49,6 @@ type Abi_EmptyInterface struct {
 type Abi_NonEmptyInterface struct {
 	ITab uintptr
 	Data unsafe.Pointer
-}
-
-// see: go/src/internal/abi/type.go Type.Kind()
-func Abi_Type_Kind(t reflect.Type) uint8 {
-	iface := (*Abi_NonEmptyInterface)(unsafe.Pointer(&t))
-	atype := (*Abi_Type)(unsafe.Pointer(iface.Data))
-	return atype.Kind_ & Abi_KindMask
-}
-
-// see: go/src/internal/abi/type.go Type.IfaceIndir()
-func Abi_Type_IfaceIndir(t reflect.Type) bool {
-	iface := (*Abi_NonEmptyInterface)(unsafe.Pointer(&t))
-	atype := (*Abi_Type)(unsafe.Pointer(iface.Data))
-	return atype.Kind_&Abi_KindDirectIface == 0
 }
 
 // PackIface packs a new reflect.nonEmptyInterface{} using shielded
