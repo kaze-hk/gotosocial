@@ -9,8 +9,8 @@ import (
 
 const (
 	// possible lock types.
-	lockTypeRead  = uint8(1) << 0
-	lockTypeWrite = uint8(1) << 1
+	lockTypeRead  = uint8(1)
+	lockTypeWrite = uint8(2)
 )
 
 // MutexMap is a structure that allows read / write locking
@@ -44,6 +44,43 @@ func (mm *MutexMap) Lock(key string) func() {
 // RLock acquires a read lock on key in map, returning runlock function.
 func (mm *MutexMap) RLock(key string) func() {
 	return mm.lock(key, lockTypeRead)
+}
+
+// TryLock attempts to acquire a write lock on key in map, returning unlock function on success.
+func (mm *MutexMap) TryLock(key string) func() {
+	return mm.tryLock(key, lockTypeWrite)
+}
+
+// TryRLock attempts to acquire a read lock on key in map, returning unlock function on success.
+func (mm *MutexMap) TryRLock(key string) func() {
+	return mm.tryLock(key, lockTypeRead)
+}
+
+func (mm *MutexMap) tryLock(key string, lt uint8) func() {
+	// Lock outer map
+	// and check init.
+	mm.mapmu.Lock()
+	mm.checkInit()
+
+	// Check map for mutex.
+	mu := mm.mumap.Get(key)
+
+	if mu == nil {
+		// Allocate mutex.
+		mu = mm.acquire()
+		mm.mumap.Put(key, mu)
+	}
+
+	var unlock func()
+	if mu.Lock(lt) {
+		// Successfully locked, set unlock func.
+		unlock = func() { mm.unlock(key, mu) }
+	}
+
+	// Done with map.
+	mm.mapmu.Unlock()
+
+	return unlock
 }
 
 func (mm *MutexMap) lock(key string, lt uint8) func() {
@@ -97,8 +134,7 @@ func (mm *MutexMap) unlock(key string, mu *rwmutex) {
 	mm.mumap.Delete(key)
 	mm.release(mu)
 
-	// Check if compaction
-	// needed.
+	// Compact mu map.
 	mm.mumap.Compact()
 
 	// Done with map.
@@ -122,16 +158,11 @@ func (mm *MutexMap) release(mu *rwmutex) {
 }
 
 // rwmutex represents a RW mutex when used correctly within
-// a MapMutex. It should ONLY be access when protected by
-// the outer map lock, except for the 'notifyList' which is
-// a runtime internal structure borrowed from the sync.Cond{}.
-//
-// this functions very similarly to a sync.Cond{}, but with
-// lock state tracking, and returning on 'Broadcast()' whether
-// any goroutines were actually awoken. it also has a less
-// confusing API than sync.Cond{} with the outer locking
-// mechanism we use, otherwise all Cond{}.L would reference
-// the same outer map mutex.
+// a MapMutex. It should ONLY be accessed when protected by
+// the outer map lock, except for the sync.Cond{}.Wait()
+// which is used similarly to a waitgroup with some memory
+// hackery to determine based on internal ticketting whether
+// any other goroutines are waiting on this rwmutex{}.
 type rwmutex struct {
 	c sync.Cond // 'trigger' mechanism
 	l int32     // no. locks
@@ -203,8 +234,6 @@ func (mu *rwmutex) Unlock() bool {
 	return false
 }
 
-// WaitRelock expects a mutex to be passed in, already in the
-// locked state. It incr the notifyList waiter count before
-// unlocking the outer mutex and blocking on notifyList wait.
-// On awake it will decr wait count and relock outer mutex.
+// WaitRelock blocks until rwmutex{} is fully unlocked,
+// and immediately locks the outer map mutex on return.
 func (mu *rwmutex) WaitRelock() { mu.c.Wait() }

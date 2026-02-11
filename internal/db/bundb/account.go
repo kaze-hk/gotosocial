@@ -900,27 +900,81 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 	return *faves, nil
 }
 
-func selectOnlyWithMedia(q *bun.SelectQuery) *bun.SelectQuery {
+func selectOnlyWithMedia(q *bun.SelectQuery, includeBoosts bool) *bun.SelectQuery {
 	// Attachments are stored as a json object; this
 	// implementation differs between SQLite and Postgres,
-	// so we have to be thorough to cover all eventualities
-	return q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-		switch d := q.Dialect().Name(); d {
-		case dialect.PG:
-			return q.
-				Where("? IS NOT NULL", bun.Ident("status.attachments")).
-				Where("? != '{}'", bun.Ident("status.attachments"))
+	// so we have to be thorough to cover all eventualities.
+	//
+	// If including boosts, consider status as having media
+	// *either* if the status itself has attachments, OR if
+	// the boosted status has attachments. For example:
+	//
+	//	[... rest of the query ...]
+	//	AND (
+	//	  (
+	//	    "status"."attachments" IS NOT NULL
+	//	    AND "status"."attachments" != 'null'
+	//	    AND "status"."attachments" != '[]'
+	//	  )
+	//	  OR (
+	//	    "boost_of"."attachments" IS NOT NULL
+	//	    AND "boost_of"."attachments" != 'null'
+	//	    AND "boost_of"."attachments" != '[]'
+	//	  )
+	//	)
+	//	[... rest of the query ...]
+	switch d := q.Dialect().Name(); {
 
-		case dialect.SQLite:
-			return q.
-				Where("? IS NOT NULL", bun.Ident("status.attachments")).
-				Where("? != 'null'", bun.Ident("status.attachments")).
-				Where("? != '[]'", bun.Ident("status.attachments"))
+	// Postgres with boosts.
+	// Use joined "boost_of".
+	case d == dialect.PG && includeBoosts:
+		return q.
+			Where(
+				"(? IS NOT NULL AND ? != '{}') "+
+					"OR (? IS NOT NULL AND ? != '{}')",
+				bun.Ident("status.attachments"),
+				bun.Ident("status.attachments"),
+				bun.Ident("boost_of.attachments"),
+				bun.Ident("boost_of.attachments"),
+			)
 
-		default:
-			panic("dialect " + d.String() + " was neither pg nor sqlite")
-		}
-	})
+	// Postgres without boosts.
+	case d == dialect.PG:
+		return q.
+			Where(
+				"? IS NOT NULL AND ? != '{}'",
+				bun.Ident("status.attachments"),
+				bun.Ident("status.attachments"),
+			)
+
+	// SQLite with boosts.
+	// Use joined "boost_of".
+	case d == dialect.SQLite && includeBoosts:
+		return q.
+			Where(
+				"(? IS NOT NULL AND ? != 'null' AND ? != '[]') "+
+					"OR (? IS NOT NULL AND ? != 'null' AND ? != '[]')",
+				bun.Ident("status.attachments"),
+				bun.Ident("status.attachments"),
+				bun.Ident("status.attachments"),
+				bun.Ident("boost_of.attachments"),
+				bun.Ident("boost_of.attachments"),
+				bun.Ident("boost_of.attachments"),
+			)
+
+	// SQLite without boosts.
+	case d == dialect.SQLite:
+		return q.
+			Where(
+				"? IS NOT NULL AND ? != 'null' AND ? != '[]'",
+				bun.Ident("status.attachments"),
+				bun.Ident("status.attachments"),
+				bun.Ident("status.attachments"),
+			)
+
+	default:
+		panic("dialect " + d.String() + " was neither pg nor sqlite")
+	}
 }
 
 func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, error) {
@@ -965,7 +1019,10 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 
 	if mediaOnly {
 		// Respect mediaOnly pref.
-		q = selectOnlyWithMedia(q)
+		// For this particular endpoint mediaOnly
+		// also implies excludeReblogs so just pass
+		// includeBoosts=false instead of !excludeReblogs.
+		q = selectOnlyWithMedia(q, false)
 	}
 
 	if publicOnly {
@@ -1164,7 +1221,7 @@ func (a *accountDB) GetAccountWebStatuses(
 
 			if mediaOnly {
 				// Respect mediaOnly pref.
-				q = selectOnlyWithMedia(q)
+				q = selectOnlyWithMedia(q, includeBoosts)
 			}
 
 			return q, nil

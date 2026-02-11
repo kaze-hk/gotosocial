@@ -278,7 +278,7 @@ type WebStatus struct {
 	// Last entry is always creation time.
 	EditTimeline []string `json:"-"`
 
-	// True if this is a boost.
+	// Set if this is a boost.
 	Reblog *WebStatusReblogged `json:"-"`
 }
 

@@ -1,4 +1,4 @@
-//go:build go1.22 && !go1.26
+//go:build go1.22 && !go1.27
 
 package mutexes
 

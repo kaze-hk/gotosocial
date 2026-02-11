@@ -54,16 +54,60 @@ func (suite *AccountTestSuite) TestGetAccountWebStatuses() {
 	suite.Len(statuses, 2)
 }
 
-func (suite *AccountTestSuite) TestGetAccountWebStatusesMediaOnly() {
-	statuses, err := suite.db.GetAccountWebStatuses(suite.T().Context(), suite.testAccounts["admin_account"], &paging.Page{Limit: 20}, true, true)
-	suite.NoError(err)
-	suite.Len(statuses, 1)
-}
-
 func (suite *AccountTestSuite) TestGetAccountWebStatusesIncludeBoosts() {
 	statuses, err := suite.db.GetAccountWebStatuses(suite.T().Context(), suite.testAccounts["admin_account"], &paging.Page{Limit: 20}, false, true)
 	suite.NoError(err)
 	suite.Len(statuses, 3)
+}
+
+// The whole shebang:
+//
+//	SELECT
+//	  "status"."id"
+//	FROM
+//	  "statuses" AS "status"
+//	  LEFT JOIN "accounts" AS "boost_of_account" ON "status"."boost_of_account_id" = "boost_of_account"."id"
+//	  LEFT JOIN "statuses" AS "boost_of" ON "status"."boost_of_id" = "boost_of"."id"
+//	WHERE
+//	  ("status"."local" = TRUE)
+//	  AND (
+//	    "status"."account_id" = '01F8MH17FWEB39HZJ76B6VXSKF'
+//	  )
+//	  AND ("status"."visibility" = 2)
+//	  AND (
+//	    "status"."in_reply_to_uri" IS NULL
+//	  )
+//	  AND (
+//	    ("status"."boost_of_id" IS NULL)
+//	    OR (
+//	      ("boost_of"."visibility" = 2)
+//	      AND ("boost_of"."federated" = TRUE)
+//	      AND (
+//	        "boost_of_account"."hides_to_public_from_unauthed_web" = FALSE
+//	      )
+//	    )
+//	  )
+//	  AND ("status"."federated" = TRUE)
+//	  AND (
+//	    (
+//	      "status"."attachments" IS NOT NULL
+//	      AND "status"."attachments" != 'null'
+//	      AND "status"."attachments" != '[]'
+//	    )
+//	    OR (
+//	      "boost_of"."attachments" IS NOT NULL
+//	      AND "boost_of"."attachments" != 'null'
+//	      AND "boost_of"."attachments" != '[]'
+//	    )
+//	  )
+//	ORDER BY
+//	  "status"."id" DESC
+//	LIMIT
+//	  20
+func (suite *AccountTestSuite) TestGetAccountWebStatusesIncludeBoostsMediaOnly() {
+	statuses, err := suite.db.GetAccountWebStatuses(suite.T().Context(), suite.testAccounts["admin_account"], &paging.Page{Limit: 20}, true, true)
+	suite.NoError(err)
+	suite.Len(statuses, 1)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
