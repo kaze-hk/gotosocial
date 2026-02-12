@@ -1914,14 +1914,12 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 		return nil, gtserror.Newf("error setting canLike.automaticApproval: %w", err)
 	}
 
-	// Set canLike.manualApproval
+	// Set canLike.automaticApproval
 	canLike.SetGoToSocialAutomaticApproval(canLikeAutomaticApprovalProp)
 
-	// Only bother building manualApproval if automaticApproval is
-	// empty, and there are entries in manualApproval. This avoids
-	// serializing empty manualApproval array for no good reason.
-	if canLikeAutomaticApprovalProp.Len() == 0 &&
-		len(interactionPolicy.CanLike.ManualApproval) != 0 {
+	// Only bother building manualApproval if it has entries.
+	// This avoids serializing empty array for no good reason.
+	if len(interactionPolicy.CanLike.ManualApproval) != 0 {
 		canLikeManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
 		if err := populateValuesForProp(
 			canLikeManualApprovalProp,
@@ -1957,14 +1955,12 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 		return nil, gtserror.Newf("error setting canReply.automaticApproval: %w", err)
 	}
 
-	// Set canReply.manualApproval
+	// Set canReply.automaticApproval
 	canReply.SetGoToSocialAutomaticApproval(canReplyAutomaticApprovalProp)
 
-	// Only bother building manualApproval if automaticApproval is
-	// empty, and there are entries in manualApproval. This avoids
-	// serializing empty manualApproval array for no good reason.
-	if canReplyAutomaticApprovalProp.Len() == 0 &&
-		len(interactionPolicy.CanReply.ManualApproval) != 0 {
+	// Only bother building manualApproval if it has entries.
+	// This avoids serializing empty array for no good reason.
+	if len(interactionPolicy.CanReply.ManualApproval) != 0 {
 		canReplyManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
 		if err := populateValuesForProp(
 			canReplyManualApprovalProp,
@@ -2000,14 +1996,12 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 		return nil, gtserror.Newf("error setting canAnnounce.automaticApproval: %w", err)
 	}
 
-	// Set canAnnounce.manualApproval
+	// Set canAnnounce.automaticApproval
 	canAnnounce.SetGoToSocialAutomaticApproval(canAnnounceAutomaticApprovalProp)
 
-	// Only bother building manualApproval if automaticApproval is
-	// empty, and there are entries in manualApproval. This avoids
-	// serializing empty manualApproval array for no good reason.
-	if canAnnounceAutomaticApprovalProp.Len() == 0 &&
-		len(interactionPolicy.CanAnnounce.ManualApproval) != 0 {
+	// Only bother building manualApproval if it has entries.
+	// This avoids serializing empty array for no good reason.
+	if len(interactionPolicy.CanAnnounce.ManualApproval) != 0 {
 		canAnnounceManualApprovalProp := streams.NewGoToSocialManualApprovalProperty()
 		if err := populateValuesForProp(
 			canAnnounceManualApprovalProp,

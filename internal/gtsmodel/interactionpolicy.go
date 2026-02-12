@@ -421,10 +421,8 @@ var defaultPolicyPublic = &InteractionPolicy{
 // Returns a default interaction policy
 // for a post with visibility of public.
 func DefaultInteractionPolicyPublic() *InteractionPolicy {
-	// Copy global.
-	c := new(InteractionPolicy)
-	*c = *defaultPolicyPublic
-	return c
+	// Copy default policy into new struct.
+	return copyPolicy(defaultPolicyPublic)
 }
 
 // Returns a default interaction policy
@@ -443,10 +441,8 @@ var defaultPolicyFollowersOnly = &InteractionPolicy{
 // Returns a default interaction policy for
 // a post with visibility of followers only.
 func DefaultInteractionPolicyFollowersOnly() *InteractionPolicy {
-	// Copy global.
-	c := new(InteractionPolicy)
-	*c = *defaultPolicyFollowersOnly
-	return c
+	// Copy default policy into new struct.
+	return copyPolicy(defaultPolicyFollowersOnly)
 }
 
 var defaultPolicyDirect = &InteractionPolicy{
@@ -458,10 +454,30 @@ var defaultPolicyDirect = &InteractionPolicy{
 // Returns a default interaction policy
 // for a post with visibility of direct.
 func DefaultInteractionPolicyDirect() *InteractionPolicy {
-	// Copy global.
-	c := new(InteractionPolicy)
-	*c = *defaultPolicyDirect
-	return c
+	// Copy default policy into new struct.
+	return copyPolicy(defaultPolicyDirect)
+}
+
+// copyPolicy returns a copy of the given InteractionPolicy
+// that can be modified safely without affecting the original.
+func copyPolicy(src *InteractionPolicy) *InteractionPolicy {
+	return &InteractionPolicy{
+		// Copy CanLike.
+		CanLike: &PolicyRules{
+			AutomaticApproval: slices.Clone(src.CanLike.AutomaticApproval),
+			ManualApproval:    slices.Clone(src.CanLike.ManualApproval),
+		},
+		// Copy CanReply.
+		CanReply: &PolicyRules{
+			AutomaticApproval: slices.Clone(src.CanReply.AutomaticApproval),
+			ManualApproval:    slices.Clone(src.CanReply.ManualApproval),
+		},
+		// Copy CanAnnounce.
+		CanAnnounce: &PolicyRules{
+			AutomaticApproval: slices.Clone(src.CanAnnounce.AutomaticApproval),
+			ManualApproval:    slices.Clone(src.CanAnnounce.ManualApproval),
+		},
+	}
 }
 
 // DifferentFrom returns true if p1 and p2 are different.
