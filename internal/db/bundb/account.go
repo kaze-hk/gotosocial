@@ -1098,10 +1098,94 @@ func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID stri
 	return a.state.DB.GetStatusesByIDs(ctx, statusIDs)
 }
 
-var webStatusVisibilities = bun.In([]gtsmodel.Visibility{
-	gtsmodel.VisibilityPublic,
-	gtsmodel.VisibilityUnlocked,
-})
+func (a *accountDB) accountWebStatusesCommonSelect(
+	accountID string,
+	mediaOnly bool,
+	includeBoosts bool,
+	visibility gtsmodel.Visibility,
+) *bun.SelectQuery {
+	// Start building
+	// this common query.
+	q := a.db.NewSelect()
+
+	// Select ID from statuses.
+	q = q.
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Column("status.id")
+
+	if includeBoosts {
+		// Join on boosted account.
+		q = q.Join(
+			"LEFT JOIN ? AS ? ON ? = ?",
+			bun.Ident("accounts"), bun.Ident("boost_of_account"),
+			bun.Ident("status.boost_of_account_id"), bun.Ident("boost_of_account.id"),
+		)
+
+		// Join on boosted status.
+		q = q.Join(
+			"LEFT JOIN ? AS ? ON ? = ?",
+			bun.Ident("statuses"), bun.Ident("boost_of"),
+			bun.Ident("status.boost_of_id"), bun.Ident("boost_of.id"),
+		)
+	}
+
+	// Local posts only, we don't show
+	// remote account's posts on the web view.
+	q = q.Where("? = ?", bun.Ident("status.local"), true)
+
+	// Select statuses created by the target account.
+	q = q.Where("? = ?", bun.Ident("status.account_id"), accountID)
+
+	// Select statuses of target visibility.
+	q = q.Where("? = ?", bun.Ident("status.visibility"), visibility)
+
+	// Don't show replies.
+	q = q.Where("? IS NULL", bun.Ident("status.in_reply_to_uri"))
+
+	if !includeBoosts {
+		// Don't include boosts.
+		q = q.Where("? IS NULL", bun.Ident("status.boost_of_id"))
+	} else {
+		// Allow statuses from boosted
+		// accounts where possible.
+		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			// Include non-boosts.
+			q = q.Where("? IS NULL", bun.Ident("status.boost_of_id"))
+
+			// Include boosts as well.
+			q = q.
+				WhereGroup(" OR ", func(q *bun.SelectQuery) *bun.SelectQuery {
+					// Boosted status must have target visibility.
+					q = q.Where("? = ?", bun.Ident("boost_of.visibility"), visibility)
+
+					// Boosted status must be federated.
+					q = q.Where("? = ?", bun.Ident("boost_of.federated"), true)
+
+					// Boosted account must not hide
+					// target visibility from unauthed web.
+					if visibility == gtsmodel.VisibilityPublic {
+						q = q.Where("? = ?", bun.Ident("boost_of_account.hides_to_public_from_unauthed_web"), false)
+					} else {
+						q = q.Where("? = ?", bun.Ident("boost_of_account.hides_cc_public_from_unauthed_web"), false)
+					}
+
+					return q
+				})
+
+			return q
+		})
+	}
+
+	// Don't show local only / unfederated.
+	q = q.Where("? = ?", bun.Ident("status.federated"), true)
+
+	if mediaOnly {
+		// Respect mediaOnly pref.
+		q = selectOnlyWithMedia(q, includeBoosts)
+	}
+
+	return q
+}
 
 func (a *accountDB) GetAccountWebStatuses(
 	ctx context.Context,
@@ -1133,100 +1217,105 @@ func (a *accountDB) GetAccountWebStatuses(
 		return nil, nil
 	}
 
-	return loadStatusTimelinePage(ctx, a.db, a.state,
+	if publicOnly {
+		// Simple case, we
+		// don't need a union.
+		return loadStatusTimelinePage(ctx, a.db, a.state,
+			// Paging
+			// params.
+			page,
 
-		// Paging
-		// params.
-		page,
+			// Use the common select query
+			// for just public web statuses.
+			func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return a.accountWebStatusesCommonSelect(
+					account.ID,
+					mediaOnly,
+					includeBoosts,
+					gtsmodel.VisibilityPublic,
+				), nil
+			},
+		)
+	}
 
-		// The actual meat of the account web statuses query.
-		func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+	// More complicated case with both
+	// public and unlisted visibilities:
+	// we need to build a union query to
+	// ensure the correct index gets used.
 
-			if includeBoosts {
-				// Join on boosted account.
-				q = q.Join(
-					"LEFT JOIN ? AS ? ON ? = ?",
-					bun.Ident("accounts"), bun.Ident("boost_of_account"),
-					bun.Ident("status.boost_of_account_id"), bun.Ident("boost_of_account.id"),
-				)
+	// Extract page params.
+	minID := page.Min.Value
+	maxID := page.Max.Value
+	limit := page.Limit
+	order := page.Order()
 
-				// Join on boosted status.
-				q = q.Join(
-					"LEFT JOIN ? AS ? ON ? = ?",
-					bun.Ident("statuses"), bun.Ident("boost_of"),
-					bun.Ident("status.boost_of_id"), bun.Ident("boost_of.id"),
-				)
-			}
+	// Pre-allocate slice of IDs as dest.
+	statusIDs := make([]string, 0, limit)
 
-			// Local posts only, we don't show
-			// remote account's posts on the web view.
-			q = q.Where("? = ?", bun.Ident("status.local"), true)
-
-			// Select statuses created by the target account.
-			q = q.Where("? = ?", bun.Ident("status.account_id"), account.ID)
-
-			// Select only public or the account's
-			// permitted visibilities for the web view.
-			if publicOnly {
-				q = q.Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic)
-			} else {
-				q = q.Where("? IN (?)", bun.Ident("status.visibility"), webStatusVisibilities)
-			}
-
-			// Don't show replies.
-			q = q.Where("? IS NULL", bun.Ident("status.in_reply_to_uri"))
-
-			if !includeBoosts {
-				// Don't include boosts.
-				q = q.Where("? IS NULL", bun.Ident("status.boost_of_id"))
-			} else {
-				// Allow public statuses from
-				// boosted accounts if possible.
-				q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.
-						// Include non-boosts.
-						Where("? IS NULL", bun.Ident("status.boost_of_id")).
-						// OR boosts that meet vis requirements.
-						// Use joined tables to check this.
-						WhereGroup(" OR ", func(q *bun.SelectQuery) *bun.SelectQuery {
-							if publicOnly {
-								// Allow boosts of public statuses
-								// if permitted by the boostee.
-								q = q.
-									// Boosted status visibility must be public.
-									Where("? = ?", bun.Ident("boost_of.visibility"), gtsmodel.VisibilityPublic).
-									// Boosted status must be federated.
-									Where("? = ?", bun.Ident("boost_of.federated"), true).
-									// Boostee's visibility settings must permit showing on the web.
-									Where("? = ?", bun.Ident("boost_of_account.hides_to_public_from_unauthed_web"), false)
-							} else {
-								// Allow boosts of public or unlisted
-								// statuses if permitted by the boostee.
-								q = q.
-									// Boosted status visibility must be public or unlisted.
-									Where("? IN (?)", bun.Ident("boost_of.visibility"), webStatusVisibilities).
-									// Boosted status must be federated.
-									Where("? = ?", bun.Ident("boost_of.federated"), true).
-									// Boostee's visibility settings must permit showing on the web.
-									Where("? = ?", bun.Ident("boost_of_account.hides_to_public_from_unauthed_web"), false).
-									Where("? = ?", bun.Ident("boost_of_account.hides_cc_public_from_unauthed_web"), false)
-							}
-							return q
-						})
-				})
-			}
-
-			// Don't show local only / unfederated.
-			q = q.Where("? = ?", bun.Ident("status.federated"), true)
-
-			if mediaOnly {
-				// Respect mediaOnly pref.
-				q = selectOnlyWithMedia(q, includeBoosts)
-			}
-
-			return q, nil
-		},
+	// Left side of the union (public statuses).
+	// Able to use statuses_profile_web_view_including_boosts_idx.
+	q1 := a.accountWebStatusesCommonSelect(
+		account.ID,
+		mediaOnly,
+		includeBoosts,
+		gtsmodel.VisibilityPublic,
 	)
+
+	// Right side of the union (unlisted statuses).
+	// Able to use statuses_profile_web_view_including_boosts_idx.
+	q2 := a.accountWebStatusesCommonSelect(
+		account.ID,
+		mediaOnly,
+		includeBoosts,
+		gtsmodel.VisibilityUnlocked,
+	)
+
+	// Apply max/min ID boundaries
+	// to both sides of the union.
+	if maxID != "" {
+		// Set a maximum ID boundary if was given.
+		q1 = q1.Where("? < ?", bun.Ident("status.id"), maxID)
+		q2 = q2.Where("? < ?", bun.Ident("status.id"), maxID)
+	}
+	if minID != "" {
+		// Set a minimum ID boundary if was given.
+		q1 = q1.Where("? > ?", bun.Ident("status.id"), minID)
+		q2 = q2.Where("? > ?", bun.Ident("status.id"), minID)
+	}
+
+	// Build the union query.
+	queryStr := "? UNION ALL ?"
+	queryArgs := []any{q1, q2}
+
+	// Apply order and limit *only* to
+	// the union query overall, not the
+	// left + right sides individually.
+	if order.Ascending() {
+		queryStr += " ORDER BY ? ASC"
+	} else /* i.e. descending */ {
+		queryStr += " ORDER BY ? DESC"
+	}
+	queryArgs = append(queryArgs, bun.Ident("status.id"))
+
+	// A limit should always
+	// be supplied for this.
+	queryStr += " LIMIT ?"
+	queryArgs = append(queryArgs, limit)
+
+	// Assemble the
+	// whole query.
+	q := a.db.NewRaw(
+		queryStr,
+		queryArgs...,
+	)
+
+	// Finally, perform query into status ID slice.
+	if err := q.Scan(ctx, &statusIDs); err != nil {
+		return nil, err
+	}
+
+	// Fetch statuses from DB / cache with given IDs.
+	return a.state.DB.GetStatusesByIDs(ctx, statusIDs)
 }
 
 func (a *accountDB) GetAccountSettings(
