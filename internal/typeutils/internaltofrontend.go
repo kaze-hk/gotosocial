@@ -3005,7 +3005,7 @@ func (c *Converter) DomainLimitToAPIDomainLimit(
 	case gtsmodel.StatusesPolicyFilterWarn:
 		statusesPolicy = apimodel.StatusesPolicyFilterWarn
 	case gtsmodel.StatusesPolicyFilterHide:
-		statusesPolicy = apimodel.StatusesPolicyFilterWarn
+		statusesPolicy = apimodel.StatusesPolicyFilterHide
 	default:
 		err := gtserror.Newf("unknown accounts policy %d", p)
 		return nil, err
