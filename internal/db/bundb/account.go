@@ -1295,7 +1295,22 @@ func (a *accountDB) GetAccountWebStatuses(
 	} else /* i.e. descending */ {
 		queryStr += " ORDER BY ? DESC"
 	}
-	queryArgs = append(queryArgs, bun.Ident("status.id"))
+
+	// Order by column must differ according to driver.
+	//
+	// If you include "status"."id" in Postgres you get:
+	//	missing FROM-clause entry for table "status"
+	//
+	// If you don't include it in SQLite you get:
+	//	1st ORDER BY term does not match any column in the result set
+	switch d := a.db.Dialect().Name(); d {
+	case dialect.PG:
+		queryArgs = append(queryArgs, bun.Ident("id"))
+	case dialect.SQLite:
+		queryArgs = append(queryArgs, bun.Ident("status.id"))
+	default:
+		panic("dialect " + d.String() + " was neither pg nor sqlite")
+	}
 
 	// A limit should always
 	// be supplied for this.

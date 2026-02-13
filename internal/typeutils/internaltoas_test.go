@@ -834,10 +834,10 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
 	testStatus, err := suite.db.GetStatusByID(ctx, testStatusID)
 	suite.NoError(err)
 
-  // Update interaction policy to allow only author + mentioned to reply.
-  testStatus.InteractionPolicy = gtsmodel.DefaultInteractionPolicyPublic()
-  testStatus.InteractionPolicy.CanReply.AutomaticApproval = gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor, gtsmodel.PolicyValueMentioned}
-  testStatus.InteractionPolicy.CanReply.ManualApproval = gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic}
+	// Update interaction policy to allow only author + mentioned to reply.
+	testStatus.InteractionPolicy = gtsmodel.DefaultInteractionPolicyPublic()
+	testStatus.InteractionPolicy.CanReply.AutomaticApproval = gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor, gtsmodel.PolicyValueMentioned}
+	testStatus.InteractionPolicy.CanReply.ManualApproval = gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic}
 
 	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
 	suite.NoError(err)
