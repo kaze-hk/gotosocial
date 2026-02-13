@@ -77,192 +77,192 @@ func (suite *AccountTestSuite) TestGetAccountWebStatusesUnlisted() {
 
 	// Get the statuses without boosts:
 	//
-	//	SELECT 
-	//	  "status"."id" 
-	//	FROM 
-	//	  "statuses" AS "status" 
-	//	WHERE 
-	//	  ("status"."local" = TRUE) 
+	//	SELECT
+	//	  "status"."id"
+	//	FROM
+	//	  "statuses" AS "status"
+	//	WHERE
+	//	  ("status"."local" = TRUE)
 	//	  AND (
 	//	    "status"."account_id" = '01F8MH17FWEB39HZJ76B6VXSKF'
-	//	  ) 
-	//	  AND ("status"."visibility" = 2) 
+	//	  )
+	//	  AND ("status"."visibility" = 2)
 	//	  AND (
 	//	    "status"."in_reply_to_uri" IS NULL
-	//	  ) 
-	//	  AND ("status"."boost_of_id" IS NULL) 
-	//	  AND ("status"."federated" = TRUE) 
-	//	UNION ALL 
-	//	SELECT 
-	//	  "status"."id" 
-	//	FROM 
-	//	  "statuses" AS "status" 
-	//	WHERE 
-	//	  ("status"."local" = TRUE) 
+	//	  )
+	//	  AND ("status"."boost_of_id" IS NULL)
+	//	  AND ("status"."federated" = TRUE)
+	//	UNION ALL
+	//	SELECT
+	//	  "status"."id"
+	//	FROM
+	//	  "statuses" AS "status"
+	//	WHERE
+	//	  ("status"."local" = TRUE)
 	//	  AND (
 	//	    "status"."account_id" = '01F8MH17FWEB39HZJ76B6VXSKF'
-	//	  ) 
-	//	  AND ("status"."visibility" = 3) 
+	//	  )
+	//	  AND ("status"."visibility" = 3)
 	//	  AND (
 	//	    "status"."in_reply_to_uri" IS NULL
-	//	  ) 
-	//	  AND ("status"."boost_of_id" IS NULL) 
-	//	  AND ("status"."federated" = TRUE) 
-	//	ORDER BY 
-	//	  "status"."id" DESC 
-	//	LIMIT 
+	//	  )
+	//	  AND ("status"."boost_of_id" IS NULL)
+	//	  AND ("status"."federated" = TRUE)
+	//	ORDER BY
+	//	  "status"."id" DESC
+	//	LIMIT
 	//	  20
-	//	
+	//
 	statuses, err := suite.db.GetAccountWebStatuses(suite.T().Context(), testAccount, &paging.Page{Limit: 20}, false, false)
 	suite.NoError(err)
 	suite.Len(statuses, 2)
 
 	// Get the statuses with boosts:
 	//
-	//	SELECT 
-	//	  "status"."id" 
-	//	FROM 
-	//	  "statuses" AS "status" 
-	//	  LEFT JOIN "accounts" AS "boost_of_account" ON "status"."boost_of_account_id" = "boost_of_account"."id" 
-	//	  LEFT JOIN "statuses" AS "boost_of" ON "status"."boost_of_id" = "boost_of"."id" 
-	//	WHERE 
-	//	  ("status"."local" = TRUE) 
+	//	SELECT
+	//	  "status"."id"
+	//	FROM
+	//	  "statuses" AS "status"
+	//	  LEFT JOIN "accounts" AS "boost_of_account" ON "status"."boost_of_account_id" = "boost_of_account"."id"
+	//	  LEFT JOIN "statuses" AS "boost_of" ON "status"."boost_of_id" = "boost_of"."id"
+	//	WHERE
+	//	  ("status"."local" = TRUE)
 	//	  AND (
 	//	    "status"."account_id" = '01F8MH17FWEB39HZJ76B6VXSKF'
-	//	  ) 
-	//	  AND ("status"."visibility" = 2) 
+	//	  )
+	//	  AND ("status"."visibility" = 2)
 	//	  AND (
 	//	    "status"."in_reply_to_uri" IS NULL
-	//	  ) 
+	//	  )
 	//	  AND (
-	//	    ("status"."boost_of_id" IS NULL) 
+	//	    ("status"."boost_of_id" IS NULL)
 	//	    OR (
-	//	      ("boost_of"."visibility" = 2) 
-	//	      AND ("boost_of"."federated" = TRUE) 
+	//	      ("boost_of"."visibility" = 2)
+	//	      AND ("boost_of"."federated" = TRUE)
 	//	      AND (
 	//	        "boost_of_account"."hides_to_public_from_unauthed_web" = FALSE
 	//	      )
 	//	    )
-	//	  ) 
-	//	  AND ("status"."federated" = TRUE) 
-	//	UNION ALL 
-	//	SELECT 
-	//	  "status"."id" 
-	//	FROM 
-	//	  "statuses" AS "status" 
-	//	  LEFT JOIN "accounts" AS "boost_of_account" ON "status"."boost_of_account_id" = "boost_of_account"."id" 
-	//	  LEFT JOIN "statuses" AS "boost_of" ON "status"."boost_of_id" = "boost_of"."id" 
-	//	WHERE 
-	//	  ("status"."local" = TRUE) 
+	//	  )
+	//	  AND ("status"."federated" = TRUE)
+	//	UNION ALL
+	//	SELECT
+	//	  "status"."id"
+	//	FROM
+	//	  "statuses" AS "status"
+	//	  LEFT JOIN "accounts" AS "boost_of_account" ON "status"."boost_of_account_id" = "boost_of_account"."id"
+	//	  LEFT JOIN "statuses" AS "boost_of" ON "status"."boost_of_id" = "boost_of"."id"
+	//	WHERE
+	//	  ("status"."local" = TRUE)
 	//	  AND (
 	//	    "status"."account_id" = '01F8MH17FWEB39HZJ76B6VXSKF'
-	//	  ) 
-	//	  AND ("status"."visibility" = 3) 
+	//	  )
+	//	  AND ("status"."visibility" = 3)
 	//	  AND (
 	//	    "status"."in_reply_to_uri" IS NULL
-	//	  ) 
+	//	  )
 	//	  AND (
-	//	    ("status"."boost_of_id" IS NULL) 
+	//	    ("status"."boost_of_id" IS NULL)
 	//	    OR (
-	//	      ("boost_of"."visibility" = 3) 
-	//	      AND ("boost_of"."federated" = TRUE) 
+	//	      ("boost_of"."visibility" = 3)
+	//	      AND ("boost_of"."federated" = TRUE)
 	//	      AND (
 	//	        "boost_of_account"."hides_cc_public_from_unauthed_web" = FALSE
 	//	      )
 	//	    )
-	//	  ) 
-	//	  AND ("status"."federated" = TRUE) 
-	//	ORDER BY 
-	//	  "status"."id" DESC 
-	//	LIMIT 
+	//	  )
+	//	  AND ("status"."federated" = TRUE)
+	//	ORDER BY
+	//	  "status"."id" DESC
+	//	LIMIT
 	//	  20
-	//	
+	//
 	statuses, err = suite.db.GetAccountWebStatuses(suite.T().Context(), testAccount, &paging.Page{Limit: 20}, false, true)
 	suite.NoError(err)
 	suite.Len(statuses, 3)
 
 	// Get the statuses with boosts + media only:
 	//
-	//	SELECT 
-	//	  "status"."id" 
-	//	FROM 
-	//	  "statuses" AS "status" 
-	//	  LEFT JOIN "accounts" AS "boost_of_account" ON "status"."boost_of_account_id" = "boost_of_account"."id" 
-	//	  LEFT JOIN "statuses" AS "boost_of" ON "status"."boost_of_id" = "boost_of"."id" 
-	//	WHERE 
-	//	  ("status"."local" = TRUE) 
+	//	SELECT
+	//	  "status"."id"
+	//	FROM
+	//	  "statuses" AS "status"
+	//	  LEFT JOIN "accounts" AS "boost_of_account" ON "status"."boost_of_account_id" = "boost_of_account"."id"
+	//	  LEFT JOIN "statuses" AS "boost_of" ON "status"."boost_of_id" = "boost_of"."id"
+	//	WHERE
+	//	  ("status"."local" = TRUE)
 	//	  AND (
 	//	    "status"."account_id" = '01F8MH17FWEB39HZJ76B6VXSKF'
-	//	  ) 
-	//	  AND ("status"."visibility" = 2) 
+	//	  )
+	//	  AND ("status"."visibility" = 2)
 	//	  AND (
 	//	    "status"."in_reply_to_uri" IS NULL
-	//	  ) 
+	//	  )
 	//	  AND (
-	//	    ("status"."boost_of_id" IS NULL) 
+	//	    ("status"."boost_of_id" IS NULL)
 	//	    OR (
-	//	      ("boost_of"."visibility" = 2) 
-	//	      AND ("boost_of"."federated" = TRUE) 
+	//	      ("boost_of"."visibility" = 2)
+	//	      AND ("boost_of"."federated" = TRUE)
 	//	      AND (
 	//	        "boost_of_account"."hides_to_public_from_unauthed_web" = FALSE
 	//	      )
 	//	    )
-	//	  ) 
-	//	  AND ("status"."federated" = TRUE) 
+	//	  )
+	//	  AND ("status"."federated" = TRUE)
 	//	  AND (
 	//	    (
-	//	      "status"."attachments" IS NOT NULL 
-	//	      AND "status"."attachments" != 'null' 
+	//	      "status"."attachments" IS NOT NULL
+	//	      AND "status"."attachments" != 'null'
 	//	      AND "status"."attachments" != '[]'
-	//	    ) 
+	//	    )
 	//	    OR (
-	//	      "boost_of"."attachments" IS NOT NULL 
-	//	      AND "boost_of"."attachments" != 'null' 
+	//	      "boost_of"."attachments" IS NOT NULL
+	//	      AND "boost_of"."attachments" != 'null'
 	//	      AND "boost_of"."attachments" != '[]'
 	//	    )
-	//	  ) 
-	//	UNION ALL 
-	//	SELECT 
-	//	  "status"."id" 
-	//	FROM 
-	//	  "statuses" AS "status" 
-	//	  LEFT JOIN "accounts" AS "boost_of_account" ON "status"."boost_of_account_id" = "boost_of_account"."id" 
-	//	  LEFT JOIN "statuses" AS "boost_of" ON "status"."boost_of_id" = "boost_of"."id" 
-	//	WHERE 
-	//	  ("status"."local" = TRUE) 
+	//	  )
+	//	UNION ALL
+	//	SELECT
+	//	  "status"."id"
+	//	FROM
+	//	  "statuses" AS "status"
+	//	  LEFT JOIN "accounts" AS "boost_of_account" ON "status"."boost_of_account_id" = "boost_of_account"."id"
+	//	  LEFT JOIN "statuses" AS "boost_of" ON "status"."boost_of_id" = "boost_of"."id"
+	//	WHERE
+	//	  ("status"."local" = TRUE)
 	//	  AND (
 	//	    "status"."account_id" = '01F8MH17FWEB39HZJ76B6VXSKF'
-	//	  ) 
-	//	  AND ("status"."visibility" = 3) 
+	//	  )
+	//	  AND ("status"."visibility" = 3)
 	//	  AND (
 	//	    "status"."in_reply_to_uri" IS NULL
-	//	  ) 
+	//	  )
 	//	  AND (
-	//	    ("status"."boost_of_id" IS NULL) 
+	//	    ("status"."boost_of_id" IS NULL)
 	//	    OR (
-	//	      ("boost_of"."visibility" = 3) 
-	//	      AND ("boost_of"."federated" = TRUE) 
+	//	      ("boost_of"."visibility" = 3)
+	//	      AND ("boost_of"."federated" = TRUE)
 	//	      AND (
 	//	        "boost_of_account"."hides_cc_public_from_unauthed_web" = FALSE
 	//	      )
 	//	    )
-	//	  ) 
-	//	  AND ("status"."federated" = TRUE) 
+	//	  )
+	//	  AND ("status"."federated" = TRUE)
 	//	  AND (
 	//	    (
-	//	      "status"."attachments" IS NOT NULL 
-	//	      AND "status"."attachments" != 'null' 
+	//	      "status"."attachments" IS NOT NULL
+	//	      AND "status"."attachments" != 'null'
 	//	      AND "status"."attachments" != '[]'
-	//	    ) 
+	//	    )
 	//	    OR (
-	//	      "boost_of"."attachments" IS NOT NULL 
-	//	      AND "boost_of"."attachments" != 'null' 
+	//	      "boost_of"."attachments" IS NOT NULL
+	//	      AND "boost_of"."attachments" != 'null'
 	//	      AND "boost_of"."attachments" != '[]'
 	//	    )
-	//	  ) 
-	//	ORDER BY 
-	//	  "status"."id" DESC 
-	//	LIMIT 
+	//	  )
+	//	ORDER BY
+	//	  "status"."id" DESC
+	//	LIMIT
 	//	  20
 	statuses, err = suite.db.GetAccountWebStatuses(suite.T().Context(), testAccount, &paging.Page{Limit: 20}, true, true)
 	suite.NoError(err)
