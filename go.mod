@@ -11,7 +11,7 @@ replace github.com/gin-gonic/gin => codeberg.org/superseriousbusiness/gin v1.11.
 require (
 	code.superseriousbusiness.org/activity v1.19.0
 	code.superseriousbusiness.org/exif-terminator v0.11.4
-	code.superseriousbusiness.org/gopkg v0.0.0-20260623123713-4ead213a2d22
+	code.superseriousbusiness.org/gopkg v0.0.0-20260701094855-ba765420af29
 	code.superseriousbusiness.org/httpsig v1.5.0
 	code.superseriousbusiness.org/oauth2/v4 v4.5.4-0.20250812115401-3961e46a7384
 	codeberg.org/gruf/go-bytesize v1.0.4

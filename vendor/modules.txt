@@ -213,7 +213,7 @@ code.superseriousbusiness.org/go-jpeg-image-structure/v2
 # code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0
 ## explicit; go 1.12
 code.superseriousbusiness.org/go-png-image-structure/v2
-# code.superseriousbusiness.org/gopkg v0.0.0-20260623123713-4ead213a2d22
+# code.superseriousbusiness.org/gopkg v0.0.0-20260701094855-ba765420af29
 ## explicit; go 1.25.0
 code.superseriousbusiness.org/gopkg/buffers
 code.superseriousbusiness.org/gopkg/httputil
