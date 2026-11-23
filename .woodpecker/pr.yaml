@@ -126,6 +126,9 @@ steps:
 
     # https://woodpecker-ci.org/docs/usage/workflow-syntax#commands
     commands:
+      # Install yarn
+      - apk add --no-cache yarn
+
       # Install web dependencies.
       - yarn --cwd ./web/source install --frozen-lockfile --cache-folder /.cache/yarn
       - yarn --cwd ./web/source ts-patch install # https://typia.io/docs/setup/#manual-setup
